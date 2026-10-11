@@ -19,6 +19,7 @@ export function makeDirector({ chapters, engine, ref, ctx, hooks = {} }) {
     activeChapter: -1,
     activeBeat: -1,
     stepTo: null,
+    stepRate: null,
   };
 
   const beatAt = () => beats[S.beat];
@@ -107,11 +108,13 @@ export function makeDirector({ chapters, engine, ref, ctx, hooks = {} }) {
     if (S.stepTo !== null) {
       const beat = beatAt();
       const before = S.t;
-      S.t = Math.min(S.stepTo, S.t + (dt * S.speed) / Math.max(0.35, Math.min(1.2, beat.dur / beat.events)));
+      const rate = S.stepRate ?? 1 / Math.max(0.35, Math.min(1.2, beat.dur / beat.events));
+      S.t = Math.min(S.stepTo, S.t + dt * S.speed * rate);
       if (still.matches) S.t = S.stepTo;
       if (S.t >= S.stepTo - 1e-9) {
         S.t = S.stepTo;
         S.stepTo = null;
+        S.stepRate = null;
         apply();
         save();
       } else apply();
@@ -208,6 +211,19 @@ export function makeDirector({ chapters, engine, ref, ctx, hooks = {} }) {
     pause() {
       S.playing = false;
       S.stepTo = null;
+    },
+    animateTo(target, seconds) {
+      S.playing = false;
+      if (seconds <= 0 || still.matches || target <= S.t) {
+        S.t = target;
+        S.stepTo = null;
+        S.stepRate = null;
+        apply();
+        save();
+        return;
+      }
+      S.stepTo = target;
+      S.stepRate = (target - S.t) / seconds;
     },
     setMode(mode) {
       S.mode = mode;

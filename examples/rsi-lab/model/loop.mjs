@@ -71,6 +71,7 @@ export function analyse(reports, analystGenome, { keepDetails = 2 } = {}) {
     if (r < keepDetails)
       details.push({
         source: lines.source,
+        raw: lines,
         lines: lines.map((entry) => ({ index: entry.index, type: entry.type, text: entry.text, tokens: entry.tokens, diag: !!entry.tags.diag, status: managed.status.get(entry.index) })),
         used: managed.used,
         read,
@@ -273,7 +274,7 @@ export function runLoop({
       stopReason = `quedan ${ledger.remaining()} ejecuciones y un ciclo completo necesita ${need}`;
       break;
     }
-    const cycle = { index: cycles.length + 1, analyst: analyst.id || "v0", strategy: { ...strategy }, reserved: need, before: ledger.snapshot() };
+    const cycle = { index: cycles.length + 1, analyst: analyst.id || "v0", analystGenome: analyst, activeBefore: active.id, strategy: { ...strategy }, reserved: need, before: ledger.snapshot() };
     const parent = rng.next() < strategy.explore && archive.length > 1 ? rng.pick(archive) : active;
     cycle.parent = parent.id;
     const devRuns = gate.run("ejecutor", "desarrollo", parent.genome);
@@ -294,6 +295,8 @@ export function runLoop({
     cycle.rule = proposal.rule;
     cycle.ranked = proposal.ranked;
     cycle.diff = genomeDiff(parent.genome, genome);
+    cycle.parentGenome = parent.genome;
+    cycle.candidateGenome = genome;
     cycle.candidate = id;
     memory.add(keyOf(genome));
     let candidateStrategy = { ...strategy };

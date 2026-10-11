@@ -46,6 +46,7 @@ function kvDiagram(n, newRow, invalidFrom) {
 
 export const chapter4 = {
   title: "Bloque completo y siguiente token",
+  showTheta: true,
   question: "¿Cómo se convierte el estado de la última posición en una predicción?",
   setup(ctx) {
     rackSetup(ctx);
@@ -85,14 +86,14 @@ export const chapter4 = {
       more: `<p>Cada cabeza aprende a mezclar información de forma distinta. La concatenación vuelve a la anchura 8 y W_O las combina.</p>`,
       pose(ctx, t) {
         cutAbove(ctx, "b0");
-        fade(ctx, ["blk-b0", "mx-b0-wo", "mx-b0-w1", "mx-b0-w2", "vec-b0", "head-b0-0", "head-b0-1"], ctx.still.matches ? 1 : Math.min(1, t * 2.5));
+        fade(ctx, ["blk-b0", "mx-b0-wo", "mx-b0-w1", "mx-b0-w2", "vec-b0", "head-b0-0", "head-b0-1"], 1);
         const tr = ctx.store.trace().blocks[0];
         ctx.focus(["head-b0-0", "head-b0-1", "mx-b0-wo", "blk-b0"]);
         ctx.tag("lb-h0", "head-b0-0", "cabeza 1 → Z₁", { dz: 8, role: "in" });
         ctx.tag("lb-h1", "head-b0-1", "cabeza 2 → Z₂", { dz: 8, role: "in" });
         ctx.tag("lb-wo", "mx-b0-wo", "W_O · 8×8", { dz: 6, role: "w" });
         blockPanel(ctx, ["mha"], `última fila: Z₁ = ${vec(last(tr.heads[0].Z))}\n            Z₂ = ${vec(last(tr.heads[1].Z))}\n[Z₁ Z₂] W_O = ${vec(last(tr.attnOut))}`);
-        if (!ctx.still.matches) for (let i = 0; i < 2; i++) ctx.pulse(i, { path: [[ -280 + 48, -233 + 22 + i * 36, 220], [-280 + 80, -233 + 30, 222]].map(([x, y, z]) => [x, y, z]), s: (t * 1.5 + i * 0.5) % 1, role: "in" });
+        if (!ctx.still.matches && t > 0.001 && t < 0.999) for (let i = 0; i < 2; i++) ctx.pulse(i, { path: [[ -280 + 48, -233 + 22 + i * 36, 220], [-280 + 80, -233 + 30, 222]].map(([x, y, z]) => [x, y, z]), s: (t * 1.5 + i * 0.5) % 1, role: "in" });
       },
     },
     {
@@ -134,8 +135,8 @@ export const chapter4 = {
         ctx.tag("lb-w2", "mx-b0-w2", "W₂ · 32×8", { dz: 6, role: "w" });
         const xs = Array.from({ length: 61 }, (_, i) => -4 + i * (8 / 60));
         const chart = lineChart([{ values: xs.map(gelu), cls: "tr" }], { w: 340, h: 120, xLabel: "x (−4 … 4)", yLabel: "GELU(x)", yMin: -0.5, yMax: 4, xTicks: [0, 30, 60] });
-        blockPanel(ctx, e <= 1 ? ["Y"] : ["gelu"], e <= 1 ? `LN₂(H) última fila = ${vec(last(tr.ln2.out))}` : e === 2 ? `u = LN₂(H)W₁ + b₁ (primeros 8 de 32): ${u.slice(0, 8).map(f2).join(" ")}…\nGELU(u): ${g.slice(0, 8).map(f2).join(" ")}…` : `Y = H + MLP = ${vec(last(tr.Y))}`);
-        if (e === 2) ctx.panel("gelu", { title: "GELU", html: chart, width: 360, top: 330 });
+        blockPanel(ctx, e <= 1 ? ["Y"] : ["gelu"], e === 0 ? `H última fila = ${vec(last(tr.H))}` : e === 1 ? `LN₂(H) última fila = ${vec(last(tr.ln2.out))}` : e === 2 ? `u = LN₂(H)W₁ + b₁ (primeros 8 de 32): ${u.slice(0, 8).map(f2).join(" ")}…\nGELU(u): ${g.slice(0, 8).map(f2).join(" ")}…` : `Y = H + MLP = ${vec(last(tr.Y))}`);
+        if (e === 1 || e === 2) ctx.panel("gelu", { title: "GELU", html: chart, width: 360, top: 330 });
       },
     },
     {
@@ -189,9 +190,9 @@ export const chapter4 = {
         const gen = ctx.store.generation();
         const greedy = argmax(tr.probs);
         const pT = temperatureProbs(tr.logits, ctx.user.temperature);
-        const chosen = e <= 1 ? greedy : gen.sampled.generated[0].id;
+        const chosen = e === 0 ? undefined : e === 1 ? greedy : gen.sampled.generated[0].id;
         ctx.state("bars-out", { showLogits: true, showProbs: true, probs: e <= 1 ? tr.probs : pT, chosen });
-        ctx.state("card-next", { id: chosen });
+        ctx.state("card-next", chosen === undefined ? {} : { id: chosen });
         ctx.focus(["bars-out", "card-next"]);
         ctx.tag("lb-next", "card-next", "siguiente token", { dz: 8, role: "ok" });
         outPanel(ctx, e <= 1 ? ["p"] : ["T"], e <= 1 ? `argmax p = ${greedy} («${esc(VOCAB[greedy])}», p = ${f3(tr.probs[greedy])})` : `p_T (T = ${ctx.user.temperature.toFixed(2)}): ${pT.map((v) => v.toFixed(2)).join(" ")}\nmuestra (semilla ${ctx.user.sampleSeed}) = ${chosen} «${esc(VOCAB[chosen])}»`);

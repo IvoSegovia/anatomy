@@ -7,6 +7,15 @@ import { lossAndGrad, headPrint, headOf, flatHead, ADAM } from "../../model/trai
 import { argmax } from "../../model/transformer.mjs";
 
 const run = (ctx) => ctx.store.training();
+export const sgdEta = (ctx) => (ctx.user.optimizer === "sgd" ? ctx.user.eta : 0.5);
+export function trackedParam(ctx, eta) {
+  const r = ctx.store.training("sgd", eta);
+  const ex = exOf(ctx);
+  const g = lossAndGrad(r.history[0].head, r.train).grad.Wu;
+  let best = { r: 0, c: ex.target, g: 0 };
+  for (let k = 0; k < g.length; k++) if (Math.abs(g[k][ex.target]) > Math.abs(best.g)) best = { r: k, c: ex.target, g: g[k][ex.target] };
+  return { ...best, before: r.history[0].head.Wu[best.r][best.c], after: r.history[1].head.Wu[best.r][best.c], target: ex.target };
+}
 const stepOf = (ctx) => Math.max(0, Math.min(40, ctx.user.trainStep));
 const exOf = (ctx) => run(ctx).train[Math.min(5, ctx.user.example)];
 
@@ -43,6 +52,7 @@ function curves(ctx, cursor, { opt = ctx.user.optimizer, eta = ctx.user.eta, tit
 
 export const chapter5 = {
   title: "Cómo cambian realmente los pesos",
+  showTheta: true,
   question: "¿Qué diferencia hay entre usar un modelo y entrenarlo?",
   setup(ctx) {
     rackSetup(ctx);
@@ -214,14 +224,18 @@ export const chapter5 = {
       },
       changed: { pesos: "cambió (160)", datos: "entrenamiento" },
       pose(ctx, t, e) {
-        const r = ctx.store.training("sgd", 0.5);
+        const eta = sgdEta(ctx);
+        const r = ctx.store.training("sgd", eta);
         const ex = exOf(ctx);
-        const head = r.history[1].head;
+        const after = e >= 1;
+        const head = r.history[after ? 1 : 0].head;
         showHead(ctx, head, ex, { gradient: null });
-        ctx.theta(r.history[1].print, `cabeza actualizada (antes ${r.history[0].print})`, true);
+        ctx.theta(r.history[after ? 1 : 0].print, after ? `cabeza actualizada (antes ${r.history[0].print})` : "todavía sin actualizar", after);
         ctx.focus(["mx-Wu", "bars-out"]);
-        ctx.tag("lb-w", "mx-Wu", "W_U después del paso", { dz: 6, role: "w" });
-        trainPanel(ctx, ["upd"], `θ_cabeza: ${r.history[0].print} → ${r.history[1].print}\nmáx |Δθ| = ${Math.max(...r.history[1].delta.map(Math.abs)).toFixed(4)}\nL entrenamiento ${f3(r.history[0].train)} → ${f3(r.history[1].train)}`);
+        const pick = trackedParam(ctx, eta);
+        ctx.state("mx-Wu", { values: head.Wu, role: "w", highlight: new Set([`${pick.r},${pick.c}`]) });
+        ctx.tag("lb-w", "mx-Wu", after ? "W_U después del paso" : "W_U antes del paso", { dz: 6, role: "w" });
+        trainPanel(ctx, ["upd"], `W_U[${pick.r},${pick.c}]: ${f3(pick.before)} − ${eta}·(${f3(pick.g)}) = ${after ? `<b>${f3(pick.after)}</b>` : "…"}\nθ_cabeza: ${r.history[0].print}${after ? ` → ${r.history[1].print}` : ""}\nL entrenamiento ${f3(r.history[0].train)}${e >= 2 ? ` → ${f3(r.history[1].train)}` : ""}`);
       },
     },
     {
@@ -266,7 +280,7 @@ export const chapter5 = {
         const eta = e <= 1 ? 1.2 : 3;
         const r = ctx.store.training("sgd", eta);
         const h = r.history.map((x) => x.train);
-        const k = e <= 1 ? h.findIndex((v, i) => i > 0 && v > h[i - 1]) : 6;
+        const k = e === 0 ? 0 : e <= 1 ? h.findIndex((v, i) => i > 0 && v > h[i - 1]) : 6;
         curves(ctx, k, { opt: "sgd", eta, title: `Pérdida por paso · SGD · η = ${eta}` });
         showHead(ctx, r.history[Math.max(0, k)].head, exOf(ctx));
         ctx.theta(r.history[Math.max(0, k)].print, `η = ${eta}, paso ${k}`, true);
@@ -286,7 +300,7 @@ export const chapter5 = {
       refs: ["adam"],
       pose(ctx, t, e) {
         const r = ctx.store.training("adam", 0.05);
-        const k = e <= 1 ? 1 : Math.round(Math.min(1, (t - 0.5) * 2) * 40);
+        const k = e === 0 ? 0 : e <= 1 ? 1 : Math.round(Math.min(1, (t - 0.5) * 2) * 40);
         const h = r.history[Math.max(1, k)];
         const idx = [16, 17, 18];
         const g = flatHead(h.grad);

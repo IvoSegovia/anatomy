@@ -25,8 +25,8 @@ export function buildShell(app, chapters) {
   ref.top = el("header", { class: "top" });
   ref.brand = el("div", { class: "brand", html: "Anatomía de la automejora recursiva<small>del Transformer al sistema que mejora cómo se mejora</small>" });
   ref.mode = el("div", { class: "mode", role: "group", "aria-label": "Modo" });
-  ref.modeTour = el("button", { "aria-pressed": "true", title: "Recorrido guiado (cámara y avance automáticos)" }, "Recorrido");
-  ref.modeFree = el("button", { "aria-pressed": "false", title: "Exploración libre (cámara y controles manuales)" }, "Explorar");
+  ref.modeTour = el("button", { "aria-pressed": "true", title: "Aprender paso a paso: cámara guiada y avance con «Ver la operación» y «Continuar»" }, "Aprender");
+  ref.modeFree = el("button", { "aria-pressed": "false", title: "Explorar: cámara libre; la explicación queda en el paso actual (M)" }, "Explorar");
   ref.mode.append(ref.modeTour, ref.modeFree);
   ref.chapters = el("nav", { class: "chapters", "aria-label": "Capítulos" });
   ref.chapterButtons = chapters.map((chapter, index) => {
@@ -34,9 +34,11 @@ export function buildShell(app, chapters) {
     ref.chapters.append(button);
     return button;
   });
-  ref.inspectorToggle = el("button", { class: "icon-btn", title: "Inspector (I)", "aria-pressed": "true", "aria-controls": "inspector" }, "Inspector");
+  ref.narratorBtn = el("button", { class: "icon-btn", title: "Mostrar u ocultar el narrador escrito (N)", "aria-pressed": "true" }, "Narrador");
+  ref.soundBtn = el("button", { class: "icon-btn", title: "Activar sonidos: cada familia de operaciones tiene una señal propia (X silencia)", "aria-pressed": "false" }, "Activar sonidos");
+  ref.inspectorToggle = el("button", { class: "icon-btn", title: "Panel lateral (I)", "aria-pressed": "true", "aria-controls": "inspector" }, "Panel");
   ref.help = el("button", { class: "icon-btn", title: "Atajos de teclado (?)" }, "?");
-  ref.top.append(ref.brand, ref.chapters, ref.mode, ref.inspectorToggle, ref.help);
+  ref.top.append(ref.brand, ref.chapters, ref.mode, ref.narratorBtn, ref.soundBtn, ref.inspectorToggle, ref.help);
 
   ref.stage = el("section", { class: "stage", "aria-label": "Escena del laboratorio", tabindex: "0" });
   ref.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -67,19 +69,21 @@ export function buildShell(app, chapters) {
   ref.caption = el("div", { class: "hud caption", "aria-live": "polite" });
   ref.capStep = el("div", { class: "step" });
   ref.capText = el("div", { class: "txt" });
-  ref.backTour = el("button", { class: "btn back-tour" }, "Volver a la cámara guiada");
+  ref.backTour = el("button", { class: "btn back-tour" }, "Volver a la explicación");
   ref.caption.append(ref.capStep, ref.capText, ref.backTour);
   ref.desk = el("div", { class: "hud desk", role: "region", "aria-label": "Mesa de control de la escena" });
+  ref.narratorOff = el("div", { class: "hud narrator-off" }, "Narrador oculto · N para mostrarlo");
+  ref.opChip = el("div", { class: "hud opchip", "aria-hidden": "true" });
   ref.disclaimer = el("div", { class: "hud disclaimer", html: '<span class="long">Representación conceptual: la posición de una matriz en la escena no es su ubicación física en una GPU.</span><span class="short">Representación conceptual (no es la disposición en una GPU)</span>' });
   ref.tip = el("div", { class: "tip", role: "tooltip" });
   ref.planes = el("div", { class: "planes" });
-  ref.stage.append(ref.svg, ref.labels, ref.planes, ref.changed, ref.theta, ref.scalemap, ref.caption, ref.desk, ref.disclaimer, ref.tip);
+  ref.stage.append(ref.svg, ref.labels, ref.planes, ref.changed, ref.theta, ref.scalemap, ref.caption, ref.desk, ref.disclaimer, ref.narratorOff, ref.opChip, ref.tip);
 
   ref.inspector = el("aside", { class: "inspector", id: "inspector", "aria-label": "Inspector" });
   ref.tabs = el("div", { class: "insp-tabs", role: "tablist" });
   ref.tabButtons = {};
-  [["obj", "Objeto"], ["notation", "Notación"], ["checks", "Verificación"], ["refs", "Fuentes"]].forEach(([key, name]) => {
-    const button = el("button", { role: "tab", "aria-selected": key === "obj" ? "true" : "false", "data-tab": key }, name);
+  [["guide", "Guía"], ["obj", "Objeto"], ["notation", "Notación"], ["checks", "Verificación"], ["refs", "Fuentes"]].forEach(([key, name]) => {
+    const button = el("button", { role: "tab", "aria-selected": key === "guide" ? "true" : "false", "data-tab": key }, name);
     ref.tabButtons[key] = button;
     ref.tabs.append(button);
   });
@@ -88,16 +92,20 @@ export function buildShell(app, chapters) {
 
   ref.transport = el("footer", { class: "transport", "aria-label": "Reproducción" });
   ref.reset = el("button", { class: "icon-btn", title: "Reiniciar el recorrido (0)" }, "⟲ reiniciar");
-  ref.prev = el("button", { class: "icon-btn", title: "Retroceder al estado guardado anterior (←)", "aria-label": "Retroceder un evento" }, "◀");
-  ref.play = el("button", { class: "icon-btn play", title: "Reproducir / pausar (espacio)", "aria-label": "Reproducir" }, "▶");
-  ref.next = el("button", { class: "icon-btn", title: "Avanzar un evento (→)", "aria-label": "Avanzar un evento" }, "▶|");
+  ref.prev = el("button", { class: "icon-btn", title: "Volver a la fase anterior, con sus parámetros (←)", "aria-label": "Volver a la fase anterior" }, "◀");
+  ref.play = el("button", { class: "icon-btn play", title: "Reproducción automática (espacio)", "aria-label": "Reproducción automática" }, "▶");
+  ref.next = el("button", { class: "icon-btn", title: "Avanzar a la fase siguiente (→)", "aria-label": "Avanzar" }, "▶|");
+  ref.learnPrimary = el("button", { class: "btn primary learn-primary", title: "Acción principal (Intro)" }, "Ver la operación");
+  ref.learnRepeat = el("button", { class: "btn", title: "Repetir esta operación (R)" }, "Repetir");
   ref.speed = el("div", { class: "grp speed" });
-  ref.speedSel = el("select", { "aria-label": "Velocidad de reproducción (no cambia cálculos)", title: "Velocidad de reproducción: sólo cambia el ritmo de la animación, no el presupuesto de cómputo ni la tasa de aprendizaje" });
-  for (const value of [0.5, 0.75, 1, 1.5, 2, 3]) ref.speedSel.append(el("option", { value, selected: value === 1 }, `${value}×`));
-  ref.speed.append(el("label", {}, "velocidad"), ref.speedSel);
-  ref.timeline = el("div", { class: "timeline", role: "slider", tabindex: "0", "aria-label": "Línea de tiempo del recorrido", "aria-valuemin": "0", "aria-valuemax": "100" });
+  ref.speedSel = el("select", { "aria-label": "Velocidad de la animación (no cambia cálculos ni lectura)", title: "Velocidad de la animación: sólo cambia el ritmo gráfico; no cambia el presupuesto de cómputo, la tasa de aprendizaje ni el tiempo de lectura" });
+  for (const value of [0.5, 0.75, 1, 1.5, 2]) ref.speedSel.append(el("option", { value, selected: value === 1 }, `${value}×`));
+  ref.wpmSel = el("select", { "aria-label": "Ritmo de lectura de la reproducción automática", title: "Ritmo de lectura estimado para la reproducción automática (palabras por minuto)" });
+  for (const value of [110, 140, 170]) ref.wpmSel.append(el("option", { value, selected: value === 140 }, `${value} ppm`));
+  ref.speed.append(el("label", {}, "animación"), ref.speedSel, el("label", {}, "lectura"), ref.wpmSel);
+  ref.timeline = el("div", { class: "timeline", role: "slider", tabindex: "0", "aria-label": "Línea de tiempo de la lección", "aria-valuemin": "0", "aria-valuemax": "100" });
   ref.clock = el("div", { class: "clock" });
-  ref.transport.append(el("div", { class: "grp" }, ref.reset, ref.prev, ref.play, ref.next), ref.speed, ref.timeline, ref.clock);
+  ref.transport.append(el("div", { class: "grp" }, ref.reset, ref.prev, ref.play, ref.next), el("div", { class: "grp learnbar" }, ref.learnPrimary, ref.learnRepeat), ref.speed, ref.timeline, ref.clock);
 
   ref.live = el("div", { class: "sr", "aria-live": "polite" });
   app.append(ref.top, ref.stage, ref.inspector, ref.transport, ref.live);

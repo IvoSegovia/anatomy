@@ -78,7 +78,11 @@ const roleWord = { in: "entrada / activación", w: "peso / parámetro", g: "grad
 
 export function renderInspector(ctx, selection) {
   const body = ctx.ref.inspBody;
-  const tab = ctx.tab || "obj";
+  const tab = ctx.tab || "guide";
+  if (tab === "guide") {
+    if (ctx.lesson) ctx.lesson.render();
+    return;
+  }
   if (tab === "notation") {
     body.innerHTML = `<h2>Notación</h2><p>Cada símbolo se define antes de usarse en la escena. Los colores codifican el papel de cada objeto y siempre van con etiqueta.</p>
     <div class="io" style="grid-template-columns:auto 1fr">${["in", "w", "g", "ok", "bad", "off"].map((r) => `<dt><span class="chip" style="height:18px"><i style="background:var(--c-${r})"></i></span></dt><dd>${roleWord[r]}</dd>`).join("")}</div>
@@ -90,7 +94,7 @@ export function renderInspector(ctx, selection) {
     body.innerHTML = `<h2>Verificación en vivo</h2><p>Comprobaciones ejecutadas ahora en tu navegador con el mismo código que mueve la escena.</p><p class="kv">calculando…</p>`;
     setTimeout(() => {
       const results = liveChecks(ctx.store);
-      body.innerHTML = `<h2>Verificación en vivo</h2><p>Comprobaciones ejecutadas ahora en tu navegador con el mismo código que mueve la escena. La batería completa (44 pruebas) está en <span class="kv">verify.mjs</span>.</p><ul class="checks">${results.map((r) => `<li class="${r.ok ? "" : "x"}">${esc(r.name)}${r.detail ? ` <span class="kv">(${esc(r.detail)})</span>` : ""}</li>`).join("")}</ul><p class="kv">${results.filter((r) => r.ok).length}/${results.length} correctas</p>`;
+      body.innerHTML = `<h2>Verificación en vivo</h2><p>Comprobaciones ejecutadas ahora en tu navegador con el mismo código que mueve la escena. La batería completa está en <span class="kv">verify.mjs</span> y se ejecuta con Node.</p><ul class="checks">${results.map((r) => `<li class="${r.ok ? "" : "x"}">${esc(r.name)}${r.detail ? ` <span class="kv">(${esc(r.detail)})</span>` : ""}</li>`).join("")}</ul><p class="kv">${results.filter((r) => r.ok).length}/${results.length} correctas</p>`;
     }, 30);
     return;
   }

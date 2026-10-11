@@ -1,4 +1,4 @@
-import { baseVisibility, explode, trayCamera, rackCamera, trayRegion, cutAbove, fade } from "../common.mjs";
+import { baseVisibility, explode, trayCamera, rackCamera, trayRegion, cutAbove, fade, segment } from "../common.mjs";
 import { VOCAB, tokenize } from "../../model/tokenizer.mjs";
 import { f2, f3, esc, T } from "../helpers.mjs";
 import { el } from "../ui.mjs";
@@ -144,8 +144,9 @@ export const chapter2 = {
       pose(ctx, t, e) {
         const ids = ctx.store.ids();
         const n = ids.length;
-        const upto = Math.min(n, Math.ceil(t * n));
-        const i = Math.max(0, upto - 1);
+        const { k, u } = segment(t, n);
+        const upto = Math.min(n, k - 1 + (u >= 0.5 ? 1 : 0));
+        const i = k - 1;
         cards(10).forEach((id, j) => ctx.pose(id, { visible: j < n, state: { showId: true, lit: j === i } }));
         ctx.state("mx-E", { rowHi: ids[i] });
         const tr = ctx.store.trace();
@@ -171,8 +172,9 @@ export const chapter2 = {
       pose(ctx, t, e) {
         const ids = ctx.store.ids();
         const n = ids.length;
-        const upto = Math.min(n, Math.ceil(t * n));
-        const i = Math.max(0, upto - 1);
+        const { k, u } = segment(t, n);
+        const upto = Math.min(n, k - 1 + (u >= 0.5 ? 1 : 0));
+        const i = k - 1;
         const tr = ctx.store.trace();
         const mixed = tr.X0.map((row, r) => (r < upto ? row : tr.tok[r]));
         cards(10).forEach((id, j) => ctx.pose(id, { visible: j < n, state: { showId: true, lit: j === i } }));

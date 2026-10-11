@@ -1,4 +1,4 @@
-import { baseVisibility, explode, cubeCamera, trayCamera, framesFor, TENSOR_IDS, cutAbove, fade } from "../common.mjs";
+import { baseVisibility, explode, cubeCamera, trayCamera, framesFor, TENSOR_IDS, cutAbove, fade, segment } from "../common.mjs";
 
 const BLOCK_PARTS = ["blk-b0", "mx-b0-wo", "mx-b0-w1", "mx-b0-w2", "vec-b0", "head-b0-0", "head-b0-1"];
 import { lerpFrame } from "../tensors.mjs";
@@ -92,7 +92,7 @@ export const chapter3 = {
       scale: "tensor",
       camera: (ctx) => cubeCamera(ctx, ["c1", "c2", "c3"], { pad: 30 }),
       camSeconds: 2.2,
-      caption: "Se abre la cabeza 1 del bloque 1. Dentro: <b>X</b> (la entrada de la subcapa, ya normalizada con LN₁) y los pesos <b>W_Q, W_K, W_V</b> (8×4 cada uno).",
+      caption: "Se abre la cabeza 1 del bloque 1. Dentro: <b>X</b> (la entrada de la subcapa, ya normalizada con LN₁) y los parámetros <b>W_Q, W_K, W_V</b> (8×4 cada uno).",
       changed: { contexto: "activo" },
       more: `<p><b>X</b> es la entrada de la subcapa de atención <i>después</i> de la normalización elegida (pre-LN): X = LN₁(X₀). Tiene una fila por posición y 8 columnas.</p><p>Las matrices se dibujan como superficies inspeccionables: celda llena = valor positivo; celda con borde = negativo; intensidad = |valor|. La posición de cada superficie en el espacio es conceptual.</p>`,
       pose(ctx, t) {
@@ -124,23 +124,26 @@ export const chapter3 = {
       },
       changed: { contexto: "activo" },
       more: `<p>Producto matricial en 3D: X ocupa la cara izquierda, los pesos la cara superior y el resultado la cara derecha. La celda (i, j) del resultado acumula los 8 productos X[i,k]·W[k,j] alineados en el volumen.</p><p>Calcular [Q K V] = X·[W_Q W_K W_V] de una vez es lo mismo que tres productos por separado.</p>`,
-      pose(ctx, t, e) {
+      pose(ctx, t) {
         const { head, block, p } = headData(ctx);
         const i = rowOf(ctx);
-        const step = Math.max(1, e);
-        const done = { "t-Q": step > 1 || t * 3 > 0.6, "t-K": step > 2 || (step === 2 && t * 3 - 1 > 0.6), "t-V": step >= 3 && t * 3 - 2 > 0.6 };
+        const { k: step, u } = segment(t, 3);
+        const fill = 0.82;
+        const done = { "t-Q": step > 1 || u >= fill, "t-K": step > 2 || (step === 2 && u >= fill), "t-V": step === 3 && u >= fill };
         planesBase(ctx, { pending: { "t-Q": done["t-Q"] ? null : () => true, "t-K": done["t-K"] ? null : () => true, "t-V": done["t-V"] ? null : () => true }, opacity: { "t-S": 0, "t-Z": 0 }, rowHi: { "t-X": i } });
         const key = ["Wq", "Wk", "Wv"][step - 1];
         const col = (step - 1) * 4;
         const products = block.ln1.out[i].map((x, k) => x * p[key][ctx.user.head][k][0]);
-        const upto = Math.min(8, Math.ceil(((t * 3) % 1 || 1) * 8));
-        ctx.state("t-cube1", { pick: { i, j: col, products, upto: e > step ? 8 : upto } });
+        const upto = Math.min(8, Math.floor((u / fill) * 8 + 1e-9));
+        ctx.state("t-cube1", { pick: { i, j: col, products, upto } });
+        ctx.state(`t-${key}`, { colHi: 0 });
         const target = ["t-Q", "t-K", "t-V"][step - 1];
         ctx.state(target, { pending: done[target] ? null : () => true, highlight: new Set([`${i},0`]) });
         ctx.focus(["t-X", `t-${key}`, target, "t-cube1"]);
         const name = ["Q", "K", "V"][step - 1];
         const value = head[name][i][0];
-        attnPanel(ctx, [name, "X"], `${name}[${i},0] = Σₖ X[${i},k]·W_${name}[k,0]\n  = ${products.map(f2).join(" + ")}\n  = <b>${f3(value)}</b>`);
+        const shown = products.slice(0, upto);
+        attnPanel(ctx, [name, "X"], `${name}[${i},0] = Σₖ X[${i},k]·W_${name}[k,0]\n  = ${shown.length ? shown.map(f2).join(" + ") : "…"}${upto < 8 ? (shown.length ? " + …" : "") : `\n  = <b>${f3(value)}</b>`}`);
         ctx.tag("lb-tgt", target, `${name} · n×4`, { dz: 6, role: "in" });
       },
     },
@@ -159,29 +162,31 @@ export const chapter3 = {
       },
       changed: { contexto: "activo" },
       more: `<p>(QKᵀ)<sub>ij</sub> = Σ<sub>k</sub> Q<sub>ik</sub>K<sub>jk</sub> es un producto punto entre la consulta de la posición i y la clave de la posición j. Se calcula para todos los j, también los futuros; la máscara llega después.</p>`,
-      pose(ctx, t, e) {
+      pose(ctx, t) {
         const n = ctx.store.ids().length;
         const F = framesFor(n);
         const { head } = headData(ctx);
         const i = rowOf(ctx);
-        const move = ease(Math.min(1, t * 7));
-        const j = e <= 1 ? -1 : Math.min(n - 1, Math.floor((t * 7 - 1) * (n / 6)));
-        const doneJ = (c) => c <= j;
+        const { k, u } = segment(t, 7);
+        const move = k === 1 ? ease(u) : 1;
+        const j = k === 1 ? -1 : Math.min(n - 1, k - 2);
+        const cellDone = (c) => c < j || (c === j && u >= 0.7);
         ctx.pose("t-cube2", { visible: true, opacity: move });
         planesBase(ctx, {
           at: { "t-Q": lerpFrame(F.Q1, F.Q2, move), "t-K": lerpFrame(F.K1, F.K2, move) },
           values: {},
-          pending: { "t-S": (r, c) => r !== i || !doneJ(c) },
+          pending: { "t-S": (r, c) => r !== i || !cellDone(c) },
           opacity: { "t-S": move, "t-Z": 0, "t-X": 0.35, "t-Wq": 0.25, "t-Wk": 0.25, "t-Wv": 0.25 },
           rowHi: { "t-Q": i },
         });
         ctx.state("t-cube1", {});
         if (j >= 0) {
-          const products = head.Q[i].map((q, k) => q * head.K[j][k]);
-          ctx.state("t-cube2", { pick: { i, j, products, upto: 4 } });
+          const products = head.Q[i].map((q, kk) => q * head.K[j][kk]);
+          ctx.state("t-cube2", { pick: { i, j, products, upto: Math.min(4, Math.floor((u / 0.7) * 4 + 1e-9)) } });
           ctx.state("t-K", { rowHi: j, frame: F.K2 });
-          numbers(ctx, "t-S", "S", i, head.S[i], { cols: Array.from({ length: j + 1 }, (_, c) => c) });
-          attnPanel(ctx, ["QK"], `(QKᵀ)[${i},${j}] = Q_${i}·K_${j} = ${products.map(f2).join(" + ")} = <b>${f3(head.S[i][j])}</b>`);
+          const shown = Array.from({ length: n }, (_, c) => c).filter(cellDone);
+          numbers(ctx, "t-S", "S", i, head.S[i], { cols: shown });
+          attnPanel(ctx, ["QK"], `(QKᵀ)[${i},${j}] = Q_${i}·K_${j} = ${products.map(f2).join(" + ")}${cellDone(j) ? ` = <b>${f3(head.S[i][j])}</b>` : ""}`);
         } else {
           ctx.state("t-cube2", {});
           attnPanel(ctx, ["QK"], "K (n×4) se transpone a Kᵀ (4×n): sus filas pasan a ser columnas.");
@@ -223,15 +228,17 @@ export const chapter3 = {
       camera: (ctx) => cubeCamera(ctx, "c2", { pad: 66 }),
       caption: "<b>Máscara causal M</b>: 0 donde j ≤ i (pasado y presente), −∞ donde j > i (futuro). Una posición no puede mirar tokens posteriores.",
       changed: { contexto: "activo" },
-      pose(ctx) {
+      pose(ctx, t) {
         const n = ctx.store.ids().length;
         const F = framesFor(n);
         const { head } = headData(ctx);
         const i = rowOf(ctx);
-        planesBase(ctx, { at: { "t-Q": F.Q2, "t-K": F.K2 }, values: { "t-S": head.Smasked }, masked: { "t-S": (r, c) => c > r }, opacity: { "t-Z": 0, "t-X": 0.25, "t-Wq": 0.2, "t-Wk": 0.2, "t-Wv": 0.2 }, rowHi: { "t-S": i } });
-        numbers(ctx, "t-S", "S", i, head.Smasked[i]);
+        const on = t >= 0.35;
+        const values = on ? head.Smasked : head.Sscaled;
+        planesBase(ctx, { at: { "t-Q": F.Q2, "t-K": F.K2 }, values: { "t-S": values }, masked: { "t-S": on ? (r, c) => c > r : null }, opacity: { "t-Z": 0, "t-X": 0.25, "t-Wq": 0.2, "t-Wk": 0.2, "t-Wv": 0.2 }, rowHi: { "t-S": i } });
+        numbers(ctx, "t-S", "S", i, values[i]);
         ctx.focus(["t-S"]);
-        attnPanel(ctx, ["mask"], `M[${i},j] = ${Array.from({ length: n }, (_, j) => (j <= i ? "0" : "−∞")).join("  ")}\nfila ${i} + M → ${head.Smasked[i].map((v) => (v === -Infinity ? "−∞" : f2(v))).join("  ")}`);
+        attnPanel(ctx, ["mask"], `M[${i},j] = ${Array.from({ length: n }, (_, j) => (j <= i ? "0" : "−∞")).join("  ")}\nfila ${i} + M → ${on ? head.Smasked[i].map((v) => (v === -Infinity ? "−∞" : f2(v))).join("  ") : "…"}`);
         ctx.tag("lb-s", "t-S", "QKᵀ/√d_k + M", { dz: 4, role: "in" });
       },
     },
@@ -241,24 +248,26 @@ export const chapter3 = {
       events: 2,
       scale: "tensor",
       camera: (ctx) => cubeCamera(ctx, "c2", { pad: 66 }),
-      caption: (ctx) => (ctx.event <= 1 ? `<b>Softmax</b> por fila: exponenciar y dividir por la suma. La fila ${rowOf(ctx)} suma 1; las posiciones futuras reciben exactamente 0.` : "Todas las filas normalizadas: <b>A</b>, una distribución de pesos por posición."),
+      caption: (ctx) => (ctx.event <= 1 ? `<b>Softmax</b> por fila: exponenciar y dividir por la suma. La fila ${rowOf(ctx)} suma 1; las posiciones futuras reciben exactamente 0.` : "Todas las filas normalizadas: <b>A</b>, una distribución de coeficientes por posición."),
       changed: { contexto: "activo" },
       more: `<p>softmax(z)<sub>j</sub> = e<sup>z<sub>j</sub></sup> / Σ<sub>l</sub> e<sup>z<sub>l</sub></sup>. Como e<sup>−∞</sup> = 0, la máscara se convierte en peso cero exacto.</p><p>La verificación en vivo comprueba que cada fila suma 1 (error ≤ 10⁻¹²) y que todo peso futuro es 0.</p>`,
-      pose(ctx, t, e) {
+      pose(ctx, t) {
         const n = ctx.store.ids().length;
         const F = framesFor(n);
         const { head } = headData(ctx);
         const i = rowOf(ctx);
-        const all = e >= 2;
-        const values = head.Smasked.map((row, r) => (all || r === i ? head.A[r] : row));
-        planesBase(ctx, { at: { "t-Q": F.Q2, "t-K": F.K2 }, values: { "t-S": values }, masked: { "t-S": (r, c) => c > r && !(all || r === i) }, opacity: { "t-Z": 0, "t-X": 0.25, "t-Wq": 0.2, "t-Wk": 0.2, "t-Wv": 0.2 }, rowHi: { "t-S": i } });
-        numbers(ctx, "t-S", "S", i, head.A[i]);
+        const { k, u } = segment(t, 2);
+        const rowDone = k === 2 || u >= 0.2;
+        const all = k === 2 && u >= 0.2;
+        const values = head.Smasked.map((r0, r) => (all || (rowDone && r === i) ? head.A[r] : r0));
+        planesBase(ctx, { at: { "t-Q": F.Q2, "t-K": F.K2 }, values: { "t-S": values }, masked: { "t-S": (r, c) => c > r && !(all || (rowDone && r === i)) }, opacity: { "t-Z": 0, "t-X": 0.25, "t-Wq": 0.2, "t-Wk": 0.2, "t-Wv": 0.2 }, rowHi: { "t-S": i } });
+        numbers(ctx, "t-S", "S", i, values[i]);
         ctx.focus(["t-S"]);
         const finite = head.Sscaled[i].map((v, j) => (j <= i ? v : null));
         const top = Math.max(...finite.filter((v) => v !== null));
         const exps = finite.map((v) => (v === null ? 0 : Math.exp(v - top)));
         const sum = exps.reduce((a, b) => a + b, 0);
-        attnPanel(ctx, ["soft"], `e^(z−máx): ${exps.map((v) => f3(v)).join("  ")}\nΣ = ${f3(sum)}\nA[${i}] = ${head.A[i].map(f3).join("  ")}\nΣ A[${i}] = ${head.A[i].reduce((a, b) => a + b, 0).toFixed(12)}`);
+        attnPanel(ctx, ["soft"], rowDone ? `e^(z−máx): ${exps.map((v) => f3(v)).join("  ")}\nΣ = ${f3(sum)}\nA[${i}] = ${head.A[i].map(f3).join("  ")}\nΣ A[${i}] = ${head.A[i].reduce((a, b) => a + b, 0).toFixed(12)}` : `fila ${i}: ${head.Smasked[i].map((v) => (v === -Infinity ? "−∞" : f2(v))).join("  ")}`);
         ctx.tag("lb-s", "t-S", all ? "A · cada fila suma 1" : "softmax fila a fila", { dz: 4, role: "in" });
       },
     },
@@ -270,14 +279,15 @@ export const chapter3 = {
       camera: (ctx) => cubeCamera(ctx, ["c2", "c3"], { pad: 30 }),
       caption: (ctx) => (ctx.event <= 1 ? "A se traslada a la cara izquierda del tercer cubo y V (de la primera etapa) a la cara superior." : `<b>Z = A·V</b>: la salida de la posición ${rowOf(ctx)} es una mezcla de los valores V ponderada por su fila de A.`),
       changed: { contexto: "activo" },
-      pose(ctx, t, e) {
+      pose(ctx, t) {
         const n = ctx.store.ids().length;
         const F = framesFor(n);
         const { head } = headData(ctx);
         const i = rowOf(ctx);
-        const move = e <= 1 ? ease(Math.min(1, t * 2)) : 1;
+        const { k, u } = segment(t, 2);
+        const move = k === 1 ? ease(u) : 1;
         ctx.pose("t-cube3", { visible: true, opacity: move });
-        const zDone = e >= 2 ? Math.min(4, Math.ceil((t * 2 - 1) * 5)) : 0;
+        const zDone = k === 2 ? Math.min(4, Math.floor((u / 0.9) * 4 + 1e-9)) : 0;
         planesBase(ctx, {
           at: { "t-Q": F.Q2, "t-K": F.K2, "t-S": lerpFrame(F.S, F.A3, move), "t-V": lerpFrame(F.V1, F.V3, move) },
           values: { "t-S": head.A },
@@ -285,8 +295,8 @@ export const chapter3 = {
           opacity: { "t-Z": move, "t-X": 0.2, "t-Wq": 0.15, "t-Wk": 0.15, "t-Wv": 0.15, "t-Q": 0.35, "t-K": 0.35 },
           rowHi: { "t-S": i },
         });
-        if (e >= 2) {
-          const j = Math.max(0, zDone - 1);
+        if (k === 2) {
+          const j = Math.min(3, zDone);
           ctx.state("t-cube3", { pick: { i, j, products: head.A[i].map((a, t2) => a * head.V[t2][j]), upto: n } });
           numbers(ctx, "t-Z", "Z", i, head.Z[i], { cols: Array.from({ length: zDone }, (_, c) => c) });
           attnPanel(ctx, ["Z"], `Z[${i},${j}] = Σₜ A[${i},t]·V[t,${j}] = ${head.A[i].map((a, t2) => `${f2(a)}·${f2(head.V[t2][j])}`).join(" + ")}\n  = <b>${f3(head.Z[i][j])}</b>`);
@@ -305,7 +315,7 @@ export const chapter3 = {
       dur: 8,
       scale: "tensor",
       camera: (ctx) => cubeCamera(ctx, ["c1", "c2", "c3"], { pad: 24 }),
-      caption: "Una advertencia: los pesos de atención muestran <b>de dónde se mezcla información</b>, no una explicación completa del razonamiento del modelo.",
+      caption: "Una advertencia: los coeficientes de atención muestran <b>de dónde se mezcla información</b>, no una explicación completa del razonamiento del modelo.",
       changed: { contexto: "activo" },
       more: `<p>Hay muchas operaciones más (otras cabezas, W_O, la MLP, los residuales, el segundo bloque) que transforman la información. Leer una fila de A como «el modelo pensó en X» es una sobreinterpretación.</p>`,
       refs: ["vaswani"],
@@ -317,7 +327,7 @@ export const chapter3 = {
         for (const id of ["t-cube1", "t-cube2", "t-cube3"]) ctx.pose(id, { visible: true, opacity: 1, state: {} });
         ctx.focus(null);
         attnPanel(ctx, [], "Prueba: cambia un token (capítulo 2) o la fila y la cabeza en la mesa de control.");
-        ctx.tag("lb-a", "t-S", "A (pesos de atención)", { dz: 4, role: "in" });
+        ctx.tag("lb-a", "t-S", "A (coeficientes de atención)", { dz: 4, role: "in" });
         ctx.tag("lb-z", "t-Z", "Z", { dz: 4, role: "in" });
       },
     },

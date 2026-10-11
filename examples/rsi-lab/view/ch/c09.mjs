@@ -60,10 +60,10 @@ export const chapter9 = {
       caption: "<b>Gödel Machine</b> (propuesta teórica): reescribirse sólo con una demostración formal de que la reescritura es útil. Precisa, pero buscar esas pruebas puede ser inviable.",
       changed: { evaluador: "prueba formal (teoría)" },
       refs: ["godel"],
-      pose(ctx) {
+      pose(ctx, t) {
         ctx.focus(CARDS.godel.anchor);
         ctx.tag("pin-g", "evaluador", "◆ Gödel Machine", { dz: 40, role: "w", cls: "name" });
-        card(ctx, "godel");
+        if (t >= 0.5) card(ctx, "godel");
       },
     },
     {
@@ -74,11 +74,11 @@ export const chapter9 = {
       caption: "<b>Darwin Gödel Machine</b> (resultado empírico): un archivo ramificado de agentes de programación que modifican su código con modelos base congelados.",
       changed: { codigo: "agente (DGM)", pesos: "fijo" },
       refs: ["dgm"],
-      pose(ctx) {
+      pose(ctx, t) {
         ctx.focus([...CARDS.dgm.anchor, "cart-v0", "cart-v1", "cart-v2", "cart-v3"]);
         ctx.tag("pin-d", "archivo", "◆ DGM", { dz: 30, role: "ok", cls: "name" });
-        card(ctx, "dgm");
-        ctx.panel("tree", { title: "Archivo ramificado (esquema)", provKind: "ilus", html: `<pre class="code">agente₀
+        if (t >= 0.5) card(ctx, "dgm");
+        if (t >= 0.5) ctx.panel("tree", { title: "Archivo ramificado (esquema)", provKind: "ilus", html: `<pre class="code">agente₀
  ├─ agente₁ ── agente₄ ── agente₇
  │            └─ agente₅
  └─ agente₂ ── agente₃ ── agente₆ …</pre><div class="subst">Cualquier agente archivado puede ser padre, no sólo el mejor: esa apertura es parte del diseño.</div>`, width: 450, top: 470 });
@@ -92,10 +92,10 @@ export const chapter9 = {
       caption: "<b>AlphaEvolve</b> (resultado empírico): propuestas de código hechas por un LLM, evaluación automática y búsqueda evolutiva. Mejorar un algoritmo de infraestructura no es demostrar RSI general.",
       changed: { codigo: "algoritmos", infra: "planificación (citada)" },
       refs: ["alphaevolve"],
-      pose(ctx) {
+      pose(ctx, t) {
         ctx.focus([...CARDS.alphaevolve.anchor, "c-archive", "c-bins"]);
         ctx.tag("pin-a", "estC", "◆ AlphaEvolve", { dz: 30, role: "g", cls: "name" });
-        card(ctx, "alphaevolve");
+        if (t >= 0.5) card(ctx, "alphaevolve");
       },
     },
     {

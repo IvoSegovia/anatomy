@@ -17,6 +17,21 @@ function diffHtml(a, b) {
   return `<pre class="code">${lines.join("\n")}</pre>`;
 }
 
+const MARK = { incluida: ["✓", "ok-t"], presupuesto: ["✗ no cupo", "bad-t"], duplicada: ["≡ duplicada", "off-t"], tipo: ["⊘ tipo", "off-t"], recortada: ["✂ recortada", "g-t"] };
+export function compareLogHtml(task, runA, runB, { labelA = "v0", labelB = "v1", showB = true, highlight = false } = {}) {
+  const cell = (run, index) => {
+    const [mark, cls] = MARK[run.managed.status.get(index)] || ["·", "off-t"];
+    return `<span class="${cls}">${mark}</span>`;
+  };
+  const rows = task.lines.map((line) => {
+    const ev = line.tags.evidence && !line.tags.dup;
+    const text = line.text.length > 44 ? `${line.text.slice(0, 43)}…` : line.text;
+    return `<tr${highlight && ev ? ' class="on"' : ""}><td>L${line.index}${ev ? " ★" : ""}</td><td style="text-align:left;white-space:nowrap">${ev && highlight ? `<b>${esc(text)}</b>` : esc(text)}</td><td>${cell(runA, line.index)}</td><td>${showB ? cell(runB, line.index) : "·"}</td></tr>`;
+  });
+  const foot = (run) => `${run.cost}/${BUDGET} tokens · ${run.success ? '<b class="ok-t">acierta</b>' : '<b class="bad-t">falla</b>'}`;
+  return `<table class="tbl rep"><tr><th>línea</th><th style="text-align:left">texto (★ = evidencia necesaria)</th><th>${labelA}</th><th>${labelB}</th></tr>${rows.join("")}</table><div class="subst">${labelA}: ${foot(runA)}${showB ? `\n${labelB}: ${foot(runB)}` : ""}</div>`;
+}
+
 function grid(runs, label) {
   const cells = runs.map((r) => `<span title="tarea ${r.seed} (${r.family}): ${r.success ? "acierto" : "fallo"}" style="display:inline-block;width:8px;height:8px;margin:1px;border-radius:1.5px;background:${r.success ? "var(--c-ok)" : "var(--c-bad)"};opacity:${r.success ? 0.9 : 0.75}"></span>`).join("");
   return `<div style="display:grid;grid-template-columns:34px 1fr;align-items:center;gap:6px;margin:3px 0"><span class="kv">${label}</span><span style="line-height:0">${cells}</span></div>`;
@@ -124,22 +139,27 @@ export const chapter7 = {
     },
     {
       id: "7.4",
-      dur: 9,
+      dur: 12,
+      events: 2,
       scale: "lab",
-      camera: () => moduleCamera(["contexto", "datos", "evaluador"], 6, { area: { left: 440 } }),
+      camera: () => moduleCamera(["contexto", "datos", "evaluador"], 6, { area: { left: 520 } }),
       caption: (ctx) => {
         const run = runTask(devTask(ctx), VERSIONS.v1);
-        return `Misma tarea, mismo presupuesto, gestor <b>v1</b>: la evidencia entra (verde) y el solucionador ${run.success ? "<b>acierta</b>" : "<b>sigue fallando</b>"}. Un caso no basta para decidir.`;
+        return `Mismo registro, mismo límite de ${BUDGET} tokens, dos gestores. Con v1 el solucionador ${run.success ? "<b>acierta</b>" : "<b>sigue fallando</b>"}. Un caso no basta para decidir.`;
       },
       changed: { codigo: "v1 a prueba", datos: "desarrollo" },
-      pose(ctx) {
+      pose(ctx, t, e) {
         const task = devTask(ctx);
-        const { run, kept, dropped } = contextState(task, VERSIONS.v1);
-        ctx.state("ctx-lines", { kept, dropped });
-        ctx.state("contexto", { used: 0, fill: Math.min(1, run.cost / BUDGET) });
-        ctx.state("evaluador", { value: run.coverage, ok: run.success, fail: !run.success });
-        ctx.focus(["contexto", "ctx-lines", "evaluador", "cart-v1"]);
-        ctx.panel("log", { title: `Tarea ${task.seed} · gestor v1`, provKind: "local", html: logPanelHtml(task, run) + `<div class="subst">${esc(run.managed.trace.join(" · "))}\ncontexto ${run.cost}/${BUDGET} · cobertura ${pct(run.coverage)} · ${run.success ? '<b class="ok-t">acierto</b>' : '<b class="bad-t">fallo</b>'}</div>`, width: 430 });
+        const v0 = contextState(task, VERSIONS.v0);
+        const v1 = contextState(task, VERSIONS.v1);
+        const shown = e >= 1 ? v1 : v0;
+        ctx.state("ctx-lines", { kept: shown.kept, dropped: shown.dropped });
+        ctx.state("contexto", { used: 0, fill: Math.min(1, shown.run.cost / BUDGET) });
+        ctx.state("evaluador", { value: e >= 2 ? v1.run.coverage : 0, ok: e >= 2 && v1.run.success, fail: e >= 2 && !v1.run.success });
+        ctx.state("cart-v1", { slot: "proposer", role: "g", lit: e >= 1 });
+        ctx.state("cart-v0", { slot: "active", role: "in" });
+        ctx.focus(["contexto", "ctx-lines", "evaluador", "cart-v1", "cart-v0"]);
+        ctx.panel("log", { title: `Tarea ${task.seed} · mismo registro, dos gestores`, provKind: "local", html: compareLogHtml(task, v0.run, v1.run, { showB: e >= 1, highlight: e >= 2 }), width: 500 });
       },
     },
     {

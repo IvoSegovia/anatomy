@@ -71,3 +71,8 @@ export function cubeCamera(ctx, which, opts = {}) {
 }
 
 export { M, centreOf, framesFor, cubeLayout, TRAY, TRAY_Z, LIFT };
+
+export const segment = (t, n) => {
+  const k = Math.min(n, Math.max(1, Math.floor(t * n - 1e-9) + 1));
+  return { k, u: Math.max(0, Math.min(1, t * n - (k - 1))) };
+};

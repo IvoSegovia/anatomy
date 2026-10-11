@@ -10,6 +10,11 @@ import { makeDirector } from "./director.mjs";
 import { CHAPTERS } from "./chapters.mjs";
 import { renderInspector } from "./inspector.mjs";
 import { prov } from "./helpers.mjs";
+import { makeBus } from "./bus.mjs";
+import { makeSound, renderOffline, SOUND_OPS } from "./sound.mjs";
+import { makeLesson, plainOf, wordsOf } from "./lesson.mjs";
+import { SCRIPTS } from "./guide/index.mjs";
+import { CONCEPTS } from "./guide/concepts.mjs";
 
 const app = document.getElementById("app");
 const ref = buildShell(app, CHAPTERS);
@@ -97,7 +102,7 @@ const ctx = {
     const style = node.style;
     style.width = width ? `${width}px` : "";
     style.top = `calc(${top ?? 78}px + var(--chips-extra, 0px))`;
-    style.maxHeight = `calc(100% - ${top ?? 78}px - var(--chips-extra, 0px) - 104px)`;
+    style.maxHeight = dock === "left" ? `calc(100% - ${top ?? 78}px - var(--chips-extra, 0px) - var(--desk-h, 0px) - 40px)` : `calc(100% - ${top ?? 78}px - var(--chips-extra, 0px) - 104px)`;
     style.left = dock === "left" ? `${left ?? 12}px` : "";
     style.right = dock === "right" ? `${right ?? 12}px` : "";
     if (dock === "center") {
@@ -167,6 +172,7 @@ const ctx = {
   },
   refresh() {
     director.apply();
+    if (lesson) lesson.render();
     wakeLoop();
   },
   restoreUser(user) {
@@ -213,65 +219,109 @@ const director = makeDirector({
       });
       ref.desk.classList.remove("on");
       ref.stage.classList.remove("has-desk");
+      app.classList.toggle("show-theta", !!chapter.showTheta);
       if (chapter.desk) chapter.desk(ctx);
     },
     beat(beat) {
       ctx.scale(beat.scale || "lab");
-      ref.capStep.textContent = `${beat.c + 1}.${beat.b + 1} · ${beat.chapter.title}`;
-      const text = typeof beat.caption === "function" ? beat.caption(ctx) : beat.caption;
-      ref.capText.innerHTML = text || "";
-      ctx.say(`${beat.chapter.title}. ${(text || "").replace(/<[^>]+>/g, "")}`);
       const changed = typeof beat.changed === "function" ? beat.changed(ctx) : beat.changed;
       ctx.changed(changed || {});
-      if (!selection) renderInspector(ctx, null);
+      if (!selection && ctx.tab !== "guide") renderInspector(ctx, null);
     },
     applied(beat) {
-      if (typeof beat.caption === "function") ref.capText.innerHTML = beat.caption(ctx);
       if (typeof beat.changed === "function") ctx.changed(beat.changed(ctx));
+      if (lesson) lesson.applyLook();
     },
   },
 });
 ctx.director = director;
 ctx.theta(store.print0, "sin cambios");
+const bus = makeBus();
+const sound = makeSound();
+ctx.tab = "guide";
+var lesson = makeLesson({ director, ctx, ref, bus, sound, scripts: SCRIPTS, concepts: CONCEPTS });
+ctx.lesson = lesson;
+let chipTimer = null;
+bus.on((event) => {
+  sound.play(event.op, { delay: event.delay || 0, id: event.id });
+  ref.opChip.innerHTML = `<span data-op="${event.op}">♪ ${event.label}</span>`;
+  ref.opChip.classList.add("on");
+  clearTimeout(chipTimer);
+  chipTimer = setTimeout(() => ref.opChip.classList.remove("on"), 1400);
+  for (const id of event.targets || []) {
+    const entry = engine.objects.get(id);
+    if (!entry) continue;
+    entry.el.classList.remove("flash");
+    void entry.el.getBoundingClientRect();
+    entry.el.classList.add("flash");
+    setTimeout(() => entry.el.classList.remove("flash"), 700 + (event.delay || 0) * 1000);
+  }
+});
+let spotTimer = null;
+ctx.spotlight = (ids, label) => {
+  const present = ids.filter((id) => engine.objects.get(id) && engine.objects.get(id).pose.visible !== false);
+  if (!present.length) {
+    ctx.say("Ese objeto no está visible en este paso.");
+    ref.opChip.innerHTML = `<span>Ese objeto no está visible en este paso</span>`;
+    ref.opChip.classList.add("on");
+    clearTimeout(chipTimer);
+    chipTimer = setTimeout(() => ref.opChip.classList.remove("on"), 1600);
+    return;
+  }
+  ctx.focus(present);
+  engine.unlabel("spotlight");
+  engine.label("spotlight", { obj: present[0], dz: 8, cls: "tag spot", html: `<span>◂ ${label || present[0]}</span>` });
+  clearTimeout(spotTimer);
+  spotTimer = setTimeout(() => {
+    engine.unlabel("spotlight");
+    lesson.applyLook();
+    wakeLoop();
+  }, 2600);
+  wakeLoop();
+};
+const refreshSound = () => {
+  ref.soundBtn.setAttribute("aria-pressed", sound.enabled ? "true" : "false");
+  ref.soundBtn.textContent = sound.enabled ? (sound.prefs.muted ? "Sonido en silencio" : "Sonidos activos") : sound.prefs.wanted ? "Activar sonidos (recordado)" : "Activar sonidos";
+};
+sound.onChange(refreshSound);
+refreshSound();
+ref.soundBtn.addEventListener("click", async () => {
+  if (sound.enabled) sound.disable();
+  else await sound.enable();
+  refreshSound();
+  if (ctx.tab === "guide") lesson.render();
+});
 
 function buildTimeline() {
   ref.timeline.innerHTML = '<div class="track"></div><div class="fill"></div>';
-  const total = director.total;
+  const total = lesson.total;
   let lastC = -1;
-  director.beats.forEach((beat, i) => {
-    const x = (director.startOf[i] / total) * 100;
-    if (beat.c !== lastC) {
+  lesson.steps.forEach((step, i) => {
+    const x = (lesson.starts[i] / total) * 100;
+    if (step.beat.c !== lastC) {
       ref.timeline.append(el("div", { class: "tick", style: `left:${x}%` }));
-      ref.timeline.append(el("div", { class: "num", style: `left:${x}%` }, String(beat.c + 1)));
-      lastC = beat.c;
-    }
-    for (let e = 1; e < beat.events; e++) ref.timeline.append(el("div", { class: "ev", style: `left:${((director.startOf[i] + (beat.dur * e) / beat.events) / total) * 100}%` }));
+      ref.timeline.append(el("div", { class: "num", style: `left:${x}%` }, String(step.beat.c + 1)));
+      lastC = step.beat.c;
+    } else ref.timeline.append(el("div", { class: "ev", style: `left:${x}%` }));
   });
   ref.head = el("div", { class: "head" });
   ref.timeline.append(ref.head);
 }
 buildTimeline();
-const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+const mmss = (s) => (s >= 3600 ? `${Math.floor(s / 3600)}:${String(Math.floor((s % 3600) / 60)).padStart(2, "0")}:${String(Math.floor(s % 60)).padStart(2, "0")}` : `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`);
 function updateTimeline() {
-  const share = director.position / director.total;
+  const share = lesson.position() / lesson.total;
   ref.timeline.querySelector(".fill").style.width = `${share * 100}%`;
   ref.head.style.left = `${share * 100}%`;
-  const beat = director.beat;
-  const e = director.eventOf(beat, director.S.t);
-  ref.clock.textContent = `${mmss(director.position / director.S.speed)} / ${mmss(director.total / director.S.speed)} · ev ${e}/${beat.events}`;
+  const step = lesson.step;
+  ref.clock.textContent = `${mmss(lesson.position())} / ${mmss(lesson.total)} estimado`;
+  ref.clock.title = `Tiempo estimado de la lección: lectura a ${lesson.L.wpm} palabras por minuto más 2,5 s por bloque (mínimo 6 s), más el tiempo de cada animación. Paso ${step.index + 1} de ${lesson.steps.length}.`;
   ref.timeline.setAttribute("aria-valuenow", String(Math.round(share * 100)));
-  ref.timeline.setAttribute("aria-valuetext", `Capítulo ${beat.c + 1}, paso ${beat.b + 1}, evento ${e} de ${beat.events}`);
-  ref.play.textContent = director.S.playing ? "❚❚" : "▶";
-  ref.play.setAttribute("aria-label", director.S.playing ? "Pausar" : "Reproducir");
-  ref.backTour.classList.toggle("on", director.S.manualCam && director.S.mode === "tour");
+  ref.timeline.setAttribute("aria-valuetext", `Capítulo ${step.beat.c + 1}, paso ${step.id}, ${step.index + 1} de ${lesson.steps.length}`);
+  ref.backTour.classList.toggle("on", director.S.manualCam);
 }
 function seekShare(share) {
-  const time = share * director.total;
-  let i = director.startOf.findIndex((start, j) => time >= start && time < start + director.beats[j].dur);
-  if (i < 0) i = director.beats.length - 1;
-  const t = (time - director.startOf[i]) / director.beats[i].dur;
-  const beat = director.beats[i];
-  director.seek(i, Math.round(t * beat.events) / beat.events);
+  lesson.seekShare(share);
   wakeLoop();
 }
 ref.timeline.addEventListener("pointerdown", (event) => {
@@ -290,9 +340,10 @@ function frame(now) {
   const dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60;
   last = now;
   const moving = director.tick(dt);
+  lesson.frame();
   engine.render();
   updateTimeline();
-  const busy = moving || director.S.playing || director.S.stepTo !== null || director.S.camAnim || dirtyFrame;
+  const busy = moving || director.S.playing || director.S.stepTo !== null || director.S.camAnim || dirtyFrame || lesson.L.phase === "act" || lesson.L.entering;
   dirtyFrame = false;
   if (busy && !document.hidden) raf = requestAnimationFrame(frame);
   else {
@@ -304,13 +355,20 @@ wakeLoop = () => {
   dirtyFrame = true;
   if (!raf) raf = requestAnimationFrame(frame);
 };
-document.addEventListener("visibilitychange", () => !document.hidden && wakeLoop());
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) lesson.pause("pestaña oculta");
+  else wakeLoop();
+});
 new ResizeObserver(() => {
   engine.measure();
   engine.setInset(insetFor());
   if (!director.S.manualCam) director.flyTo(director.cameraFor(director.beat), 0);
   wakeLoop();
 }).observe(ref.stage);
+new ResizeObserver(() => {
+  const on = ref.desk.classList.contains("on") && getComputedStyle(ref.desk).position === "absolute";
+  ref.stage.style.setProperty("--desk-h", `${on ? Math.round(ref.desk.getBoundingClientRect().height) : 0}px`);
+}).observe(ref.desk);
 new ResizeObserver(() => {
   const h = Math.round(ref.changed.getBoundingClientRect().height);
   if (!h) return;
@@ -327,23 +385,35 @@ function insetFor() {
 engine.setInset(insetFor());
 
 ref.play.addEventListener("click", () => {
-  if (director.S.playing) director.pause();
-  else director.play();
+  if (lesson.L.auto) lesson.pause();
+  else lesson.play();
   wakeLoop();
 });
 ref.next.addEventListener("click", () => {
-  director.nextEvent();
+  lesson.next();
   wakeLoop();
 });
 ref.prev.addEventListener("click", () => {
-  director.prevEvent();
+  lesson.prev();
+  wakeLoop();
+});
+ref.learnPrimary.addEventListener("click", () => {
+  lesson.next();
+  wakeLoop();
+});
+ref.learnRepeat.addEventListener("click", () => {
+  lesson.repeat();
   wakeLoop();
 });
 ref.reset.addEventListener("click", () => {
+  lesson.pause();
   store.restore(JSON.parse(JSON.stringify(ctx.defaults)));
+  lesson.L.stack = [];
+  lesson.L.trail = [];
   director.S.history = [];
   director.S.manualCam = false;
-  director.seek(0, 0, { forceEnter: true });
+  director.S.activeBeat = -1;
+  lesson.enter(0);
   director.flyTo(director.cameraFor(director.beat));
   wakeLoop();
 });
@@ -352,10 +422,14 @@ ref.speedSel.addEventListener("change", () => {
   director.S.speed = Number(ref.speedSel.value);
   wakeLoop();
 });
+ref.wpmSel.addEventListener("change", () => {
+  lesson.setWpm(Number(ref.wpmSel.value));
+  buildTimeline();
+  wakeLoop();
+});
 ref.chapterButtons.forEach((button, c) =>
   button.addEventListener("click", () => {
-    director.seek(director.chapterStart(c), 0);
-    if (director.S.mode === "tour") director.S.manualCam = false;
+    lesson.goToChapter(c);
     director.flyTo(director.cameraFor(director.beat));
     wakeLoop();
   }),
@@ -364,13 +438,30 @@ const setMode = (mode) => {
   director.setMode(mode);
   ref.modeTour.setAttribute("aria-pressed", mode === "tour" ? "true" : "false");
   ref.modeFree.setAttribute("aria-pressed", mode === "free" ? "true" : "false");
-  if (mode === "free") director.pause();
+  app.classList.toggle("explore", mode === "free");
+  if (mode === "free") lesson.pause("explorar");
   wakeLoop();
 };
+const setNarrator = (on) => {
+  lesson.setNarrator(on);
+  app.classList.toggle("no-narrator", !on);
+  ref.narratorBtn.setAttribute("aria-pressed", on ? "true" : "false");
+  if (!on && ctx.tab === "guide" && !ref.inspector.hasAttribute("hidden")) {
+    ref.inspector.dataset.closedByNarrator = "1";
+    toggleInspector(false);
+  } else if (on && ref.inspector.dataset.closedByNarrator) {
+    delete ref.inspector.dataset.closedByNarrator;
+    toggleInspector(true);
+  }
+  wakeLoop();
+};
+ref.narratorBtn.addEventListener("click", () => setNarrator(!lesson.L.narrator));
 ref.modeTour.addEventListener("click", () => setMode("tour"));
 ref.modeFree.addEventListener("click", () => setMode("free"));
 ref.backTour.addEventListener("click", () => {
   director.guidedCamera();
+  selectTab("guide");
+  lesson.applyLook();
   wakeLoop();
 });
 const toggleInspector = (force) => {
@@ -383,23 +474,31 @@ const toggleInspector = (force) => {
   });
 };
 ref.inspectorToggle.addEventListener("click", () => toggleInspector());
-if (window.innerWidth < 1100) toggleInspector(false);
-for (const [key, button] of Object.entries(ref.tabButtons))
-  button.addEventListener("click", () => {
-    for (const other of Object.values(ref.tabButtons)) other.setAttribute("aria-selected", other === button ? "true" : "false");
-    ctx.tab = key;
-    renderInspector(ctx, selection);
-  });
-ctx.tab = "obj";
+function selectTab(key) {
+  for (const [name, other] of Object.entries(ref.tabButtons)) other.setAttribute("aria-selected", name === key ? "true" : "false");
+  ctx.tab = key;
+  renderInspector(ctx, selection);
+}
+for (const [key, button] of Object.entries(ref.tabButtons)) button.addEventListener("click", () => selectTab(key));
+ref.inspBody.addEventListener("click", (event) => {
+  if (ctx.tab === "guide") {
+    lesson.handleClick(event);
+    wakeLoop();
+  }
+});
+ref.inspBody.addEventListener("input", (event) => ctx.tab === "guide" && lesson.handleInput(event));
+ref.inspBody.addEventListener("pointerover", (event) => ctx.tab === "guide" && lesson.handleHover(event));
+ref.inspBody.addEventListener("pointerout", (event) => ctx.tab === "guide" && lesson.handleLeave(event));
+ref.desk.addEventListener("input", () => lesson.interrupt("parámetro"), true);
+ref.desk.addEventListener("change", () => lesson.interrupt("parámetro"), true);
 
 const SCALE_CHAPTER = { lab: 0, model: 1, tensor: 2 };
 let scaleHistory = [];
 for (const [key, button] of Object.entries(ref.scaleButtons))
   button.addEventListener("click", () => {
     if (ctx.currentScale === key) return;
-    scaleHistory.push(director.S.beat);
-    const target = ctx.scaleBeat ? ctx.scaleBeat(key) : director.chapterStart(SCALE_CHAPTER[key]);
-    director.seek(target, 1);
+    scaleHistory.push(lesson.L.i);
+    lesson.goToChapter(SCALE_CHAPTER[key]);
     director.S.manualCam = false;
     director.flyTo(director.cameraFor(director.beat));
     wakeLoop();
@@ -407,9 +506,9 @@ for (const [key, button] of Object.entries(ref.scaleButtons))
 ref.backScale.addEventListener("click", () => goBack());
 function goBack() {
   const index = scaleHistory.pop();
-  if (index !== undefined) director.seek(index, 1);
-  else if (ctx.currentScale === "tensor") director.seek(director.chapterStart(1), 1);
-  else if (ctx.currentScale === "model") director.seek(director.chapterStart(0), 0);
+  if (index !== undefined) lesson.enter(index);
+  else if (ctx.currentScale === "tensor") lesson.goToChapter(1);
+  else if (ctx.currentScale === "model") lesson.goToChapter(0);
   director.S.manualCam = false;
   director.flyTo(director.cameraFor(director.beat));
   wakeLoop();
@@ -421,6 +520,7 @@ let pinch = null;
 const manual = () => {
   director.stopCamera();
   director.S.manualCam = true;
+  lesson.interrupt("cámara");
 };
 ref.svg.addEventListener("contextmenu", (event) => event.preventDefault());
 ref.svg.addEventListener("pointerdown", (event) => {
@@ -497,6 +597,7 @@ ref.zoomIn.addEventListener("click", camStep(() => engine.setCamera({ scale: eng
 ref.zoomOut.addEventListener("click", camStep(() => engine.setCamera({ scale: engine.cam.scale / 1.25 })));
 ref.camReset.addEventListener("click", () => {
   director.guidedCamera();
+  lesson.applyLook();
   wakeLoop();
 });
 
@@ -513,7 +614,7 @@ function click(event) {
   for (const node of ref.svg.querySelectorAll("[data-sel]")) node.removeAttribute("data-sel");
   if (!id) {
     selection = null;
-    renderInspector(ctx, null);
+    if (ctx.tab !== "guide") renderInspector(ctx, null);
     director.apply();
     wakeLoop();
     return;
@@ -527,10 +628,9 @@ function click(event) {
     selection = { id: target, cell: entry.cell(i, j), obj: id, i, j };
     if (entry.onCell) entry.onCell(i, j, ctx);
   } else selection = target;
-  if (ref.inspector.hasAttribute("hidden") && window.innerWidth >= 760) toggleInspector(true);
-  for (const other of Object.values(ref.tabButtons)) other.setAttribute("aria-selected", other === ref.tabButtons.obj ? "true" : "false");
-  ctx.tab = "obj";
-  renderInspector(ctx, selection);
+  lesson.interrupt("inspección");
+  if (ref.inspector.hasAttribute("hidden")) toggleInspector(true);
+  selectTab("obj");
   wakeLoop();
 }
 function hover(event) {
@@ -558,66 +658,102 @@ ctx.inspectFromList = (id) => {
 };
 
 const HELP = [
-  ["Espacio", "reproducir / pausar"],
-  ["→ / ←", "avanzar un evento / retroceder al estado guardado anterior"],
+  ["Intro", "acción principal: «Ver la operación» o «Continuar»"],
+  ["→ / ←", "avanzar a la fase siguiente / volver a la anterior, con sus parámetros"],
+  ["R", "repetir esta operación"],
+  ["Espacio", "reproducción automática / pausa"],
+  ["N", "mostrar u ocultar el narrador escrito"],
+  ["X", "silenciar o reactivar los sonidos al instante"],
   ["[ / ]", "capítulo anterior / siguiente"],
-  ["Q / E", "girar la cámara"],
-  ["W / S", "inclinar la cámara"],
+  ["Q / E", "girar la cámara (acimut entre 0° y 90°)"],
+  ["W / S", "inclinar la cámara (elevación entre 18° y 62°)"],
   ["+ / −", "acercar / alejar"],
-  ["R", "restablecer la cámara guiada"],
-  ["I", "mostrar u ocultar el inspector"],
-  ["M", "alternar recorrido / exploración"],
+  ["C", "volver a la cámara guiada"],
+  ["I", "mostrar u ocultar el panel lateral"],
+  ["M", "alternar Aprender / Explorar"],
   ["Esc", "volver a la escala anterior"],
+  ["0", "reiniciar"],
   ["Mayús + arrastrar", "desplazar la cámara"],
 ];
 ref.help.addEventListener("click", () => {
   selection = { help: HELP };
   toggleInspector(true);
-  renderInspector(ctx, selection);
+  selectTab("obj");
 });
 window.addEventListener("keydown", (event) => {
   if (event.target.closest && event.target.closest("input, select, textarea")) return;
+  if (event.ctrlKey || event.metaKey || event.altKey) return;
   const key = event.key;
   const act = (fn) => {
     event.preventDefault();
     fn();
     wakeLoop();
   };
-  if (key === " ") act(() => (director.S.playing ? director.pause() : director.play()));
-  else if (key === "ArrowRight") act(() => director.nextEvent());
-  else if (key === "ArrowLeft") act(() => director.prevEvent());
-  else if (key === "]") act(() => director.seek(director.chapterStart(Math.min(9, director.beat.c + 1)), 0));
-  else if (key === "[") act(() => director.seek(director.chapterStart(Math.max(0, director.beat.c - (director.S.t > 0 || director.beat.b > 0 ? 0 : 1))), 0));
+  if (key === "Enter") {
+    if (event.target.closest && event.target.closest("button, a, [role=slider]")) return;
+    act(() => lesson.next());
+  } else if (key === " ") act(() => (lesson.L.auto ? lesson.pause() : lesson.play()));
+  else if (key === "ArrowRight") act(() => lesson.next());
+  else if (key === "ArrowLeft") act(() => lesson.prev());
+  else if (key === "r" || key === "R") act(() => lesson.repeat());
+  else if (key === "n" || key === "N") act(() => setNarrator(!lesson.L.narrator));
+  else if (key === "x" || key === "X") act(() => sound.setMuted(!sound.prefs.muted));
+  else if (key === "]") act(() => lesson.goToChapter(Math.min(9, lesson.step.beat.c + 1)));
+  else if (key === "[") act(() => lesson.goToChapter(Math.max(0, lesson.step.beat.c - (lesson.step.index > lesson.steps.findIndex((s) => s.beat.c === lesson.step.beat.c) ? 0 : 1))));
   else if (key === "q" || key === "Q") act(() => (manual(), engine.setCamera({ azimuth: engine.cam.azimuth - 10 })));
   else if (key === "e" || key === "E") act(() => (manual(), engine.setCamera({ azimuth: engine.cam.azimuth + 10 })));
   else if (key === "w" || key === "W") act(() => (manual(), engine.setCamera({ elevation: engine.cam.elevation + 4 })));
   else if (key === "s" || key === "S") act(() => (manual(), engine.setCamera({ elevation: engine.cam.elevation - 4 })));
   else if (key === "+" || key === "=") act(() => (manual(), engine.setCamera({ scale: engine.cam.scale * 1.2 })));
   else if (key === "-" || key === "_") act(() => (manual(), engine.setCamera({ scale: engine.cam.scale / 1.2 })));
-  else if (key === "r" || key === "R") act(() => director.guidedCamera());
+  else if (key === "c" || key === "C") act(() => (director.guidedCamera(), lesson.applyLook()));
   else if (key === "i" || key === "I") act(() => toggleInspector());
   else if (key === "m" || key === "M") act(() => setMode(director.S.mode === "tour" ? "free" : "tour"));
   else if (key === "Escape") act(() => goBack());
   else if (key === "0") act(() => ref.reset.click());
+  else if (key === "?" || key === "h" || key === "H") act(() => ref.help.click());
 });
 
 window.__sceneQA = {
   get state() {
-    return { beat: director.beat.id, chapter: director.beat.c + 1, t: director.S.t, event: director.eventOf(director.beat, director.S.t), playing: director.S.playing, mode: director.S.mode, camera: { ...engine.cam }, changed: changedNow, user: JSON.parse(JSON.stringify(store.user)) };
+    return { beat: director.beat.id, chapter: director.beat.c + 1, t: director.S.t, event: director.eventOf(director.beat, director.S.t), playing: lesson.L.auto, mode: director.S.mode, camera: { ...engine.cam }, changed: changedNow, user: JSON.parse(JSON.stringify(store.user)), step: lesson.step.id, stepIndex: lesson.L.i, phase: lesson.L.phase, narrator: lesson.L.narrator, tab: ctx.tab };
   },
   seek: (chapter, beat = 0, t = 0) => {
     director.seek(director.chapterStart(chapter - 1) + beat, t);
     director.flyTo(director.cameraFor(director.beat), 0);
     wakeLoop();
   },
+  go(index, phase = "orient") {
+    director.S.manualCam = false;
+    lesson.enter(index, phase);
+    director.flyTo(director.cameraFor(director.beat), 0);
+    if (director.S.stepTo !== null) director.animateTo(director.S.stepTo, 0);
+    wakeLoop();
+  },
+  steps: () => lesson.steps.map((s) => {
+    const orient = lesson.textOf(s.orient);
+    const act = lesson.textOf(s.act);
+    const result = lesson.textOf(s.result);
+    const refs = [...`${orient} ${act} ${result}`.matchAll(/\{\{([^|}]+)\|/g)].flatMap((m) => m[1].split(","));
+    const terms = [...`${orient} ${act} ${result}`.matchAll(/\[\[([^|\]]+)\|/g)].map((m) => m[1]);
+    return { id: s.id, beat: s.beat.id, from: s.from, to: s.to, missing: !!s.missing, words: { orient: wordsOf(orient), act: wordsOf(act), result: wordsOf(result) }, refs, terms, concept: s.concept || null, cues: (typeof s.cues === "function" ? s.cues(ctx) : s.cues || []).map((c) => c.op), look: Array.isArray(s.look) ? s.look : null };
+  }),
+  objectIds: () => [...engine.objects.keys()],
+  concepts: () => Object.keys(CONCEPTS),
+  missing: () => lesson.missing,
+  total: () => lesson.total,
   beats: () => director.beats.map((b) => b.id),
-  total: () => director.total,
+  events: bus.log,
+  sound,
+  soundOps: SOUND_OPS.map((o) => o.op),
+  renderOffline,
+  lesson,
   store,
   engine,
   director,
   ctx,
 };
 
-director.seek(0, 0);
+lesson.enter(0);
 director.flyTo(director.cameraFor(director.beat), 0);
 wakeLoop();
