@@ -294,7 +294,7 @@ details summary{cursor:pointer;color:var(--ink-2);font-size:12px}
 .clock{font:11px var(--mono);color:var(--ink-3);white-space:nowrap;min-width:92px;text-align:right}
 .transport .next{font-size:11px}
 
-@media (max-width:1100px){.inspector{width:340px}.guide .g-text{font-size:17px}.chapter-btn .t{max-width:220px}}
+@media (max-width:1100px){.inspector{width:340px}.guide .g-text{font-size:15px}.chapter-btn .t{max-width:220px}}
 @media (max-width:760px){
   #app{grid-template-rows:auto 1fr auto}
   .top{flex-wrap:wrap;height:auto;padding:6px 8px;gap:6px}
@@ -333,18 +333,18 @@ details summary{cursor:pointer;color:var(--ink-2);font-size:12px}
   .inspector{grid-row:3;grid-column:1;width:auto;border-left:0;border-top:1px solid var(--line)}
   .inspector[hidden]{display:none}
   .transport{grid-row:4}
-  .guide .g-text{font-size:17px;line-height:1.55}
+  .guide .g-text{font-size:15px;line-height:1.55}
   .opchip{top:auto;bottom:40px}
 }
 .glass{fill:#9fdbe60c;stroke:#9fdbe633;stroke-width:.6}
 
 .guide{padding-bottom:10px}
 .guide h2{font-size:15px}
-.guide .g-text{font:17.5px/1.62 var(--sans);color:var(--ink);margin:10px 0 4px;letter-spacing:.005em}
+.guide .g-text{font:15.5px/1.6 var(--sans);color:var(--ink);margin:10px 0 4px;letter-spacing:.005em}
 .guide .g-text b{color:#fff;font-weight:600}
-.guide .g-text.dim{opacity:.55;font-size:15px;line-height:1.5}
-.guide .g-text.dim.small{font-size:13.5px}
-.guide .g-act{margin:10px 0;padding:8px 10px;border-left:2px solid var(--c-in);background:#47c9dd0d;color:var(--ink);font-size:15.5px;line-height:1.45}
+.guide .g-text.dim{opacity:.55;font-size:13.5px;line-height:1.5}
+.guide .g-text.dim.small{font-size:13px}
+.guide .g-act{margin:10px 0;padding:8px 10px;border-left:2px solid var(--c-in);background:#47c9dd0d;color:var(--ink);font-size:14.5px;line-height:1.45}
 .guide .phases{display:flex;gap:4px;list-style:none;padding:0;margin:10px 0 0}
 .guide .phases li{font:10.5px var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-4);border:1px solid var(--line-2);border-radius:10px;padding:2px 8px}
 .guide .phases li[aria-current]{color:var(--ink);border-color:var(--c-in);background:#47c9dd14}
@@ -405,3 +405,13 @@ details summary{cursor:pointer;color:var(--ink-2);font-size:12px}
 .plane.min h4{padding-right:0}
 .opchip,.opchip *,.caption,.caption *{pointer-events:none!important}
 .back-tour.on{pointer-events:auto;z-index:5}
+.about{left:50%;top:50%;transform:translate(-50%,-50%);width:min(520px,calc(100% - 32px));max-height:calc(100% - 32px);overflow:auto;pointer-events:auto;z-index:8;background:#0d0e11f2;border:1px solid var(--line-2);border-radius:10px;padding:18px 20px;box-shadow:0 18px 50px #000c;color:var(--ink-2);font-size:13.5px;line-height:1.55}
+.about h2{margin:2px 0 8px;font-size:17px;color:var(--ink);font-weight:600}
+.about .kind{font:10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.about p{margin:0 0 10px}
+.about b{color:var(--ink);font-weight:600}
+.about ul{margin:0 0 12px;padding-left:18px}
+.about li{margin:6px 0}
+.about .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.about .x{position:absolute;right:10px;top:8px;font-size:18px}
+.desk-what{margin:0 0 6px;font-size:11.5px;line-height:1.4;color:var(--ink-3)}

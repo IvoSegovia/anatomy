@@ -155,7 +155,7 @@ const ctx = {
     ref.stage.classList.add("has-desk");
     ref.desk.classList.toggle("min", ref.desk.dataset.open !== "1");
     const open = !ref.desk.classList.contains("min");
-    const toggle = el("button", { class: "pl-toggle", "aria-expanded": open ? "true" : "false", title: "Mostrar u ocultar los controles de esta escena" }, el("span", { class: "pl-arrow", "aria-hidden": "true" }, open ? "▾" : "▸"), el("span", {}, `Mesa de control · ${title}`));
+    const toggle = el("button", { class: "pl-toggle", "aria-expanded": open ? "true" : "false", title: "Mesa de control: los parámetros de esta escena. Abrila para cambiarlos." }, el("span", { class: "pl-arrow", "aria-hidden": "true" }, open ? "▾" : "▸"), el("span", {}, `Mesa de control · ${title}`));
     const close = el("button", { class: "x", "aria-label": "Cerrar la mesa de control" }, "×");
     const flip = (next) => {
       ref.desk.dataset.open = next ? "1" : "";
@@ -168,6 +168,7 @@ const ctx = {
     ref.desk.append(el("h3", {}, toggle, close));
     const body = el("div", { class: "desk-body" });
     ref.desk.append(body);
+    body.append(el("p", { class: "desk-what" }, "Los parámetros de esta escena. Si cambiás uno, los cálculos, la escena y el texto de la Guía se rehacen con el valor nuevo; nada sale de esta página."));
     build(body);
   },
   refresh() {
@@ -402,6 +403,7 @@ function resetLesson() {
   director.S.activeBeat = -1;
   lesson.enter(0);
   director.flyTo(director.cameraFor(director.beat));
+  showAbout(true);
   wakeLoop();
 }
 ctx.defaults = JSON.parse(JSON.stringify(store.user));
@@ -676,11 +678,44 @@ const firstSentence = (html) => {
   const sentence = cut > 20 ? text.slice(0, cut + 1) : text;
   return sentence.length > 150 ? `${sentence.slice(0, 147)}…` : sentence;
 };
-function unpick() {
+function unpick({ restore = false } = {}) {
+  const had = engine.labels.has("pick") || ref.tip.classList.contains("pinned") || !!ref.svg.querySelector("[data-sel]");
   engine.unlabel("pick");
   ref.tip.classList.remove("pinned", "on");
   for (const node of ref.svg.querySelectorAll("[data-sel]")) node.removeAttribute("data-sel");
+  if (restore && had) {
+    selection = null;
+    ctx.focus(null);
+    director.apply();
+    lesson.applyLook();
+    wakeLoop();
+  }
 }
+const ABOUT = `<button class="x" data-about="close" aria-label="Cerrar">×</button>
+  <div class="kind">Qué es esto</div>
+  <h2>Anatomía de la automejora recursiva</h2>
+  <p>Un laboratorio dibujado como maqueta para entender <b>qué tendría que cambiar en un sistema de IA para que su próxima versión también pudiera producir mejores mejoras</b>. Los números se calculan en esta página: no es un video.</p>
+  <ul>
+    <li><b>Qué muestra.</b> Un Transformer pequeño (el modelo), el agente que lo rodea (contexto, herramientas, código, datos, evaluador y archivo de versiones) y, a la derecha, tres estaciones con algoritmos de mejora.</li>
+    <li><b>Qué permite.</b> Seguir la lección en 10 capítulos con la Guía; detener cualquier operación, repetirla y ver sus números; tocar una pieza para saber qué hace; cambiar parámetros en la mesa de control y ver cómo cambia todo.</li>
+    <li><b>Qué no es.</b> No es un sistema real ni un plano de hardware: las posiciones son conceptuales y algunas reglas se inventaron para la demostración; cada número dice de dónde sale.</li>
+  </ul>
+  <div class="row"><button class="btn primary" data-about="start">Empezar</button><span class="kv">Para volver a verlo, hacé clic en el piso del laboratorio.</span></div>`;
+let aboutStep = 0;
+function showAbout(open) {
+  if (open) {
+    ref.about.innerHTML = ABOUT;
+    aboutStep = lesson.L.i;
+  }
+  ref.about.hidden = !open;
+}
+ref.about.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-about]");
+  if (button) showAbout(false);
+});
+lesson.onChange(() => {
+  if (!ref.about.hidden && (lesson.L.i !== aboutStep || lesson.L.auto || lesson.L.phase !== "orient")) showAbout(false);
+});
 ctx.unpick = unpick;
 function pickCard(title, text, { more = false } = {}) {
   return `<span class="pick-card"><button class="x" data-pick="close" aria-label="Cerrar">×</button><b>${title}</b>${text ? `<em>${text}</em>` : ""}${more ? '<button class="link" data-pick="more">Detalles en el panel ›</button>' : ""}</span>`;
@@ -692,9 +727,7 @@ ref.labels.addEventListener("click", (event) => {
     if (ref.inspector.hasAttribute("hidden")) toggleInspector(true);
     selectTab("obj");
   }
-  unpick();
-  director.apply();
-  wakeLoop();
+  unpick({ restore: true });
 });
 ref.tip.addEventListener("click", (event) => {
   const button = event.target.closest("[data-pick]");
@@ -703,19 +736,19 @@ ref.tip.addEventListener("click", (event) => {
     if (ref.inspector.hasAttribute("hidden")) toggleInspector(true);
     selectTab("obj");
   }
-  unpick();
-  wakeLoop();
+  unpick({ restore: true });
 });
 function click(event) {
   const { cell, id } = hit(event);
-  unpick();
-  if (!id) {
-    selection = null;
+  const again = id && !cell && engine.labels.has("pick") && engine.objects.get(id)?.el.hasAttribute("data-sel");
+  if (!id || id === "plate" || again) {
+    unpick({ restore: true });
     if (ctx.tab === "obj") renderInspector(ctx, null);
-    director.apply();
-    wakeLoop();
+    if (id === "plate") showAbout(true);
     return;
   }
+  unpick();
+  showAbout(false);
   const entry = engine.objects.get(id);
   const target = entry.info || id;
   engine.objects.get(id).el.setAttribute("data-sel", "");
@@ -803,7 +836,7 @@ window.addEventListener("keydown", (event) => {
   else if (key === "c" || key === "C") act(() => (director.guidedCamera(), lesson.applyLook()));
   else if (key === "i" || key === "I") act(() => toggleInspector());
   else if (key === "m" || key === "M") act(() => setMode(director.S.mode === "tour" ? "free" : "tour"));
-  else if (key === "Escape") act(() => (engine.labels.has("pick") || ref.tip.classList.contains("pinned") || !ref.chapterList.hidden ? (unpick(), openChapters(false), director.apply()) : goBack()));
+  else if (key === "Escape") act(() => (engine.labels.has("pick") || ref.tip.classList.contains("pinned") || !ref.chapterList.hidden ? (unpick({ restore: true }), openChapters(false)) : goBack()));
   else if (key === "0") act(() => resetLesson());
   else if (key === "?" || key === "h" || key === "H") act(() => ref.help.click());
 });
@@ -850,4 +883,5 @@ window.__sceneQA = {
 
 lesson.enter(0);
 director.flyTo(director.cameraFor(director.beat), 0);
+showAbout(true);
 wakeLoop();

@@ -71,9 +71,10 @@ export function buildShell(app, chapters) {
   ref.backTour = el("button", { class: "hud btn back-tour" }, "Volver a la explicación");
   ref.desk = el("div", { class: "hud desk min", role: "region", "aria-label": "Mesa de control de la escena" });
   ref.opChip = el("div", { class: "hud opchip", "aria-hidden": "true" });
+  ref.about = el("div", { class: "hud about", role: "dialog", "aria-label": "Qué es este laboratorio", hidden: true });
   ref.tip = el("div", { class: "tip", role: "tooltip" });
   ref.planes = el("div", { class: "planes" });
-  ref.stage.append(ref.svg, ref.labels, ref.planes, ref.rail, ref.scalemap, ref.caption, ref.backTour, ref.desk, ref.opChip, ref.tip);
+  ref.stage.append(ref.svg, ref.labels, ref.planes, ref.rail, ref.scalemap, ref.caption, ref.backTour, ref.desk, ref.opChip, ref.about, ref.tip);
 
   ref.inspector = el("aside", { class: "inspector", id: "inspector", "aria-label": "Panel lateral" });
   ref.tabs = el("div", { class: "insp-tabs", role: "tablist" });

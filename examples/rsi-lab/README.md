@@ -26,6 +26,10 @@ La pantalla tiene pocos controles a la vista:
 
 Sonido, velocidades, modo Explorar, reinicio y atajos están en la pestaña **Ajustes** del panel.
 
+Al abrir, una presentación breve explica qué es el laboratorio, qué muestra, qué permite y qué no
+es. Se cierra con «Empezar» o × (o al avanzar), y vuelve a aparecer con un clic en el piso del
+laboratorio.
+
 Reconstruir la página después de cambiar las fuentes (Node 20 o posterior, sin dependencias):
 
 ```sh
@@ -87,8 +91,8 @@ nada que leer, así que cada fase espera sólo 2,5 s.
 Inspeccionar una celda o un módulo, cambiar un parámetro, mover la cámara o abrir una explicación
 pausa la lección sin perder el punto. Al continuar, el texto se recalcula con los valores nuevos.
 
-La pestaña Guía mide 400 px (340 px entre 760 y 1100 px), con texto de 17,5 px (17 px en
-pantallas medianas y estrechas). En pantallas estrechas la lectura pasa a una sección debajo de la
+La pestaña Guía mide 400 px (340 px entre 760 y 1100 px), con texto de 15,5 px (15 px en
+pantallas medianas y estrechas), apenas mayor que el resto de la interfaz. En pantallas estrechas la lectura pasa a una sección debajo de la
 escena. En Aprender se ocultan las huellas, las comprobaciones y los detalles del renderer: siguen
 en la pestaña Referencias. El narrador escrito es la Guía del panel: **N** (o «Panel») lo oculta y
 lo vuelve a mostrar.
@@ -102,7 +106,9 @@ Las fórmulas, registros y tablas de cada paso aparecen en ventanas sobre la esc
 - **V** pliega o despliega todas;
 - en Ajustes se puede pedir que no se abran solas.
 
-La mesa de control de cada escena empieza plegada.
+La mesa de control de cada escena empieza plegada. Reúne los parámetros de esa escena (por
+ejemplo, la cabeza y la fila en el capítulo 3, o η en el 5): al cambiar uno, los cálculos, la
+escena y el texto de la Guía se rehacen con el valor nuevo. Su primera línea lo explica.
 
 ## Controles
 
@@ -129,7 +135,8 @@ Con el ratón:
 - el botón derecho (o Mayús) + arrastrar gira la cámara, entre 0° y 90° de acimut;
 - un clic en un módulo, una matriz o una celda muestra encima su nombre y qué hace (o el valor de
   la celda). «Detalles en el panel» abre la ficha completa: entradas y salidas recorribles,
-  operandos y procedencia de cada número. Esc o × cierra el rótulo.
+  operandos y procedencia de cada número. Esc, ×, un clic en una zona vacía o un segundo clic en
+  el mismo objeto cierran el rótulo y devuelven la vista sin nada seleccionado.
 
 En Ajustes, «animación» sólo cambia la velocidad de los movimientos y «lectura» cambia el tiempo de
 lectura en la reproducción automática. Con «reducir movimiento» del sistema, cada operación salta a
@@ -209,7 +216,7 @@ rsi-lab/
 ├── build.mjs            empaquetador mínimo de módulos ES → un solo HTML
 ├── verify.mjs           69 comprobaciones en Node (modelos, presupuesto, ruta de datos, guion)
 ├── qa.mjs               capturas de los 135 pasos (orientación y resultado) y errores de consola
-├── qa-interact.mjs      50 comprobaciones de interacción (Playwright)
+├── qa-interact.mjs      55 comprobaciones de interacción (Playwright)
 ├── qa-audio.mjs         16 comprobaciones de señales de audio y disciplina de eventos (17 con --reduced)
 ├── model/               modelos puros, sin DOM: se ejecutan igual en Node y en el navegador
 │   ├── rng.mjs          mulberry32, normal de Irwin–Hall, huella FNV-1a
@@ -426,13 +433,15 @@ renderizado por software). Las comprobaciones son de tres tipos:
 
 - «Verificación en vivo» (pestaña Referencias): 14 comprobaciones recalculadas en el navegador. Incluyen la
   ruta real (`runLoop` con observador de `runTask`). Todas son correctas.
-- `node examples/rsi-lab/qa-interact.mjs`: **50/50** (48/48 con `--reduced`, donde no hay
+- `node examples/rsi-lab/qa-interact.mjs`: **55/55** (53/53 con `--reduced`, donde no hay
   animación que congelar). Cubre:
   - interfaz mínima: tres botones arriba, tres abajo y ninguna leyenda fija sobre la escena;
   - ▶ hace avanzar el reloj y la barra de lectura enseguida; con el panel oculto no espera la
     lectura;
   - × pliega una ventana de datos y la deja plegada en el paso siguiente; V pliega todas;
-  - el clic en un módulo o una celda muestra su rótulo encima, sin cambiar de pestaña;
+  - el clic en un módulo o una celda muestra su rótulo encima, sin cambiar de pestaña; un clic en
+    una zona vacía o la × devuelven la vista inicial;
+  - la presentación inicial y su reaparición con un clic en el piso del laboratorio;
   - arrastrar desplaza sin tope, también con zoom y el panel abierto; botón derecho gira;
   - menú de capítulos y pestaña Ajustes (sonido, ritmo, ventanas, reinicio, atajos);
   - fases orientación → operación → resultado, ← y → con sus parámetros;
