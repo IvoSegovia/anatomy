@@ -1,6 +1,3 @@
-// Escala «modelo»: el Transformer como bastidor de bandejas dentro del gabinete del modelo.
-// Al explotar, las bandejas suben (la identidad de cada objeto se conserva: mismo id, se traslada).
-// Contenido real: cada matriz muestra los valores calculados por model/transformer.mjs.
 import * as k from "../../../kit/iso-kit.mjs";
 import { matrixSvg, planeCentre } from "./matrix.mjs";
 import { tray, tokenCard, S, L, D, at } from "./shapes.mjs";
@@ -10,19 +7,16 @@ const plan0 = M.modelo.plan;
 export const TRAY = { x: plan0.x + 7, y: plan0.y + 7, w: plan0.w - 14, d: plan0.d - 14, r: 2 };
 export const TRAYS = ["emb", "b0", "b1", "out"];
 export const TRAY_NAMES = { emb: "Embeddings y posición", b0: "Bloque 1", b1: "Bloque 2", out: "Salida" };
-export const TRAY_Z = { emb: 10, b0: 26, b1: 42, out: 58 }; // dentro del gabinete
-export const LIFT = { emb: 110, b0: 190, b1: 270, out: 350 }; // altura explosionada del fondo de cada bandeja
+export const TRAY_Z = { emb: 10, b0: 26, b1: 42, out: 58 };
+export const LIFT = { emb: 110, b0: 190, b1: 270, out: 350 };
 export const liftOf = (id, share) => [0, 0, (LIFT[id] - TRAY_Z[id]) * share];
 
 const T = TRAY;
-// Coordenadas locales de la bandeja → mundo (z = fondo de la bandeja en el gabinete).
 const W = (id, x, y, dz = 0) => [T.x + x, T.y + y, TRAY_Z[id] + 1.4 + dz];
 
-// Marco horizontal para una matriz tendida sobre la bandeja: filas a lo largo de +x, columnas a lo largo de +y.
 export const flatFrame = (id, x, y, dz, c, { rowsAlong = "x" } = {}) =>
   rowsAlong === "x" ? { o: W(id, x, y, dz), u: [0, c, 0], v: [c, 0, 0] } : { o: W(id, x, y, dz), u: [c, 0, 0], v: [0, c, 0] };
 
-// Posiciones de piezas dentro de las bandejas de bloque.
 export const BLOCK = {
   bus: { x: 6, y: 80, w: 172, d: 6 },
   ln1: { x: 14, y: 48, w: 10, d: 24, h: 6 },
@@ -46,7 +40,6 @@ function block(id) {
       const plan = { x: T.x + b.x, y: T.y + b.y, w: b.w, d: b.d, r: 1.2 };
       return `<g${role ? ` data-role="${role}"` : ""}>${S(k.slabOf(plan, z, b.h, P, 3, 0.4), { tone })}</g>`;
     };
-    // bus residual (flujo de activaciones)
     const bus = { x: T.x + BLOCK.bus.x, y: T.y + BLOCK.bus.y, w: BLOCK.bus.w, d: BLOCK.bus.d, r: 1 };
     parts.push(`<g data-role="in">${S(k.slabOf(bus, z, 1.6, P, 3, 0.4), { tone: "mid" })}</g>`);
     parts.push(L(k.lineOnTop([bus.x + 2, bus.y + bus.d / 2], [bus.x + bus.w - 2, bus.y + bus.d / 2], z + 1.6, P), { tone: "lo" }));
@@ -90,9 +83,8 @@ export function buildRack(engine, store) {
     add({ id: `tray-${id}`, layer: 2, level: LEVEL[id], anchor: [T.x + T.w / 2, T.y + T.d / 2, TRAY_Z[id]], build: (P) => tray(T, TRAY_Z[id], P, "back"), pose: { visible: false } });
     add({ id: `tray-${id}-front`, layer: 2, level: LEVEL[id] + 3, anchor: [T.x + T.w / 2, T.y + T.d / 2, TRAY_Z[id] + 3], build: (P) => tray(T, TRAY_Z[id], P, "front"), parent: `tray-${id}`, pose: { visible: false }, info: `tray-${id}` });
   }
-  // ---- bandeja de embeddings ----
-  const E = { x: 6, y: 6, c: 4 }; // tabla E: 16 filas (vocabulario) a lo largo de +x, 8 columnas a lo largo de +y
-  const Pp = { x: 6, y: 24, c: 4 }; // tabla P: 10 filas (se dibuja en y = Pp.y + 18)
+  const E = { x: 6, y: 6, c: 4 };
+  const Pp = { x: 6, y: 24, c: 4 };
   const X0 = { x: 104, y: 6, c: 4 };
   add({ id: "mx-E", layer: 2, heavy: true, anchor: planeCentre(flatFrame("emb", E.x, E.y, 0.4, E.c), 16, 8), parent: "tray-emb", role: "w", pose: { visible: false, state: {} }, info: "mx-E",
     build: (P, s = {}) => matrixSvg(P, { rows: 16, cols: 8, frame: flatFrame("emb", E.x, E.y, 0.4, E.c), role: "w", values: store.params0.E, highlight: s.highlight, rowHi: s.rowHi, normal: [0, 0, -0.5] }) });
@@ -104,7 +96,6 @@ export function buildRack(engine, store) {
       const n = tr.X0.length;
       return matrixSvg(P, { rows: n, cols: 8, frame: flatFrame("emb", X0.x, X0.y, 0.4, X0.c), role: "in", values: tr.X0, pending: s.upto !== undefined ? (i) => i >= s.upto : null, rowHi: s.rowHi, normal: [0, 0, -0.5] });
     } });
-  // tarjetas de token (en la bandeja de embeddings, carril delantero)
   for (let i = 0; i < 10; i++) {
     add({ id: `card${i}`, layer: 2, anchor: [T.x + 107 + i * 8, T.y + 81, TRAY_Z.emb + 2], parent: "tray-emb", role: "in", pose: { visible: false, state: {} }, info: "card",
       build: (P, s = {}) => {
@@ -114,7 +105,6 @@ export function buildRack(engine, store) {
         return `<g data-role="in">${tokenCard(plan, TRAY_Z.emb + 1.4, P, s.showId ? String(ids[i]) : store.VOCAB[ids[i]], { lit: s.lit })}</g>`;
       } });
   }
-  // ---- bandejas de bloque ----
   for (const [b, id] of [[0, "b0"], [1, "b1"]]) {
     add({ id: `blk-${id}`, layer: 2, anchor: [T.x + 90, T.y + 60, TRAY_Z[id] + 4], parent: `tray-${id}`, pose: { visible: false }, info: `blk`, build: block(id) });
     for (const h of [0, 1]) {
@@ -129,7 +119,6 @@ export function buildRack(engine, store) {
       build: (P) => matrixSvg(P, { rows: 8, cols: 32, frame: flatFrame(id, BLOCK.w1.x, BLOCK.w1.y, 3, BLOCK.w1.c), role: "w", values: p.W1, normal: [0, 0, -0.5], gap: 0.06 }) });
     add({ id: `mx-${id}-w2`, layer: 2, heavy: true, anchor: planeCentre(flatFrame(id, BLOCK.w2.x, BLOCK.w2.y, 3, BLOCK.w2.c, { rowsAlong: "y" }), 32, 8), parent: `tray-${id}`, role: "w", pose: { visible: false, state: {} }, info: "mx-w2",
       build: (P) => matrixSvg(P, { rows: 32, cols: 8, frame: flatFrame(id, BLOCK.w2.x, BLOCK.w2.y, 3, BLOCK.w2.c, { rowsAlong: "y" }), role: "w", values: p.W2, normal: [0, 0, -0.5], gap: 0.06 }) });
-    // estado del flujo residual en la última posición (vector de 8) sobre el bus: X → H → Y
     add({ id: `vec-${id}`, layer: 2, anchor: W(id, 150, 70, 3), parent: `tray-${id}`, role: "in", pose: { visible: false, state: {} }, info: "resid",
       build: (P, s = {}) => {
         const tr = blockOf();
@@ -139,22 +128,19 @@ export function buildRack(engine, store) {
         return matrixSvg(P, { rows: n, cols: 8, frame: flatFrame(id, s.x ?? 140, 56, 3, 1.4), role: "in", values: vec, rowHi: n - 1, normal: [0, 0, -0.5] });
       } });
   }
-  // ---- bandeja de salida ----
   add({ id: "out-base", layer: 2, anchor: [T.x + 90, T.y + 50, TRAY_Z.out + 3], parent: "tray-out", pose: { visible: false }, info: "out",
     build: (P) => {
       const z = TRAY_Z.out + 1.4;
       const parts = [];
-      parts.push(S(k.slabOf({ x: T.x + 12, y: T.y + 30, w: 10, d: 24, r: 1.2 }, z, 6, P, 3, 0.4), { tone: "mid" })); // LN_f
-      parts.push(S(k.slabOf({ x: T.x + 70, y: T.y + 6, w: 96, d: 8, r: 1 }, z, 1.2, P, 3), { tone: "lo" })); // regla de logits
-      parts.push(S(k.slabOf({ x: T.x + 70, y: T.y + 46, w: 96, d: 8, r: 1 }, z, 1.2, P, 3), { tone: "lo" })); // regla de probabilidades
+      parts.push(S(k.slabOf({ x: T.x + 12, y: T.y + 30, w: 10, d: 24, r: 1.2 }, z, 6, P, 3, 0.4), { tone: "mid" }));
+      parts.push(S(k.slabOf({ x: T.x + 70, y: T.y + 6, w: 96, d: 8, r: 1 }, z, 1.2, P, 3), { tone: "lo" }));
+      parts.push(S(k.slabOf({ x: T.x + 70, y: T.y + 46, w: 96, d: 8, r: 1 }, z, 1.2, P, 3), { tone: "lo" }));
       return parts.join("");
     } });
   add({ id: "mx-Wu", layer: 2, heavy: true, anchor: planeCentre(flatFrame("out", 30, 18, 3, 1.6), 8, 16), parent: "tray-out", role: "w", pose: { visible: false, state: {} }, info: "mx-Wu",
     build: (P, s = {}) => matrixSvg(P, { rows: 8, cols: 16, frame: flatFrame("out", 32, 18, 3, 1.6), role: s.role || "w", values: s.values || store.params0.Wu, highlight: s.highlight, colHi: s.colHi, normal: [0, 0, -0.5] }) });
-  // gradiente de W_U flotando sobre la superficie de pesos (naranja)
   add({ id: "mx-gWu", layer: 2, heavy: true, level: LEVEL.out + 2, anchor: planeCentre(flatFrame("out", 32, 18, 12, 1.6), 8, 16), parent: "tray-out", role: "g", pose: { visible: false, state: {} }, info: "mx-gWu",
     build: (P, s = {}) => (s.values ? matrixSvg(P, { rows: 8, cols: 16, frame: flatFrame("out", 32, 18, 12, 1.6), role: "g", values: s.values, normal: [0, 0, -0.4] }) : "") });
-  // barras de logits y probabilidades (16 símbolos) + tarjeta del token elegido
   add({ id: "bars-out", layer: 2, anchor: [T.x + 118, T.y + 30, TRAY_Z.out + 4], parent: "tray-out", pose: { visible: false, state: {} }, info: "bars-out",
     build: (P, s = {}) => {
       const z = TRAY_Z.out + 2.6;

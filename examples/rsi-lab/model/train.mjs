@@ -1,8 +1,3 @@
-// Entrenamiento REAL de una parte del Transformer: la cabeza de salida.
-// Cambio de escala declarado: el cuerpo (embeddings y 2 bloques) queda CONGELADO; sólo se
-// entrenan θ = {γ_f (8), β_f (8), W_U (8×16), b_U (16)} = 160 parámetros.
-//   n = (h − μ)/σ      u = γ ⊙ n + β      z = u·W_U + b_U      p = softmax(z)      L = −log p_y
-// Gradientes por retropropagación (regla de la cadena), comprobables por diferencias finitas.
 import { fingerprint } from "./rng.mjs";
 import { forward, CONFIG } from "./transformer.mjs";
 import { softmax, layerNormRow } from "./linalg.mjs";
@@ -25,8 +20,6 @@ export function unflatHead(values) {
 export const headSize = () => 2 * D + D * VSZ + VSZ;
 export const headPrint = (head) => fingerprint(flatHead(head));
 
-// Ejemplos: prefijo de 6 tokens → token objetivo. Conjuntos SEPARADOS: los de validación
-// nunca intervienen en un gradiente.
 export const TRAIN_TEXT = [
   ["def f(x):", "return"],
   ["if x<0:return", "0"],
@@ -46,12 +39,11 @@ export function examplesOf(params, pairs) {
   return pairs.map(([text, target]) => {
     const ids = tokenize(text).map((piece) => piece.id);
     if (ids.length !== 6 || ids.includes(-1)) throw new Error(`ejemplo inválido: ${text}`);
-    const h = forward(params, ids).hLast; // característica congelada del cuerpo
+    const h = forward(params, ids).hLast;
     return { text, ids, target: VOCAB.indexOf(target), h };
   });
 }
 
-// Pérdida media y gradiente analítico sobre un lote.
 export function lossAndGrad(head, examples) {
   const grad = { g: new Array(D).fill(0), b: new Array(D).fill(0), Wu: Array.from({ length: D }, () => new Array(VSZ).fill(0)), bu: new Array(VSZ).fill(0) };
   let loss = 0;
@@ -62,19 +54,19 @@ export function lossAndGrad(head, examples) {
     const z = head.bu.map((bias, k) => bias + u.reduce((total, value, j) => total + value * head.Wu[j][k], 0));
     const p = softmax(z);
     const top = Math.max(...z);
-    const l = top + Math.log(z.reduce((total, value) => total + Math.exp(value - top), 0)) - z[example.target]; // −log p_y estable (log-sum-exp)
+    const l = top + Math.log(z.reduce((total, value) => total + Math.exp(value - top), 0)) - z[example.target];
     loss += l;
     each.push({ p, loss: l, z, u, n: normed, target: example.target });
-    const dz = p.map((value, k) => (value - (k === example.target ? 1 : 0)) / examples.length); // ∂L/∂z = p − e_y
+    const dz = p.map((value, k) => (value - (k === example.target ? 1 : 0)) / examples.length);
     for (let k = 0; k < VSZ; k++) grad.bu[k] += dz[k];
     const du = new Array(D).fill(0);
     for (let j = 0; j < D; j++) {
       for (let k = 0; k < VSZ; k++) {
-        grad.Wu[j][k] += u[j] * dz[k]; // ∂L/∂W_U = uᵀ (p − e_y)
-        du[j] += head.Wu[j][k] * dz[k]; // ∂L/∂u = W_U (p − e_y)
+        grad.Wu[j][k] += u[j] * dz[k];
+        du[j] += head.Wu[j][k] * dz[k];
       }
-      grad.g[j] += du[j] * normed[j]; // ∂L/∂γ = ∂L/∂u ⊙ n
-      grad.b[j] += du[j]; // ∂L/∂β = ∂L/∂u
+      grad.g[j] += du[j] * normed[j];
+      grad.b[j] += du[j];
     }
   }
   return { loss: loss / examples.length, grad, each };
@@ -83,7 +75,6 @@ export function lossAndGrad(head, examples) {
 export const lossOf = (head, examples) => lossAndGrad(head, examples).loss;
 export const accuracyOf = (head, examples) => lossAndGrad(head, examples).each.filter((e) => e.p.indexOf(Math.max(...e.p)) === e.target).length / examples.length;
 
-// Diferencias finitas centrales sobre TODOS los parámetros de la cabeza.
 export function finiteDifferenceCheck(head, examples, step = 1e-5) {
   const analytic = flatHead(lossAndGrad(head, examples).grad);
   const base = flatHead(head);
@@ -105,16 +96,12 @@ export function finiteDifferenceCheck(head, examples, step = 1e-5) {
   return { worst, worstIndex, analytic, numeric, count: base.length };
 }
 
-// SGD: θ ← θ − η·g
 export function sgdStep(head, grad, eta) {
   const theta = flatHead(head);
   const g = flatHead(grad);
   return { head: unflatHead(theta.map((value, index) => value - eta * g[index])), delta: g.map((value) => -eta * value) };
 }
 
-// Adam (Kingma y Ba, 2014). Estado {m, v, t}.
-//   m ← β1 m + (1−β1) g      v ← β2 v + (1−β2) g²      m̂ = m/(1−β1^t)      v̂ = v/(1−β2^t)
-//   θ ← θ − η m̂ / (√v̂ + ε)
 export const ADAM = { beta1: 0.9, beta2: 0.999, eps: 1e-8 };
 export const adamInit = () => ({ m: new Array(headSize()).fill(0), v: new Array(headSize()).fill(0), t: 0 });
 
@@ -132,7 +119,6 @@ export function adamStep(head, grad, state, eta, { beta1, beta2, eps } = ADAM) {
   return { head: unflatHead(theta.map((value, index) => value + delta[index])), state: { m, v, t }, delta, mhat, vhat, c1, c2 };
 }
 
-// Ejecuta k pasos y devuelve la historia completa (para la línea de tiempo y la verificación).
 export function runTraining(params, { optimizer = "sgd", eta = 0.5, steps = 40 } = {}) {
   const train = examplesOf(params, TRAIN_TEXT);
   const valid = examplesOf(params, VALID_TEXT);

@@ -1,9 +1,3 @@
-// Estación B: aprendizaje por refuerzo con una POLÍTICA PEQUEÑA (4 parámetros), no con el Transformer.
-// Acción = estrategia de lectura del registro; recompensa = 1 si el solucionador simbólico
-// acierta en una tarea de desarrollo muestreada, 0 si no (se ejecuta de verdad).
-//   π_θ(a) = softmax(θ)_a        ∇_θ log π_θ(a) = e_a − π_θ
-//   REINFORCE con baseline b:    ĝ = (1/N) Σ_i (R_i − b) ∇_θ log π_θ(a_i);   θ ← θ + α ĝ
-// b es una media móvil de recompensas de lotes ANTERIORES: no depende de las acciones del lote actual.
 import { makeRng } from "./rng.mjs";
 import { softmax } from "./linalg.mjs";
 import { VERSIONS, runTask, makeSplit, SPLITS } from "./agent.mjs";
@@ -24,7 +18,6 @@ export const gradLogPi = (theta, action) => {
   return pi.map((p, k) => (k === action ? 1 : 0) - p);
 };
 
-// Un lote de N episodios con la política actual. Semilla por lote: reproducible.
 export function sampleBatch(theta, table, { n = 8, seed = 1 } = {}) {
   const rng = makeRng(seed);
   const pi = softmax(theta);
@@ -55,7 +48,7 @@ export function runReinforce({ updates = 30, n = 8, alpha = 1.0, seed = 5, basel
   const history = [{ update: 0, theta, pi: softmax(theta), baseline }];
   for (let u = 1; u <= updates; u++) {
     const batch = sampleBatch(theta, table, { n, seed: seed * 1000 + u });
-    const step = reinforceUpdate(theta, batch, baseline, alpha); // baseline calculado ANTES de este lote
+    const step = reinforceUpdate(theta, batch, baseline, alpha);
     theta = step.theta;
     const used = baseline;
     baseline = nextBaseline(baseline, batch);
@@ -64,9 +57,6 @@ export function runReinforce({ updates = 30, n = 8, alpha = 1.0, seed = 5, basel
   return { table, history, expected: table.map((row) => row.reduce((t, v) => t + v, 0) / row.length) };
 }
 
-// ---------- PPO (ampliación opcional) ----------
-// r_i(θ) = π_θ(a_i) / π_old(a_i);  L(θ) = (1/N) Σ min(r_i A_i, clip(r_i, 1−ε, 1+ε) A_i)
-// ∇L: cada término aporta A_i r_i ∇log π_θ(a_i) salvo cuando el recorte está activo (gradiente 0).
 export function ppoObjective(theta, oldPi, batch, eps) {
   const pi = softmax(theta);
   return batch.reduce((total, e) => {

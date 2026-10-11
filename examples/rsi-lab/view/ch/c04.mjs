@@ -1,4 +1,3 @@
-// Capítulo 4 — Bloque completo y siguiente token.
 import { baseVisibility, explode, trayRegion, rackCamera, cutAbove, fade } from "../common.mjs";
 import { f2, f3, T, esc, lineChart } from "../helpers.mjs";
 import { el } from "../ui.mjs";
@@ -29,7 +28,6 @@ function outPanel(ctx, active, subst) {
 }
 
 function kvDiagram(n, newRow, invalidFrom) {
-  // filas de la caché (K y V) por bloque y cabeza: cian = guardada, blanca = calculada ahora, gris = invalidada
   const cell = 13;
   const blocks = [];
   for (let b = 0; b < 2; b++)

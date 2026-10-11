@@ -1,5 +1,3 @@
-// Construye rsi-lab.html: una página autónoma (sin red, sin dependencias) con el kit Anatomy,
-// los modelos ejecutables y la escena incrustados. Uso: node examples/rsi-lab/build.mjs
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,7 +6,6 @@ import { ISO_CSS } from "../../kit/iso-kit.mjs";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ENTRY = join(HERE, "view", "main.mjs");
 
-// ---- Mini empaquetador ESM: cada módulo se envuelve en una función y devuelve sus exportaciones.
 const modules = new Map();
 const order = [];
 const idOf = (file) => "__m_" + relative(join(HERE, "..", ".."), file).replace(/[^a-zA-Z0-9]/g, "_");

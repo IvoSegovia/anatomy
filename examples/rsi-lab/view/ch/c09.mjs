@@ -1,4 +1,3 @@
-// Capítulo 9 — Conexión con investigaciones reales (fichas separadas, sin mezclar arquitecturas).
 import { baseVisibility, explode, moduleCamera, labCamera } from "../common.mjs";
 import { table, prov } from "../helpers.mjs";
 

@@ -1,6 +1,3 @@
-// QA en navegador (Chromium headless vía Playwright): recorre todos los pasos, recoge errores de
-// consola, comprueba controles y guarda capturas y hojas de contactos.
-// Uso: node examples/rsi-lab/qa.mjs [--out dir] [--size 1440x900] [--only 3] [--reduced]
 import { createRequire } from "node:module";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -51,7 +48,6 @@ for (let i = 0; i < beats.length; i++) {
   await page.screenshot({ path: file });
   shots.push({ id, file });
 }
-// Hojas de contactos por capítulo
 const byChapter = {};
 for (const s of shots) (byChapter[s.id.split(".")[0]] ||= []).push(s);
 for (const [c, list] of Object.entries(byChapter)) {

@@ -1,4 +1,3 @@
-// Inspector: profundidad opcional. Pestañas: objeto, notación, verificación (en vivo), fuentes.
 import { prov, esc, f2 } from "./helpers.mjs";
 import { liveChecks } from "./checks.mjs";
 
@@ -134,7 +133,6 @@ export function renderInspector(ctx, selection) {
     );
     return;
   }
-  // Sin selección: explicación ampliada del paso actual.
   const more = typeof beat.more === "function" ? beat.more(ctx) : beat.more;
   body.innerHTML = `<div class="kind">capítulo ${beat.c + 1} · paso ${beat.b + 1}</div><h2>${esc(beat.chapter.title)}</h2>
     ${beat.chapter.question ? `<p><b style="color:var(--ink)">${beat.chapter.question}</b></p>` : ""}

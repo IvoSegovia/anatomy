@@ -1,9 +1,6 @@
-// Banco reproducible de tareas SINTÉTICAS de depuración + gestores de contexto + solucionador SIMBÓLICO.
-// Nada aquí es un LLM: el «agente» lee un registro a través de su gestor de contexto (con un
-// presupuesto de tokens) y un solucionador de reglas declaradas intenta identificar función y causa.
 import { makeRng } from "./rng.mjs";
 
-export const BUDGET = 64; // presupuesto de contexto, en «tokens» (palabras separadas por espacios)
+export const BUDGET = 64;
 export const TYPES = ["ERROR", "TRACE", "DEBUG", "WARN", "INFO"];
 
 const MODULES = {
@@ -14,7 +11,6 @@ const MODULES = {
   geo: ["distancia", "proyectar", "rumbo"],
   pay: ["cobrar", "reembolso", "total_iva"],
 };
-// Cada causa tiene una palabra clave; el solucionador la busca en DEBUG (o en el mensaje de ERROR).
 export const CAUSES = {
   espacios: { debug: "la entrada ' 3' llega sin recortar espacios", key: "recortar", error: "ValueError con entrada ' 3'", errorKey: "ValueError" },
   cero: { debug: "divisor igual a 0 cuando la lista está vacía", key: "divisor", error: "ZeroDivisionError al dividir", errorKey: "ZeroDivisionError" },
@@ -54,7 +50,6 @@ const WARN_TEXT = [
 const words = (text) => text.trim().split(/\s+/).length;
 const line = (type, text, tags = {}) => ({ type, text, tokens: words(text), tags });
 
-// Genera una tarea a partir de una semilla. family puede forzarse.
 export function makeTask(seed, family = null) {
   const rng = makeRng(seed * 9973 + 17);
   const fam = family ?? ["F1", "F2", "F3", "F4"][rng.int(0, 3)];
@@ -70,7 +65,6 @@ export function makeTask(seed, family = null) {
 
   const startup = rng.shuffle(INFO_TEXT).slice(0, rng.int(0, 8)).map((text) => line("INFO", text));
   const warns = rng.shuffle(WARN_TEXT).slice(0, rng.int(0, 2)).map((text) => line("WARN", text));
-  // Señuelos: pruebas inestables que fallan, se reintentan y al final pasan.
   const decoyCount = fam === "F4" ? 2 : rng.int(1, 2);
   const decoyBlocks = [];
   const retryLines = [];
@@ -101,15 +95,14 @@ export function makeTask(seed, family = null) {
   }
   if (fam === "F4") evidence.push(line("TRACE", evidence[0].text, { evidence: "E2", dup: true }));
   if (fam !== "F2") evidence.push(line("DEBUG", `DEBUG ${culprit} ${CAUSES[cause].debug}`, { evidence: "E3" }));
-  else evidence.push(line("DEBUG", `DEBUG ${culprit} entrada recibida con 3 campos`, {})); // DEBUG irrelevante
+  else evidence.push(line("DEBUG", `DEBUG ${culprit} entrada recibida con 3 campos`, {}));
   const errorText = fam === "F2" ? `ERROR ${testName} ${CAUSES[cause].error}` : `ERROR ${testName} resultado distinto del esperado`;
   const chain = [...evidence, line("ERROR", errorText, { evidence: "E1" })];
   const summary = line("INFO", `INFO resumen 41 pruebas 1 fallo ${decoyCount} inestables`);
 
-  // Orden: arranque, avisos y luego los bloques (cadena verdadera temprana o tardía).
   const early = rng.next() < 0.3;
   const blocks = early ? [chain, ...decoyBlocks] : [...decoyBlocks, chain];
-  const lateRetry = rng.next() < 0.35; // algunos reintentos terminan después del resumen
+  const lateRetry = rng.next() < 0.35;
   const lines = [...startup, ...warns.slice(0, 1), ...blocks[0], ...progress.slice(0, 1), ...blocks.slice(1).flat(), ...warns.slice(1), ...progress.slice(1)];
   if (!lateRetry) lines.push(...retryLines);
   lines.push(summary);
@@ -124,12 +117,9 @@ export const SPLITS = {
   dev: { base: 100, count: 16, label: "desarrollo" },
   valid: { base: 200, count: 40, label: "validación" },
   test: { base: 300, count: 60, label: "prueba reservada" },
-  audit: { base: 400, count: 40, label: "auditoría" }, // sólo escenas 8 y 10: confirma promociones, nunca guía la búsqueda
+  audit: { base: 400, count: 40, label: "auditoría" },
 };
 
-// ---------- Gestores de contexto: una familia parametrizada («genoma») ----------
-// El código que se ejecuta es el mismo para todas las versiones; cada versión es una
-// configuración distinta de sus etapas. pseudocodeOf(genome) lo escribe legible.
 export const VERSIONS = {
   v0: { id: "v0", name: "registros completos", dedupe: false, weights: { ERROR: 0, TRACE: 0, DEBUG: 0, WARN: 0, INFO: 0 }, link: 0, select: "orden", tie: "antiguas", keepLast: 0 },
   v1: { id: "v1", name: "evidencia relevante + sin duplicados", dedupe: true, weights: { ERROR: 3, TRACE: 2, DEBUG: 1, WARN: 0, INFO: 0 }, link: 2, select: "puntuación", tie: "recientes", keepLast: 0 },
@@ -143,7 +133,6 @@ const traceOf = (text) => {
   return match ? { from: match[1], to: match[2] } : null;
 };
 
-// El gestor: deduplicar → puntuar → seleccionar bajo presupuesto → restaurar orden cronológico.
 export function manageContext(log, genome, budget = BUDGET) {
   const trace = [];
   let pool = log.map((entry) => ({ ...entry, full: entry.text }));
@@ -200,7 +189,7 @@ export function manageContext(log, genome, budget = BUDGET) {
   };
   if (genome.keepLast) candidates.slice(-genome.keepLast).forEach(take);
   if (genome.select === "orden") {
-    for (const entry of candidates) if (!take(entry)) break; // llena en orden y se detiene al primer desborde
+    for (const entry of candidates) if (!take(entry)) break;
   } else {
     const ranked = [...candidates].sort((a, b) => b.score - a.score || (genome.tie === "recientes" ? b.index - a.index : a.index - b.index));
     ranked.forEach(take);
@@ -211,7 +200,6 @@ export function manageContext(log, genome, budget = BUDGET) {
   return { context, used, trace, status };
 }
 
-// ---------- Solucionador simbólico (reglas declaradas, no un LLM) ----------
 const causeFromText = (text, type) => Object.keys(CAUSES).find((key) => text.split(/\s+/).includes(type === "ERROR" ? CAUSES[key].errorKey : CAUSES[key].key)) || null;
 
 export function solve(context) {
@@ -275,8 +263,6 @@ export function evaluate(genome, tasks, budget = BUDGET) {
   };
 }
 
-// ---------- Estadística pareada ----------
-// Bootstrap pareado (semilla fija) de la diferencia de tasas de éxito B − A sobre las MISMAS tareas.
 export function pairedBootstrap(a, b, { resamples = 2000, seed = 4242 } = {}) {
   const rng = makeRng(seed);
   const diffs = a.runs.map((run, index) => (b.runs[index].success ? 1 : 0) - (run.success ? 1 : 0));
@@ -296,7 +282,6 @@ export function pairedBootstrap(a, b, { resamples = 2000, seed = 4242 } = {}) {
   return { mean, low, high, wins, losses, ties: n - wins - losses, p: signTest(wins, losses) };
 }
 
-// Prueba de signos exacta (bilateral) sobre pares discordantes.
 export function signTest(wins, losses) {
   const n = wins + losses;
   if (!n) return 1;
@@ -316,8 +301,6 @@ export function verdictOf(ci) {
   return "sin diferencia concluyente";
 }
 
-// Métrica compuesta declarada: éxito (fracción 0–1) − 0.1 × coste normalizado (tokens / presupuesto).
-// Puerta dura: si el IC95 de Δéxito queda por debajo de 0, la candidata se rechaza aunque sea más barata.
 export const COMPOSITE = { lambda: 0.1 };
 export const compositeOf = (result, budget = BUDGET) => result.success - COMPOSITE.lambda * (result.cost / budget);
 
@@ -333,7 +316,6 @@ export function promotionDecision(active, candidate, ci, budget = BUDGET) {
   };
 }
 
-// Registro de accesos: demuestra que el proponente sólo ve desarrollo y agregados de validación.
 export function makeAccessLog() {
   const entries = [];
   return {

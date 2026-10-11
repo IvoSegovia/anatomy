@@ -1,4 +1,3 @@
-// Esqueleto de la interfaz: barra superior, escenario, HUD, inspector y transporte.
 export const CHANGE_KEYS = [
   ["contexto", "Contexto"],
   ["pesos", "Pesos"],

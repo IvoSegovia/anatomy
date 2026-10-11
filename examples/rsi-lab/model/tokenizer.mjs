@@ -1,7 +1,3 @@
-// Vocabulario de JUGUETE de 16 símbolos para un fragmento de código.
-// No es la tokenización de ningún modelo comercial: es una segmentación codiciosa
-// (coincidencia más larga primero) sobre esta lista, ignorando espacios.
-
 export const VOCAB = ["def", "f", "(", "x", ")", ":", "return", "+", "1", "*", "2", "if", "<", "0", "y", "-"];
 
 export function tokenize(text) {

@@ -1,14 +1,3 @@
-// Escena 8 y 10: el bucle de automejora del agente como SIMULACIÓN CONCEPTUAL.
-// Lo conceptual son las reglas del proponente (declaradas abajo, no un LLM).
-// Lo calculado de verdad: cada candidata se construye y se ejecuta sobre el banco de tareas,
-// y la promoción usa el mismo criterio estadístico de la escena 7.
-//
-// Estado del sistema S_t = (θ_t, código_t, memoria_t, estrategia_t)
-//   θ_t: modelo base CONGELADO en este experimento (no cambia nunca)
-//   código_t: genoma del gestor de contexto activo
-//   memoria_t: notas del proponente (variantes probadas y resultado)
-//   estrategia_t: tareas de validación por candidata, probabilidad de explorar
-// Fuera de S_t: infraestructura (presupuesto, entorno) y protocolo de evaluación.
 import { makeRng } from "./rng.mjs";
 import { VERSIONS, BUDGET, TYPES, makeSplit, SPLITS, runTask, manageContext, pairedBootstrap, pseudocodeOf } from "./agent.mjs";
 
@@ -16,8 +5,6 @@ const clampW = (value) => Math.max(-1, Math.min(3, value));
 const keyOf = (genome) => JSON.stringify([genome.dedupe, TYPES.map((type) => genome.weights[type]), genome.link, genome.select, genome.tie, genome.keepLast, genome.clip || 0]);
 const withId = (genome, id, name) => ({ ...genome, weights: { ...genome.weights }, id, name });
 
-// Diagnóstico exacto de por qué falló una tarea (lo usa el informe; el analista lo VE sólo si su
-// gestor de contexto conserva las líneas DEBUG correspondientes del informe).
 export function diagnose(task, run) {
   if (run.success) return [];
   const out = [];
@@ -35,7 +22,6 @@ export function diagnose(task, run) {
   return out;
 }
 
-// Informe de fallo legible por el analista: cabecera verbosa + una línea DEBUG por diagnóstico.
 export function reportOf(task, run, versionId) {
   const header = [
     `INFO ejecución de la tarea ${task.seed} con el gestor ${versionId} y presupuesto ${BUDGET}`,
@@ -56,7 +42,6 @@ export function reportOf(task, run, versionId) {
   return lines;
 }
 
-// El analista lee cada informe A TRAVÉS de un gestor de contexto (aquí está la autorreferencia).
 export function analyse(reports, analystGenome) {
   const seen = {};
   let total = 0;
@@ -73,7 +58,6 @@ export function analyse(reports, analystGenome) {
   return { seen, total, visible, quality: total ? visible / total : 1 };
 }
 
-// Reglas declaradas del proponente.
 export function propose(parent, analysis, rng, memory, failingTypes) {
   const g = withId(parent.genome, "", "");
   const ranked = Object.entries(analysis.seen).filter(([kind]) => kind !== "otro").sort((a, b) => b[1] - a[1]);
@@ -111,7 +95,6 @@ export function propose(parent, analysis, rng, memory, failingTypes) {
     }
   }
   if (!note || memory.has(keyOf(g))) {
-    // Mutación aleatoria (sin diagnóstico visible o propuesta ya probada).
     const field = rng.pick(["dedupe", "weight", "weight", "link", "select", "tie", "clip"]);
     if (field === "dedupe") g.dedupe = !g.dedupe;
     else if (field === "weight") {
@@ -128,8 +111,6 @@ export function propose(parent, analysis, rng, memory, failingTypes) {
 
 const validGenome = (g) => TYPES.some((type) => g.weights[type] >= 0) && g.weights.ERROR >= 0;
 
-// Corre el bucle completo. mode: "A" (proponente y estrategia fijos) o "B" (las versiones
-// promovidas pasan a analizar y a fijar la estrategia de los ciclos siguientes).
 export function runLoop({
   mode = "B",
   seed = 1,
@@ -143,15 +124,11 @@ export function runLoop({
   start = VERSIONS.v0,
   metaMutation = true,
 } = {}) {
-  // Semillas compatibles: A y B usan el MISMO flujo para padres y mutaciones; B tiene un flujo
-  // aparte para sus meta-mutaciones, así las diferencias vienen del mecanismo, no del azar.
   const rng = makeRng(seed * 131 + 1);
   const metaRng = makeRng(seed * 389 + 2);
   const noiseRng = makeRng(seed * 977 + 5);
   const dev = makeSplit(SPLITS.dev.base, SPLITS.dev.count, families);
   const valAll = makeSplit(SPLITS.valid.base, SPLITS.valid.count, families);
-  // Auditoría: tareas nuevas de las 4 familias; mide cada versión promovida (el bucle no la lee).
-  // Prueba final: reservada; se usa una sola vez, al terminar, sobre la versión resultante.
   const audit = makeSplit(SPLITS.audit.base, SPLITS.audit.count);
   const test = makeSplit(SPLITS.test.base, SPLITS.test.count);
   const auditOf = (genome) => audit.filter((task) => runTask(task, genome).success).length / audit.length;
@@ -175,10 +152,8 @@ export function runLoop({
   const devCost = dev.length;
   while (spent + devCost + strategy.nVal <= budget) {
     const cycle = { index: cycles.length + 1, analyst: analyst.id || "v0", strategy: { ...strategy } };
-    // 1. Elegir un padre del archivo.
     const parent = rng.next() < strategy.explore && archive.length > 1 ? rng.pick(archive) : active;
     cycle.parent = parent.id;
-    // 2. Analizar registros de desarrollo del padre.
     const devRuns = dev.map((task) => runTask(task, parent.genome));
     spent += devCost;
     const failing = dev.map((task, i) => ({ task, run: devRuns[i] })).filter((x) => !x.run.success);
@@ -188,7 +163,6 @@ export function runLoop({
     failing.forEach(({ task, run }) => diagnose(task, run).forEach((d) => (failingTypes[d.kind] = [...(failingTypes[d.kind] || []), d.type])));
     cycle.analysis = analysis;
     cycle.devSuccess = devRuns.filter((r) => r.success).length / dev.length;
-    // 3. Proponer y construir una variante.
     const proposal = propose(parent, analysis, rng, memory, failingTypes);
     counter += 1;
     const id = `c${counter}`;
@@ -196,7 +170,6 @@ export function runLoop({
     cycle.proposal = proposal.note;
     cycle.candidate = id;
     memory.add(keyOf(genome));
-    // Meta-mutación de la estrategia (sólo modo B): el sistema también cambia cómo experimenta.
     let candidateStrategy = { ...strategy };
     if (mode === "B" && metaMutation && metaRng.next() < 0.25) {
       candidateStrategy = { ...strategy, nVal: metaRng.pick([10, 20, 40].filter((n) => n !== strategy.nVal)) };
@@ -209,27 +182,20 @@ export function runLoop({
       continue;
     }
     cycle.built = true;
-    // 4. Ejecutar con presupuesto definido (mismas tareas para activa y candidata).
     const tasks = valAll.slice(0, strategy.nVal);
     const key = tasks.map((t) => t.seed).join(",");
     valQueries.set(key, (valQueries.get(key) || 0) + 1);
     const activeRuns = evalVal(active.genome, tasks);
     const candRuns = evalVal(genome, tasks);
     spent += strategy.nVal;
-    // proxy: fracción de líneas del contexto que son ERROR o TRACE («cuántas señales de error vemos»).
     const proxyOf = (run) => (run.managed.context.length ? run.managed.context.filter((e) => e.type === "ERROR" || e.type === "TRACE").length / run.managed.context.length : 0);
     const pack = (runs) => ({ runs, success: runs.filter((r) => r.success).length / runs.length, cost: runs.reduce((t, r) => t + r.cost, 0) / runs.length, proxy: runs.reduce((t, r) => t + proxyOf(r), 0) / runs.length });
     const a = pack(activeRuns);
     const c = pack(candRuns);
     const ci = pairedBootstrap(a, c, { resamples: 1000, seed: seed * 17 + counter });
     cycle.val = { active: a.success, candidate: c.success, ci, n: tasks.length, costA: a.cost, costC: c.cost };
-    // 5. Archivar toda variante válida.
     const version = { id, genome, parent: parent.id, strategy: candidateStrategy, cycle: cycle.index, valSuccess: c.success };
     archive.push(version);
-    // 6. Promover sólo si cumple el criterio.
-    // Criterios: «estricto» (IC95 pareado de Δéxito > 0), «ingenuo» (estimación puntual mayor),
-    // «compuesto» (éxito − λ·coste normalizado mayor, SIN puerta de corrección),
-    // «proxy» (métrica imperfecta: densidad de líneas ERROR/TRACE en el contexto).
     const composite = (x) => x.success - lambda * (x.cost / BUDGET);
     const visibleOf = (x) => (criterion === "compuesto" ? composite(x) : criterion === "proxy" ? x.proxy : x.success);
     const promote = criterion === "estricto" ? ci.low > 0 : visibleOf(c) > visibleOf(a);
@@ -237,13 +203,12 @@ export function runLoop({
     cycle.visibleActive = visibleOf(a);
     cycle.promoted = promote;
     if (promote) {
-      version.audit = auditOf(genome); // medición independiente (el bucle NO la lee)
+      version.audit = auditOf(genome);
       cycle.auditBefore = active.audit;
       cycle.auditAfter = version.audit;
       cycle.validImprovement = version.audit > active.audit;
       active = version;
-      if (version.audit >= lastValid.audit) lastValid = version; // válida = no retrocede en auditoría
-      // 7. Usar versiones seleccionadas en ciclos posteriores (sólo modo B).
+      if (version.audit >= lastValid.audit) lastValid = version;
       if (mode === "B") {
         analyst = genome;
         strategy = candidateStrategy;
@@ -267,7 +232,7 @@ export function runLoop({
     spent,
     startAudit: root.audit,
     finalAudit: active.audit,
-    finalTest: testOf(active.genome), // uso único de la prueba reservada
+    finalTest: testOf(active.genome),
     startTest: testOf(root.genome),
     lastValidTest: testOf(lastValid.genome),
     promotions,

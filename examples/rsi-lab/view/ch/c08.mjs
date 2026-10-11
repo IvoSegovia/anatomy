@@ -1,4 +1,3 @@
-// Capítulo 8 — Dónde aparece la recursión.
 import { baseVisibility, explode, mainCamera, moduleCamera } from "../common.mjs";
 import { f2, f3, esc, table, pct, lineChart, prov } from "../helpers.mjs";
 import { el } from "../ui.mjs";
@@ -27,7 +26,6 @@ function analysisDemo(ctx) {
 }
 
 function compareChart(rows) {
-  // final de auditoría por semilla: A (gris) y B (naranja)
   const w = 400;
   const h = 150;
   const pad = { l: 34, r: 10, t: 10, b: 26 };

@@ -1,4 +1,3 @@
-// Utilidades compartidas por los capítulos: explosión del bastidor, encuadres de cámara y grupos.
 import * as k from "../../../kit/iso-kit.mjs";
 import { M, MAIN, BENCH, boxOf, centreOf, LAB_IDS } from "./lab.mjs";
 import { TRAY, TRAYS, TRAY_Z, LIFT, liftOf } from "./rack.mjs";
@@ -11,20 +10,17 @@ export const STATION_IDS = ["a-gen", "a-tests", "a-memory", "a-theta", "b-policy
 export const AGENT_IDS = ["ctx-lines", "cart-v0", "cart-v1", "cart-v2", "cart-v3"];
 export const TRAY_IDS = TRAYS.flatMap((id) => [`tray-${id}`, `tray-${id}-front`]);
 
-// Visibilidad base: laboratorio siempre presente; lo demás según la escena.
 export function baseVisibility(ctx, { rack = false, tensors = false, stations = true, agent = false } = {}) {
   const show = new Set([...LAB_IDS, ...(stations ? STATION_IDS : []), ...(rack ? [...TRAY_IDS, ...RACK_IDS] : []), ...(tensors ? TENSOR_IDS : []), ...(agent ? AGENT_IDS : [])]);
   for (const [id] of ctx.engine.objects) if (!id.startsWith("pulse")) ctx.engine.pose(id, { visible: show.has(id) });
 }
 
-// share ∈ [0,1]: 0 = bandejas guardadas en el gabinete, 1 = bastidor explosionado.
 export function explode(ctx, share, { stagger = true, shrinkFront = true } = {}) {
   const s = Math.max(0, Math.min(1, share));
   TRAYS.forEach((id, index) => {
     const local = stagger ? ease(Math.max(0, Math.min(1, s * 1.6 - (3 - index) * 0.2))) : s;
     ctx.engine.pose(`tray-${id}`, { offset: liftOf(id, local), visible: true });
   });
-  // el frente del gabinete se dibuja delante sólo mientras las bandejas están dentro
   const front = ctx.engine.objects.get("modelo-front");
   if (front) front.level = s > 0.05 ? 5 : 100;
   ctx.engine.pose("modelo-front", { opacity: shrinkFront ? 1 - 0.6 * s : 1 });
@@ -40,15 +36,12 @@ export function trayBox(id, share = 1, dz = 0) {
 }
 export const rackCamera = (share = 1) => ({ points: [...TRAYS.flatMap((id) => trayBox(id, share)), ...k.boxCorners(M.modelo.plan, 0, 84)], pad: 24 });
 export const trayCamera = (id, opts = {}) => ({ points: trayBox(id, 1, opts.dz ?? 10), pad: opts.pad ?? 40, ...opts });
-// Encaja sólo una región de una bandeja (coordenadas locales x0..x1, y0..y1).
 export function trayRegion(id, [x0, y0, x1, y1], opts = {}) {
   const z = LIFT[id] + 1.4;
   const out = [];
   for (const x of [TRAY.x + x0, TRAY.x + x1]) for (const y of [TRAY.y + y0, TRAY.y + y1]) for (const dz of [0, opts.h ?? 8]) out.push([x, y, z + dz]);
   return { points: out, pad: opts.pad ?? 30, area: opts.area ?? { left: 360 }, azimuth: opts.azimuth ?? 45, elevation: opts.elevation ?? 34 };
 }
-// Retira (corte) las bandejas por encima de `keep` y su contenido.
-// share ∈ [0,1] funde progresivamente (1 = retiradas del todo); reveal funde la entrada de las de abajo.
 export function cutAbove(ctx, keep, share = 1, reveal = 1) {
   const order = ["emb", "b0", "b1", "out"];
   const hide = new Set(order.slice(order.indexOf(keep) + 1));
@@ -60,12 +53,10 @@ export function cutAbove(ctx, keep, share = 1, reveal = 1) {
     else if (rack.has(id) && !id.startsWith("card")) ctx.pose(id, { visible: true, opacity: tray === keep ? reveal : 1 });
   }
 }
-// Funde un conjunto de objetos (corte progresivo dentro de una bandeja).
 export function fade(ctx, ids, value) {
   for (const id of ids) ctx.pose(id, { visible: value > 0.001, opacity: Math.max(0, Math.min(1, value)) });
 }
 
-// Cámara para un cubo de la cabeza (escala tensores), con el bastidor explosionado.
 export function cubeCamera(ctx, which, opts = {}) {
   const n = ctx.store.ids().length;
   const L = cubeLayout(n);

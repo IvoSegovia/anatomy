@@ -1,4 +1,3 @@
-// Capítulo 1 — El laboratorio completo y sus tres bucles.
 import { baseVisibility, explode, labCamera, mainCamera, moduleCamera, rackCamera, M, RACK_IDS } from "../common.mjs";
 import { VERSIONS, runTask } from "../../model/agent.mjs";
 import { esc, prov } from "../helpers.mjs";
@@ -15,7 +14,7 @@ const MODULES = [
   ["archivo", "Archivo de versiones", "guarda variantes comparables; guardar no es promover"],
 ];
 
-export const DEV_TASK = 14; // tarea de desarrollo del ejemplo transversal (v0 falla, v1 acierta)
+export const DEV_TASK = 14;
 
 export function contextState(task, genome) {
   const run = runTask(task, genome);

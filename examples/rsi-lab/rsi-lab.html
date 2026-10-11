@@ -113,7 +113,6 @@
 @media (max-width:560px){.iso-plate{padding:48px 12px 70px}.iso-plate-corner[data-corner="hint"]{bottom:18px}}
 @media (prefers-reduced-motion:reduce){.iso-line[data-flow],.iso-dots circle[data-pulse]{animation:none}}
 
-/* ===== Laboratorio oscuro, sobrio y preciso ===== */
 .iso{
   --bg:#0a0b0d;--panel:#111216;--panel-2:#16181d;--line:#24272e;--line-2:#30343c;
   --ink:#e7e8ea;--ink-2:#b6b9bf;--ink-3:#868a92;--ink-4:#5d6168;
@@ -148,7 +147,6 @@ button{cursor:pointer}
 .icon-btn:hover{border-color:var(--ink-4);color:var(--ink)}
 .icon-btn[aria-pressed="true"]{border-color:var(--c-in);color:var(--ink)}
 
-/* ===== Escenario ===== */
 .stage{position:relative;overflow:hidden;background:radial-gradient(120% 90% at 50% 40%,#121318 0%,#0d0e11 60%,#0a0b0d 100%);touch-action:none;min-width:0;min-height:0}
 .stage svg.scene{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible}
 .stage svg.scene.grabbing{cursor:grabbing}
@@ -170,7 +168,6 @@ button{cursor:pointer}
 .lbl[data-r="bad"]>span{border-color:#ff6a6a77;color:#ffcfcf}
 .lbl[data-r="off"]>span{border-color:#7a7f8855;color:#a9adb4}
 
-/* objetos seleccionables y foco */
 [data-obj]{transition:opacity .35s}
 .scene[data-focus] [data-obj]:not([data-on]){opacity:.3}
 .scene[data-focus] [data-obj][data-on] .iso-edge{stroke:var(--anatomy-lit)}
@@ -178,7 +175,6 @@ button{cursor:pointer}
 [data-obj][data-sel] .iso-edge,[data-obj][data-sel] .mx-frame{stroke:var(--c-in)!important;stroke-width:1.1}
 @media (prefers-reduced-motion:reduce){[data-obj]{transition:none}}
 
-/* roles en sólidos (tinte discreto en tapas) */
 [data-role="w"] .iso-top{fill:#211d2d}[data-role="w"] .iso-edge{stroke:#7d6bb0}
 [data-role="in"] .iso-top{fill:#16252a}[data-role="in"] .iso-edge{stroke:#3b8f9c}
 [data-role="g"] .iso-top{fill:#2a2016}[data-role="g"] .iso-edge{stroke:#b06d2f}
@@ -186,14 +182,12 @@ button{cursor:pointer}
 [data-role="ok"] .iso-top{fill:#16271e}[data-role="ok"] .iso-edge{stroke:#3a9a62}
 [data-role="bad"] .iso-top{fill:#2b1718}[data-role="bad"] .iso-edge{stroke:#b04a4a}
 
-/* lámparas */
 .lamp[data-state="ok"] .iso-top{fill:var(--c-ok)}.lamp[data-state="ok"] .iso-edge{stroke:var(--c-ok)}
 .lamp[data-state="fail"] .iso-top{fill:var(--c-bad)}.lamp[data-state="fail"] .iso-edge{stroke:var(--c-bad)}
 .lamp[data-state="off"] .iso-top{fill:#22252b}
 .lamp[data-state="ok"],.lamp[data-state="fail"]{filter:drop-shadow(0 0 4px currentColor)}
 .lamp[data-state="ok"]{color:#4fd38399}.lamp[data-state="fail"]{color:#ff6a6a99}
 
-/* matrices */
 .mx-plate{fill:#121419;stroke:none}
 .mx-edge{fill:#08090b;stroke:none}
 .mx-frame{fill:none;stroke:var(--anatomy-mid);stroke-width:.7}
@@ -222,7 +216,6 @@ button{cursor:pointer}
 .prod-ray{fill:none;stroke:#9fe4ef;stroke-opacity:.35;stroke-width:.6}
 .prod-sum{fill:none;stroke:#e8f9ff;stroke-opacity:.6;stroke-width:.9}
 
-/* rutas y pulsos */
 .route{fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
 .route[data-loop="1"]{stroke:var(--c-in)}
 .route[data-loop="2"]{stroke:var(--c-g);stroke-dasharray:6 3}
@@ -246,7 +239,6 @@ button{cursor:pointer}
 .bar[data-r="ok"]{fill:var(--c-ok)}.bar[data-r="bad"]{fill:var(--c-bad)}.bar[data-r="off"]{fill:var(--c-off)}
 .needle[data-tone]{stroke:#fff}
 
-/* ===== Superposiciones en el escenario ===== */
 .hud{position:absolute;pointer-events:none;z-index:3}
 .hud *{pointer-events:auto}
 .changed{left:12px;top:10px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;max-width:calc(100% - 320px)}
@@ -259,7 +251,7 @@ button{cursor:pointer}
 .chip[data-s="activo"] i{background:var(--c-in)}
 .chip b{font-weight:500;color:inherit}
 .chip em{font-style:normal;color:var(--ink-4);font-size:10px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.theta{left:12px;top:40px;font:11px var(--mono);color:var(--ink-3);display:flex;gap:8px;align-items:center}
+.theta{left:12px;top:calc(14px + var(--chips-h,26px));font:11px var(--mono);color:var(--ink-3);display:flex;gap:8px;align-items:center}
 .theta .print{color:var(--ink-2);border:1px solid var(--line-2);padding:1px 6px;border-radius:3px}
 .theta .print.flash{border-color:var(--c-g);color:#ffd6ad}
 .scalemap{right:12px;top:10px;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
@@ -278,7 +270,6 @@ button{cursor:pointer}
 .back-tour{display:none;margin-top:6px}
 .back-tour.on{display:inline-flex}
 
-/* Mesa de control de la escena (controles locales) */
 .desk{left:12px;bottom:12px;width:306px;max-height:calc(100% - 200px);overflow:auto;background:#0e0f12eb;border:1px solid var(--line-2);border-radius:8px;padding:10px 12px;display:none}
 .desk.on{display:block}
 .desk h3{margin:0 0 6px;font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -297,10 +288,10 @@ button{cursor:pointer}
 .btn:hover{border-color:var(--ink-4)}
 .btn.warn{border-color:#ff9b3f88}
 
-/* Planos legibles: fórmulas, código, gráficos */
-.plane{position:absolute;z-index:2;background:#0d0e11ee;border:1px solid var(--line-2);border-radius:8px;padding:10px 12px;color:var(--ink-2);font-size:12.5px;max-width:420px;display:none;box-shadow:0 10px 30px #0008}
+.plane{position:absolute;z-index:2;background:#0d0e11ee;border:1px solid var(--line-2);border-radius:8px;padding:10px 12px;color:var(--ink-2);font-size:12.5px;max-width:420px;display:none;box-shadow:0 10px 30px #0008;overflow:auto;scrollbar-width:thin}
 .plane.on{display:block}
 .plane h4{margin:0 0 6px;font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);display:flex;gap:8px;align-items:center;justify-content:space-between}
+.plane h4.sub{margin-top:10px;padding-top:8px;border-top:1px solid var(--line)}
 .formula{font:15px/1.6 "Cambria Math","STIX Two Math","Latin Modern Math",Georgia,serif;color:var(--ink);white-space:nowrap}
 .formula .t{padding:0 2px;border-radius:3px;transition:background .3s,color .3s}
 .formula .t.on{background:#ffffff14;color:#fff}
@@ -335,13 +326,11 @@ pre.code .hl{background:#ffffff12;display:block;color:var(--ink)}
 .legend{display:flex;gap:12px;flex-wrap:wrap;font:11px var(--sans);color:var(--ink-3);margin-top:4px}
 .legend i{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:5px;background:currentColor}
 
-/* tooltip de celdas */
 .tip{position:absolute;z-index:6;pointer-events:none;background:#0b0c0ff2;border:1px solid var(--line-2);border-radius:6px;padding:8px 10px;font:11.5px/1.45 var(--mono);color:var(--ink-2);max-width:340px;display:none;box-shadow:0 8px 24px #000a}
 .tip.on{display:block}
 .tip .tt{font:600 11px var(--mono);color:var(--ink);margin-bottom:3px}
 .tip .k{color:var(--ink-3)}
 
-/* ===== Inspector ===== */
 .inspector{grid-row:2;grid-column:2;width:340px;border-left:1px solid var(--line);background:var(--panel);overflow:auto;display:flex;flex-direction:column;min-height:0}
 .inspector[hidden]{display:none}
 .insp-tabs{display:flex;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:1}
@@ -368,7 +357,6 @@ details summary{cursor:pointer;color:var(--ink-2);font-size:12px}
 .checks li.x::before{content:"✗ ";color:var(--c-bad)}
 .kv{font:11.5px var(--mono);color:var(--ink-2)}
 
-/* ===== Transporte ===== */
 .transport{grid-column:1/3;display:flex;align-items:center;gap:10px;padding:8px 14px;border-top:1px solid var(--line);background:var(--panel);min-width:0}
 .transport .grp{display:flex;gap:4px;align-items:center;flex:none}
 .play{width:34px!important;height:30px!important;border-color:var(--ink-4)!important;color:var(--ink)!important}
@@ -383,7 +371,6 @@ details summary{cursor:pointer;color:var(--ink-2);font-size:12px}
 .speed select{background:var(--panel-2);border:1px solid var(--line-2);border-radius:5px;padding:2px 4px;font-size:12px}
 .speed label{font-size:11px;color:var(--ink-3)}
 
-/* ===== Pantallas pequeñas ===== */
 @media (max-width:1100px){.inspector{position:absolute;right:0;top:44px;bottom:52px;z-index:8;box-shadow:-20px 0 40px #000a}}
 @media (max-width:760px){
   #app{grid-template-rows:auto 1fr auto}
@@ -396,7 +383,7 @@ details summary{cursor:pointer;color:var(--ink-2);font-size:12px}
   .changed .h{display:none}
   .chip{height:19px;padding:0 6px;font-size:10px}
   .chip em{display:none}
-  .theta{left:8px;top:54px;font-size:10px;gap:5px}
+  .theta{left:8px;top:calc(10px + var(--chips-h,44px));font-size:10px;gap:5px}
   .theta>span:last-child,.theta>span:first-child{display:none}
   .disclaimer{display:block;left:8px;right:auto;top:72px;text-align:left;max-width:60%;font-size:9.5px}
   .disclaimer .long{display:none}
@@ -1108,9 +1095,6 @@ return { AZIMUTH, ELEVATION, SHADES, cameraOf, iso, towardViewer, depthOf, pathO
 })();
 const __m_examples_rsi_lab_view_engine_mjs = (() => {
 const k = __m_kit_iso_kit_mjs;
-// Motor de escena: proyección isométrica del kit Anatomy + cámara + objetos + etiquetas.
-// La geometría se construye con el kit a escala base (BASE) y la cámara aplica zoom/desplazamiento
-// como transformación 2D. Girar (acimut/elevación) reconstruye los trazados de lo visible.
 
 const BASE = 8;
 const NS = "http://www.w3.org/2000/svg";
@@ -1143,7 +1127,7 @@ function makeEngine({ stage, svg, labelLayer }) {
   let inset = { top: 0, right: 0, bottom: 0, left: 0 };
   let orderKey = ["", "", "", "", ""];
   let lod = 1;
-  let fast = false; // detalle reducido mientras se arrastra la cámara
+  let fast = false;
   let lastMs = 0;
 
   const measure = () => {
@@ -1152,7 +1136,6 @@ function makeEngine({ stage, svg, labelLayer }) {
     svg.setAttribute("viewBox", `0 0 ${size.w} ${size.h}`);
   };
 
-  // Mundo → pantalla (px del escenario).
   const factor = () => cam.scale / BASE;
   const centre = () => [inset.left + (size.w - inset.left - inset.right) / 2, inset.top + (size.h - inset.top - inset.bottom) / 2];
   function toScreen(point) {
@@ -1183,7 +1166,6 @@ function makeEngine({ stage, svg, labelLayer }) {
     objects.delete(id);
   }
 
-  // Cambia la pose de un objeto. `state` (datos que cambian la forma) obliga a reconstruir.
   function pose(id, next) {
     const entry = objects.get(id);
     if (!entry) return;
@@ -1230,8 +1212,6 @@ function makeEngine({ stage, svg, labelLayer }) {
     cam.scale = Math.max(0.25, Math.min(40, cam.scale));
   }
 
-  // Encaje: escala y objetivo para que estos puntos quepan en el área útil.
-  // area: márgenes extra (px) ocupados por planos acoplados; el encuadre se centra en el resto.
   function fit(points, { pad = 24, azimuth = cam.azimuth, elevation = cam.elevation, maxScale = 40, area = {} } = {}) {
     const unit = { origin: [0, 0], scale: 1, azimuth, elevation };
     const flat = points.map((point) => k.iso(point, unit));
@@ -1243,10 +1223,8 @@ function makeEngine({ stage, svg, labelLayer }) {
     const w = size.w - inset.left - inset.right - extra.left - extra.right - pad * 2;
     const h = size.h - inset.top - inset.bottom - extra.top - extra.bottom - pad * 2;
     const scale = Math.min(maxScale, Math.min(w / Math.max(1e-6, Math.max(...xs) - Math.min(...xs)), h / Math.max(1e-6, Math.max(...ys) - Math.min(...ys))));
-    // objetivo: el punto del mundo que debe quedar en el centro del escenario
     const shift = [(extra.left - extra.right) / 2 / (scale * UNIT), (extra.top - extra.bottom) / 2 / (scale * UNIT)];
     const mid = [(Math.max(...xs) + Math.min(...xs)) / 2 - shift[0] * UNIT, (Math.max(...ys) + Math.min(...ys)) / 2 - shift[1] * UNIT];
-    // resolver un punto 3D que proyecte a `mid` en el plano z = media de los puntos
     const zMid = points.reduce((t, p) => t + p[2], 0) / points.length;
     const target = unproject(mid, zMid, unit);
     return { scale, target, azimuth, elevation };
@@ -1254,13 +1232,11 @@ function makeEngine({ stage, svg, labelLayer }) {
 
   function unproject([sx, sy], z, projection) {
     const { sinA, cosA, sinE, cosE, k: kk } = k.cameraOf(projection);
-    // sx = (x sinA − y cosA)kk ; sy = ((x cosA + y sinA) sinE − z cosE)kk
     const a = sx / kk;
     const b = (sy / kk + z * cosE) / sinE;
     return [a * sinA + b * cosA, -a * cosA + b * sinA, z];
   }
 
-  // Pantalla → mundo sobre un plano z (para orbitar alrededor del punto bajo el puntero).
   function screenToWorld([px, py], z = cam.target[2]) {
     const t = k.iso(cam.target, P);
     const f = factor();
@@ -1317,8 +1293,6 @@ function makeEngine({ stage, svg, labelLayer }) {
     }
     buckets.forEach((list, index) => {
       if (index === 0) return;
-      // Orden jerárquico: los miembros de un grupo se ordenan por (nivel, profundidad) y el
-      // grupo entero ocupa la profundidad de su ancla entre los demás objetos.
       const groups = new Map();
       const top = [];
       for (const item of list) {
@@ -1432,7 +1406,6 @@ function makeEngine({ stage, svg, labelLayer }) {
     set lod(value) {
       lod = value;
     },
-    // Activa el modo rápido sólo si el último fotograma fue costoso.
     setFast(on) {
       const next = on && lastMs > 24;
       if (next === fast) return;
@@ -1451,7 +1424,6 @@ return { BASE, lerp, lerp3, ease, add3, sub3, mul3, makeEngine };
 })();
 const __m_examples_rsi_lab_view_ui_mjs = (() => {
 
-// Esqueleto de la interfaz: barra superior, escenario, HUD, inspector y transporte.
 const CHANGE_KEYS = [
   ["contexto", "Contexto"],
   ["pesos", "Pesos"],
@@ -1573,8 +1545,6 @@ return { CHANGE_KEYS, el, buildShell, renderChanged };
 })();
 const __m_examples_rsi_lab_view_shapes_mjs = (() => {
 const k = __m_kit_iso_kit_mjs;
-// Piezas de taller construidas con el kit Anatomy (sólidos sombreados en cuatro tonos,
-// biseles, tornillos, costuras, placas de rótulo). Cada función devuelve marcado SVG para P.
 
 const S = (paths, style) => k.solidSvg(paths, style);
 const L = (d, style) => k.lineSvg(d, style);
@@ -1582,7 +1552,6 @@ const D = (points, style) => k.dotsSvg(points, style);
 const at = (p, P) => k.iso(p, P);
 const byDepth = (points, P) => [...points].sort((a, b) => k.depthOf([a[0], a[1], 0], P) - k.depthOf([b[0], b[1], 0], P));
 
-// Placa base sobre patas, con ranura perimetral, tornillos y regla.
 function basePlate(plan, P, { thick = 12, foot = 6, ruler = true } = {}) {
   const out = [`<path class="iso-halo" d="${k.haloOf(plan, -thick - foot, thick, P)}"/>`];
   for (const [x, y] of byDepth(k.corners(plan, 26), P)) {
@@ -1604,8 +1573,6 @@ function basePlate(plan, P, { thick = 12, foot = 6, ruler = true } = {}) {
   return out.join("");
 }
 
-// Caja de instrumento: cuerpo con bisel, costura, tapa, tornillos en la tapa y placa de rótulo frontal.
-// Rejilla de ventilación: ranuras cerradas en una cara vertical visible (+x o +y).
 function vents(plan, z0, z1, P, count = 5) {
   const [vx, vy] = k.towardViewer(P);
   const out = [];
@@ -1633,7 +1600,6 @@ function vents(plan, z0, z1, P, count = 5) {
 function cabinet(plan, z, h, P, { tone = "mid", lid = 3, lit = false, screws = true, seam = true, className = "", vent = true } = {}) {
   const out = [];
   out.push(`<path class="iso-halo" d="${k.haloOf(k.insetPlan(plan, -2), z, 0.1, P)}" style="filter:blur(6px)"/>`);
-  // zócalo inferior (tono bajo) sobre el que apoya el cuerpo
   const plinth = 2.4;
   out.push(S(k.slabOf(k.insetPlan(plan, 1.6), z, plinth, P, 5), { tone: "lo", crease: "none" }));
   const body = k.slabOf(plan, z + plinth, h - lid - plinth, P, 6, 0.8);
@@ -1650,7 +1616,6 @@ function cabinet(plan, z, h, P, { tone = "mid", lid = 3, lit = false, screws = t
   return out.join("");
 }
 
-// Placa de rótulo sobre una cara superior: tres líneas de «texto» (libres) y dos tornillos.
 function labelPlate(plan, z, P) {
   const out = [S(k.slabOf(plan, z, 0.8, P, 3), { tone: "lo" })];
   out.push(L(k.planOutline(k.insetPlan(plan, 1.4), z + 0.8, P, 3), { tone: "faint" }));
@@ -1664,7 +1629,6 @@ function labelPlate(plan, z, P) {
   return out.join("");
 }
 
-// Lámpara de estado: base, collar y cúpula; `state` = "ok" | "fail" | "off".
 function lamp(x, y, z, P, state = "off", r = 3.2) {
   const out = [S(k.cylinder(x, y, r + 1.4, z, 1.6, P, 24), { tone: "lo" })];
   out.push(S(k.cylinder(x, y, r, z + 1.6, 2.2, P, 24, 0.4), { tone: "mid" }));
@@ -1672,7 +1636,6 @@ function lamp(x, y, z, P, state = "off", r = 3.2) {
   return out.join("");
 }
 
-// Indicador de cuadrante con aguja (valor 0..1 sobre 270°).
 function gauge(x, y, z, R, P, value = 0, { tone = "hi", needleClass = "needle" } = {}) {
   const out = [S(k.cylinder(x, y, R + 1.2, z, 2, P, 48), { tone: "lo" })];
   out.push(S(k.cylinder(x, y, R, z + 2, 4, P, 64, 0.6), { tone, crease: "lo" }));
@@ -1689,7 +1652,6 @@ function gauge(x, y, z, R, P, value = 0, { tone = "hi", needleClass = "needle" }
   return out.join("");
 }
 
-// Perilla moleteada con puntero.
 function knob(x, y, z, r, P, angle = 0) {
   const out = [S(k.cylinder(x, y, r, z, 3.4, P, 32), { tone: "mid" })];
   out.push(L(k.knurl(x, y, r, z, z + 3.4, 36, P), { tone: "lo" }));
@@ -1697,7 +1659,6 @@ function knob(x, y, z, r, P, angle = 0) {
   return out.join("");
 }
 
-// Cartucho (versión de código): cuerpo, agarre y ventana de etiqueta.
 function cartridge(plan, z, h, P, { tone = "hi", lit = false, className = "" } = {}) {
   const out = [S(k.slabOf(plan, z, h, P, 3, 0.5), { tone, lit, className, inner: L(k.sideSeam(plan, z + h * 0.45, P, 3), { tone: "faint" }) })];
   const grip = { x: plan.x + plan.w * 0.25, y: plan.y + plan.d * 0.3, w: plan.w * 0.5, d: plan.d * 0.4, r: 1 };
@@ -1705,7 +1666,6 @@ function cartridge(plan, z, h, P, { tone = "hi", lit = false, className = "" } =
   return out.join("");
 }
 
-// Bandeja de bastidor: fondo y paredes. part = "back" (fondo + paredes traseras) | "front" (paredes delanteras).
 function tray(plan, z, P, part = "back", { wall = 2.2, h = 5, tone = "mid", className = "" } = {}) {
   const out = [];
   const view = k.towardViewer(P);
@@ -1727,14 +1687,12 @@ function tray(plan, z, P, part = "back", { wall = 2.2, h = 5, tone = "mid", clas
   return out.join("");
 }
 
-// Tarjeta de token: losa fina con su símbolo grabado encima.
 function tokenCard(plan, z, P, text, { lit = false, className = "card" } = {}) {
   const out = [S(k.slabOf(plan, z, 1.6, P, 3, 0.4), { tone: "hi", lit, className })];
   if (text !== undefined) out.push(k.faceTextSvg(k.topMatrix([plan.x + plan.w / 2, plan.y + plan.d * 0.62], z + 1.6, P, "x"), text, { size: Math.min(plan.d * 0.42, 4.2), tone: "hi", anchor: "middle" }));
   return out.join("");
 }
 
-// Canal en el suelo para una ruta (dos bordes tenues).
 function channel(points, z, P) {
   return L(k.onTop(points, z, P), { tone: "faint" });
 }
@@ -1745,14 +1703,11 @@ return { basePlate, cabinet, labelPlate, lamp, gauge, knob, cartridge, tray, tok
 const __m_examples_rsi_lab_view_lab_mjs = (() => {
 const k = __m_kit_iso_kit_mjs;
 const { basePlate, cabinet, labelPlate, lamp, gauge, knob, cartridge, S, L, D, at } = __m_examples_rsi_lab_view_shapes_mjs;
-// El laboratorio a escala «laboratorio»: bancos, módulos, rutas de los tres bucles y fichas
-// de información para el inspector. Representación CONCEPTUAL: posiciones sin significado físico.
 
 
 const MAIN = { x: -320, y: -262, w: 640, d: 524, r: 16 };
 const BENCH = { x: 362, y: -262, w: 262, d: 524, r: 14 };
 
-// Planos de los módulos (x, y, ancho, fondo) y altura.
 const M = {
   modelo: { plan: { x: -305, y: -247, w: 200, d: 110, r: 5 }, h: 84, name: "Modelo θ" },
   archivo: { plan: { x: -85, y: -247, w: 150, d: 72, r: 4 }, h: 18, name: "Archivo de versiones" },
@@ -1776,7 +1731,6 @@ const boxOf = (id, extra = 0) => {
   return k.boxCorners(k.insetPlan(plan, -extra), 0, h + extra);
 };
 
-// Puertos en el suelo (z = 0.4) para las rutas de los bucles.
 const port = (id, side, share = 0.5) => {
   const { plan } = M[id];
   if (side === "+x") return [plan.x + plan.w + 6, plan.y + plan.d * share, 0.4];
@@ -1828,9 +1782,7 @@ function pointAlong(points, s) {
   return points[points.length - 1];
 }
 
-// ---------- Constructores de módulos ----------
 function buildModeloShell(P, state = {}) {
-  // Gabinete abierto con postes, techo y paneles de vidrio (corte): la parte trasera.
   const { plan, h } = M.modelo;
   const out = [`<path class="iso-halo" d="${k.haloOf(plan, 0, 0.1, P)}" style="filter:blur(8px)"/>`];
   out.push(S(k.slabOf(plan, 0, 6, P, 6, 1), { tone: "mid", inner: L(k.sideSeam(plan, 3, P, 6), { tone: "faint" }) }));
@@ -1838,10 +1790,8 @@ function buildModeloShell(P, state = {}) {
   const view = k.towardViewer(P);
   const back = posts.filter(([x, y]) => (x - (plan.x + plan.w / 2)) * view[0] + (y - (plan.y + plan.d / 2)) * view[1] < 0);
   for (const [x, y] of back) out.push(S(k.slabOf({ x: x - 3, y: y - 3, w: 6, d: 6, r: 1 }, 6, h - 10, P, 2, 0.4), { tone: "mid" }));
-  // panel trasero (paredes −x y −y) como placas finas con nervios
   out.push(S(k.slabOf({ x: plan.x + 2, y: plan.y + 2, w: plan.w - 4, d: 2.4, r: 0.6 }, 6, h - 10, P, 2), { tone: "lo" }));
   out.push(S(k.slabOf({ x: plan.x + 2, y: plan.y + 2, w: 2.4, d: plan.d - 4, r: 0.6 }, 6, h - 10, P, 2), { tone: "lo" }));
-  // guías de bandejas en la pared trasera
   for (const z of [16, 32, 48, 64]) out.push(L(k.segment([plan.x + 4.4, plan.y + 4.4, z], [plan.x + plan.w - 4, plan.y + 4.4, z], P) + k.segment([plan.x + 4.4, plan.y + 4.4, z], [plan.x + 4.4, plan.y + plan.d - 4, z], P), { tone: "lo" }));
   return out.join("");
 }
@@ -1852,7 +1802,6 @@ function buildModeloFront(P, state = {}) {
   const view = k.towardViewer(P);
   const front = posts.filter(([x, y]) => (x - (plan.x + plan.w / 2)) * view[0] + (y - (plan.y + plan.d / 2)) * view[1] >= 0);
   for (const [x, y] of front) out.push(S(k.slabOf({ x: x - 3, y: y - 3, w: 6, d: 6, r: 1 }, 6, h - 10, P, 2, 0.4), { tone: "mid" }));
-  // marcos del vidrio en las caras frontales (+x, +y)
   const z0 = 6;
   const z1 = h - 4;
   const fx = plan.x + plan.w - 2;
@@ -1862,7 +1811,6 @@ function buildModeloFront(P, state = {}) {
   const poly = (pts) => `M${pts.map((p) => p.map((v) => v.toFixed(1)).join(" ")).join("L")}Z`;
   out.push(`<path class="glass" d="${poly(glassX)}"/><path class="glass" d="${poly(glassY)}"/>`);
   out.push(L(k.segment([fx, plan.y + 6, z0 + (z1 - z0) * 0.5], [fx, fy - 4, z0 + (z1 - z0) * 0.5], P) + k.segment([plan.x + 6, fy, z0 + (z1 - z0) * 0.5], [fx - 4, fy, z0 + (z1 - z0) * 0.5], P), { tone: "faint" }));
-  // techo
   out.push(S(k.slabOf(k.insetPlan(plan, -1), h - 10, 6, P, 6, 1), { tone: "mid" }));
   out.push(D(k.corners(plan, 6).map(([x, y]) => at([x, y, h - 4], P)), { size: 0.5 }));
   out.push(labelPlate({ x: plan.x + plan.w - 52, y: plan.y + 14, w: 40, d: 18, r: 1.5 }, h - 4, P));
@@ -1872,7 +1820,6 @@ function buildModeloFront(P, state = {}) {
 function buildDatos(P, state = {}) {
   const { plan, h } = M.datos;
   const out = [cabinet(plan, 0, h, P, { tone: "mid" })];
-  // cuatro cajones en la cara +x: desarrollo, validación, prueba (sellada), auditoría
   const names = ["dev", "valid", "test", "audit"];
   const x = plan.x + plan.w;
   const span = (plan.d - 12) / 4;
@@ -1884,7 +1831,6 @@ function buildDatos(P, state = {}) {
     out.push(S(k.slabOf(front, 7, h - 18, P, 2, 0.4), { tone: name === "test" ? "lo" : "mid", className: `drawer d-${name}` }));
     out.push(S(k.slabOf({ x: front.x + 3, y: y0 + span / 2 - 5, w: 2, d: 10, r: 0.8 }, 20, 4, P, 2), { tone: "mid" }));
     if (name === "test") {
-      // candado: precinto de la prueba reservada
       out.push(S(k.slabOf({ x: front.x + 3, y: y0 + span / 2 - 3, w: 3, d: 6, r: 1 }, 30, 7, P, 2), { tone: "hi" }));
       out.push(L(k.sideRing([front.x + 4.5, y0 + span / 2, 38.5], 2, "x", P, 16), { tone: "mid" }));
     }
@@ -1895,7 +1841,6 @@ function buildDatos(P, state = {}) {
 function buildContexto(P, state = {}) {
   const { plan, h } = M.contexto;
   const out = [S(k.slabOf(plan, 0, 4, P, 4, 0.8), { tone: "mid", className: "ctx-base" })];
-  // diez ranuras (máximo 10 posiciones) y una regla de presupuesto en el borde frontal
   const slot = (plan.w - 14) / 10;
   for (let i = 0; i < 10; i++) out.push(L(k.planOutline({ x: plan.x + 7 + i * slot + 1, y: plan.y + 6, w: slot - 2, d: plan.d - 16, r: 1 }, 4, P, 3), { tone: i < (state.used ?? 6) ? "lo" : "faint" }));
   const strip = { x: plan.x + 6, y: plan.y + plan.d - 8, w: plan.w - 12, d: 5, r: 0.8 };
@@ -1912,7 +1857,6 @@ function buildContexto(P, state = {}) {
 function buildHerramientas(P) {
   const { plan, h } = M.herramientas;
   const out = [cabinet(plan, 0, h, P)];
-  // ejecutor de pruebas: cuatro lámparas y una perilla; lector de registros: rodillo
   for (let i = 0; i < 4; i++) out.push(lamp(plan.x + 16 + i * 12, plan.y + 18, h, P, "off", 3));
   out.push(knob(plan.x + plan.w - 16, plan.y + 18, h, 5, P, 0.6));
   out.push(S(k.slabOf({ x: plan.x + 10, y: plan.y + 36, w: plan.w - 20, d: 22, r: 2 }, h, 3, P, 3, 0.4), { tone: "lo" }));
@@ -1923,17 +1867,14 @@ function buildHerramientas(P) {
 function buildEntorno(P, state = {}) {
   const { plan, h } = M.entorno;
   const out = [S(k.slabOf(plan, 0, 6, P, 5, 1), { tone: "mid" })];
-  // recinto aislado (sandbox): vidrio sobre bastidor
   const inner = k.insetPlan(plan, 6);
   out.push(S(k.slabOf(inner, 6, 2, P, 4), { tone: "lo" }));
   out.push(`<path class="glass" d="${k.slabOf(inner, 8, h - 10, P, 3).fill}"/>`);
   out.push(L(k.slabOf(inner, 8, h - 10, P, 3).outline, { tone: "lo" }));
   out.push(S(k.slabOf(k.insetPlan(plan, 4), h - 2, 2, P, 4, 0.6), { tone: "mid" }));
-  // medidor de presupuesto
   const meter = { x: plan.x + 8, y: plan.y + plan.d - 4.5, w: plan.w - 16, d: 3, r: 0.6 };
   out.push(S(k.slabOf(meter, 6, 0.6, P, 2), { tone: "lo", crease: "none" }));
   if (state.budget !== undefined) out.push(`<path class="bar" data-r="${state.budget > 0.95 ? "bad" : "g"}" d="${k.planOutline({ x: meter.x + 0.5, y: meter.y + 0.6, w: (meter.w - 1) * Math.min(1, state.budget), d: 1.8, r: 0.3 }, 6.7, P, 2)}"/>`);
-  // planificador de trabajos (bandejas de máquinas)
   for (let i = 0; i < 5; i++) out.push(S(k.slabOf({ x: inner.x + 8 + i * 18, y: inner.y + 10, w: 12, d: 22, r: 1.2 }, 8, 6 + (i % 3) * 3, P, 2, 0.3), { tone: "mid" }));
   return out.join("");
 }
@@ -1941,7 +1882,6 @@ function buildEntorno(P, state = {}) {
 function buildCodigo(P, state = {}) {
   const { plan, h } = M.codigo;
   const out = [cabinet(plan, 0, h, P)];
-  // ranura del gestor de contexto (cartucho) y ranura de estrategia
   const slotA = { x: plan.x + 14, y: plan.y + 16, w: 40, d: 22, r: 2 };
   const slotB = { x: plan.x + 66, y: plan.y + 16, w: 40, d: 22, r: 2 };
   out.push(L(k.planOutline(slotA, h, P, 3) + k.planOutline(slotB, h, P, 3), { tone: "lo" }));
@@ -1953,7 +1893,6 @@ function buildCodigo(P, state = {}) {
 function buildProponente(P, state = {}) {
   const { plan, h } = M.proponente;
   const out = [cabinet(plan, 0, h, P)];
-  // atril de análisis: placa inclinada (registros) y ranura del analista
   out.push(S(k.slabOf({ x: plan.x + 10, y: plan.y + 10, w: 50, d: 34, r: 2 }, h, 2, P, 3, 0.4), { tone: "lo" }));
   for (let i = 0; i < 5; i++) out.push(L(k.lineOnTop([plan.x + 14, plan.y + 16 + i * 5.5], [plan.x + 56 - (i % 2) * 10, plan.y + 16 + i * 5.5], h + 2, P), { tone: "lo", free: true }));
   out.push(L(k.planOutline({ x: plan.x + 70, y: plan.y + 14, w: 30, d: 20, r: 2 }, h, P, 3), { tone: "lo" }));
@@ -1974,7 +1913,6 @@ function buildEvaluador(P, state = {}) {
 function buildArchivo(P, state = {}) {
   const { plan, h } = M.archivo;
   const out = [S(k.slabOf(plan, 0, h - 8, P, 5, 1), { tone: "mid" })];
-  // riel con ranuras para cartuchos de versión
   out.push(S(k.slabOf(k.insetPlan(plan, 4), h - 8, 3, P, 4, 0.5), { tone: "lo" }));
   const slots = 8;
   for (let i = 0; i < slots; i++) out.push(L(k.planOutline({ x: plan.x + 10 + i * 18, y: plan.y + 12, w: 12, d: plan.d - 24, r: 1 }, h - 5, P, 2), { tone: "faint" }));
@@ -1996,7 +1934,6 @@ function buildRoute(id) {
     const route = ROUTES[id];
     const d = k.onTop(route.points.map(([x, y]) => [x, y]), 0.4, P);
     const cls = state.off ? "route off" : "route";
-    // terminales: cada ruta empieza y termina en un puerto (anillo + punto), nunca en el aire
     const ends = [route.points[0], route.points[route.points.length - 1]].map(([x, y]) => {
       const [sx, sy] = k.iso([x, y, 0.4], P);
       const r = 2.2 * k.cameraOf(P).k;
@@ -2069,28 +2006,20 @@ return { MAIN, BENCH, M, centreOf, boxOf, ROUTES, pointAlong, INFO, buildLab, LA
 const __m_examples_rsi_lab_view_matrix_mjs = (() => {
 const k = __m_kit_iso_kit_mjs;
 const { add3, mul3 } = __m_examples_rsi_lab_view_engine_mjs;
-// Matrices como superficies inspeccionables y cubos de producto matricial.
-// Codificación: celda llena = valor positivo, celda con borde = negativo, intensidad = |valor|/máx.
-// Celdas enmascaradas (−∞) en gris con un trazo diagonal. Todo en coordenadas del mundo.
 
 
 const r1 = (v) => Math.round(v * 10) / 10;
 const pathOf = (pts) => `M${pts.map(([x, y]) => `${r1(x)} ${r1(y)}`).join("L")}Z`;
 
-// frame: { o: esquina de la celda (0,0), u: paso de columna, v: paso de fila } (vectores del mundo)
 const cellCorner = (frame, i, j) => add3(add3(frame.o, mul3(frame.u, j)), mul3(frame.v, i));
 const cellCentre = (frame, i, j) => add3(add3(frame.o, mul3(frame.u, j + 0.5)), mul3(frame.v, i + 0.5));
 const planeCentre = (frame, rows, cols) => add3(add3(frame.o, mul3(frame.u, cols / 2)), mul3(frame.v, rows / 2));
 
-// Construye el marcado de una matriz.
-// spec: { rows, cols, values (matriz o null), role, frame, scaleMax, highlight: Set("i,j"), rowHi, colHi,
-//         dimCells: Set, masked: (i,j)=>bool, plate: true, title }
 function matrixSvg(P, spec) {
   const { rows, cols, frame, role = "input", values } = spec;
   const gap = spec.gap ?? 0.08;
   const project = (point) => k.iso(point, P);
   const out = [];
-  // placa: paralelogramo con un canto que sugiere grosor
   const pad = spec.pad ?? 0.35;
   const o = add3(add3(frame.o, mul3(frame.u, -pad)), mul3(frame.v, -pad));
   const U = mul3(frame.u, cols + 2 * pad);
@@ -2140,20 +2069,17 @@ function matrixSvg(P, spec) {
   return out.join("");
 }
 
-// Cubo del producto C = A·B (n×k · k×m). Ejes: k → +x, j → −y, i → −z.
-// Devuelve los marcos de A (cara +y), B (cara superior) y C (cara +x) y la geometría del volumen.
 function cubeFrames(origin, n, kk, m, c, faceGap = 0.6) {
-  const [x0, y0, z0] = origin; // esquina frontal-superior: x = x0 + k·c, y = y0 − j·c, z = z0 − i·c
+  const [x0, y0, z0] = origin;
   return {
-    A: { o: [x0, y0 + faceGap, z0], u: [c, 0, 0], v: [0, 0, -c] }, // filas i hacia abajo, columnas k a lo largo de +x
-    B: { o: [x0, y0, z0 + faceGap], u: [0, -c, 0], v: [c, 0, 0] }, // filas k a lo largo de +x, columnas j hacia −y
-    C: { o: [x0 + kk * c + faceGap, y0, z0], u: [0, -c, 0], v: [0, 0, -c] }, // filas i, columnas j
+    A: { o: [x0, y0 + faceGap, z0], u: [c, 0, 0], v: [0, 0, -c] },
+    B: { o: [x0, y0, z0 + faceGap], u: [0, -c, 0], v: [c, 0, 0] },
+    C: { o: [x0 + kk * c + faceGap, y0, z0], u: [0, -c, 0], v: [0, 0, -c] },
     volume: { x0, y0, z0, X: kk * c, Y: m * c, Z: n * c },
     point: (i, j, t) => [x0 + (t + 0.5) * c, y0 - (j + 0.5) * c, z0 - (i + 0.5) * c],
   };
 }
 
-// Aristas visibles del volumen (líneas tenues) y, si hay celda elegida, la fila de productos.
 function cubeSvg(P, spec) {
   const { frames, n, kk, m } = spec;
   const { x0, y0, z0, X, Y, Z } = frames.volume;
@@ -2177,7 +2103,6 @@ function cubeSvg(P, spec) {
       const value = products[t];
       const radius = (0.35 + 0.65 * Math.abs(value) / max) * spec.c * 0.32 * k.cameraOf(P).k;
       line.push(`<circle class="prod ${value < 0 ? "neg" : "pos"}${shown ? "" : " pending"}" data-prod="${t}" cx="${r1(sx)}" cy="${r1(sy)}" r="${r1(radius)}"/>`);
-      // proyecciones: de A[i,t] y de B[t,j] hacia el punto del producto
       if (shown) {
         const fromA = add3(cellCentre(frames.A, i, t), [0, 0, 0]);
         const fromB = cellCentre(frames.B, t, j);
@@ -2199,9 +2124,6 @@ const k = __m_kit_iso_kit_mjs;
 const { matrixSvg, planeCentre } = __m_examples_rsi_lab_view_matrix_mjs;
 const { tray, tokenCard, S, L, D, at } = __m_examples_rsi_lab_view_shapes_mjs;
 const { M } = __m_examples_rsi_lab_view_lab_mjs;
-// Escala «modelo»: el Transformer como bastidor de bandejas dentro del gabinete del modelo.
-// Al explotar, las bandejas suben (la identidad de cada objeto se conserva: mismo id, se traslada).
-// Contenido real: cada matriz muestra los valores calculados por model/transformer.mjs.
 
 
 
@@ -2210,19 +2132,16 @@ const plan0 = M.modelo.plan;
 const TRAY = { x: plan0.x + 7, y: plan0.y + 7, w: plan0.w - 14, d: plan0.d - 14, r: 2 };
 const TRAYS = ["emb", "b0", "b1", "out"];
 const TRAY_NAMES = { emb: "Embeddings y posición", b0: "Bloque 1", b1: "Bloque 2", out: "Salida" };
-const TRAY_Z = { emb: 10, b0: 26, b1: 42, out: 58 }; // dentro del gabinete
-const LIFT = { emb: 110, b0: 190, b1: 270, out: 350 }; // altura explosionada del fondo de cada bandeja
+const TRAY_Z = { emb: 10, b0: 26, b1: 42, out: 58 };
+const LIFT = { emb: 110, b0: 190, b1: 270, out: 350 };
 const liftOf = (id, share) => [0, 0, (LIFT[id] - TRAY_Z[id]) * share];
 
 const T = TRAY;
-// Coordenadas locales de la bandeja → mundo (z = fondo de la bandeja en el gabinete).
 const W = (id, x, y, dz = 0) => [T.x + x, T.y + y, TRAY_Z[id] + 1.4 + dz];
 
-// Marco horizontal para una matriz tendida sobre la bandeja: filas a lo largo de +x, columnas a lo largo de +y.
 const flatFrame = (id, x, y, dz, c, { rowsAlong = "x" } = {}) =>
   rowsAlong === "x" ? { o: W(id, x, y, dz), u: [0, c, 0], v: [c, 0, 0] } : { o: W(id, x, y, dz), u: [c, 0, 0], v: [0, c, 0] };
 
-// Posiciones de piezas dentro de las bandejas de bloque.
 const BLOCK = {
   bus: { x: 6, y: 80, w: 172, d: 6 },
   ln1: { x: 14, y: 48, w: 10, d: 24, h: 6 },
@@ -2246,7 +2165,6 @@ function block(id) {
       const plan = { x: T.x + b.x, y: T.y + b.y, w: b.w, d: b.d, r: 1.2 };
       return `<g${role ? ` data-role="${role}"` : ""}>${S(k.slabOf(plan, z, b.h, P, 3, 0.4), { tone })}</g>`;
     };
-    // bus residual (flujo de activaciones)
     const bus = { x: T.x + BLOCK.bus.x, y: T.y + BLOCK.bus.y, w: BLOCK.bus.w, d: BLOCK.bus.d, r: 1 };
     parts.push(`<g data-role="in">${S(k.slabOf(bus, z, 1.6, P, 3, 0.4), { tone: "mid" })}</g>`);
     parts.push(L(k.lineOnTop([bus.x + 2, bus.y + bus.d / 2], [bus.x + bus.w - 2, bus.y + bus.d / 2], z + 1.6, P), { tone: "lo" }));
@@ -2290,9 +2208,8 @@ function buildRack(engine, store) {
     add({ id: `tray-${id}`, layer: 2, level: LEVEL[id], anchor: [T.x + T.w / 2, T.y + T.d / 2, TRAY_Z[id]], build: (P) => tray(T, TRAY_Z[id], P, "back"), pose: { visible: false } });
     add({ id: `tray-${id}-front`, layer: 2, level: LEVEL[id] + 3, anchor: [T.x + T.w / 2, T.y + T.d / 2, TRAY_Z[id] + 3], build: (P) => tray(T, TRAY_Z[id], P, "front"), parent: `tray-${id}`, pose: { visible: false }, info: `tray-${id}` });
   }
-  // ---- bandeja de embeddings ----
-  const E = { x: 6, y: 6, c: 4 }; // tabla E: 16 filas (vocabulario) a lo largo de +x, 8 columnas a lo largo de +y
-  const Pp = { x: 6, y: 24, c: 4 }; // tabla P: 10 filas (se dibuja en y = Pp.y + 18)
+  const E = { x: 6, y: 6, c: 4 };
+  const Pp = { x: 6, y: 24, c: 4 };
   const X0 = { x: 104, y: 6, c: 4 };
   add({ id: "mx-E", layer: 2, heavy: true, anchor: planeCentre(flatFrame("emb", E.x, E.y, 0.4, E.c), 16, 8), parent: "tray-emb", role: "w", pose: { visible: false, state: {} }, info: "mx-E",
     build: (P, s = {}) => matrixSvg(P, { rows: 16, cols: 8, frame: flatFrame("emb", E.x, E.y, 0.4, E.c), role: "w", values: store.params0.E, highlight: s.highlight, rowHi: s.rowHi, normal: [0, 0, -0.5] }) });
@@ -2304,7 +2221,6 @@ function buildRack(engine, store) {
       const n = tr.X0.length;
       return matrixSvg(P, { rows: n, cols: 8, frame: flatFrame("emb", X0.x, X0.y, 0.4, X0.c), role: "in", values: tr.X0, pending: s.upto !== undefined ? (i) => i >= s.upto : null, rowHi: s.rowHi, normal: [0, 0, -0.5] });
     } });
-  // tarjetas de token (en la bandeja de embeddings, carril delantero)
   for (let i = 0; i < 10; i++) {
     add({ id: `card${i}`, layer: 2, anchor: [T.x + 107 + i * 8, T.y + 81, TRAY_Z.emb + 2], parent: "tray-emb", role: "in", pose: { visible: false, state: {} }, info: "card",
       build: (P, s = {}) => {
@@ -2314,7 +2230,6 @@ function buildRack(engine, store) {
         return `<g data-role="in">${tokenCard(plan, TRAY_Z.emb + 1.4, P, s.showId ? String(ids[i]) : store.VOCAB[ids[i]], { lit: s.lit })}</g>`;
       } });
   }
-  // ---- bandejas de bloque ----
   for (const [b, id] of [[0, "b0"], [1, "b1"]]) {
     add({ id: `blk-${id}`, layer: 2, anchor: [T.x + 90, T.y + 60, TRAY_Z[id] + 4], parent: `tray-${id}`, pose: { visible: false }, info: `blk`, build: block(id) });
     for (const h of [0, 1]) {
@@ -2329,7 +2244,6 @@ function buildRack(engine, store) {
       build: (P) => matrixSvg(P, { rows: 8, cols: 32, frame: flatFrame(id, BLOCK.w1.x, BLOCK.w1.y, 3, BLOCK.w1.c), role: "w", values: p.W1, normal: [0, 0, -0.5], gap: 0.06 }) });
     add({ id: `mx-${id}-w2`, layer: 2, heavy: true, anchor: planeCentre(flatFrame(id, BLOCK.w2.x, BLOCK.w2.y, 3, BLOCK.w2.c, { rowsAlong: "y" }), 32, 8), parent: `tray-${id}`, role: "w", pose: { visible: false, state: {} }, info: "mx-w2",
       build: (P) => matrixSvg(P, { rows: 32, cols: 8, frame: flatFrame(id, BLOCK.w2.x, BLOCK.w2.y, 3, BLOCK.w2.c, { rowsAlong: "y" }), role: "w", values: p.W2, normal: [0, 0, -0.5], gap: 0.06 }) });
-    // estado del flujo residual en la última posición (vector de 8) sobre el bus: X → H → Y
     add({ id: `vec-${id}`, layer: 2, anchor: W(id, 150, 70, 3), parent: `tray-${id}`, role: "in", pose: { visible: false, state: {} }, info: "resid",
       build: (P, s = {}) => {
         const tr = blockOf();
@@ -2339,22 +2253,19 @@ function buildRack(engine, store) {
         return matrixSvg(P, { rows: n, cols: 8, frame: flatFrame(id, s.x ?? 140, 56, 3, 1.4), role: "in", values: vec, rowHi: n - 1, normal: [0, 0, -0.5] });
       } });
   }
-  // ---- bandeja de salida ----
   add({ id: "out-base", layer: 2, anchor: [T.x + 90, T.y + 50, TRAY_Z.out + 3], parent: "tray-out", pose: { visible: false }, info: "out",
     build: (P) => {
       const z = TRAY_Z.out + 1.4;
       const parts = [];
-      parts.push(S(k.slabOf({ x: T.x + 12, y: T.y + 30, w: 10, d: 24, r: 1.2 }, z, 6, P, 3, 0.4), { tone: "mid" })); // LN_f
-      parts.push(S(k.slabOf({ x: T.x + 70, y: T.y + 6, w: 96, d: 8, r: 1 }, z, 1.2, P, 3), { tone: "lo" })); // regla de logits
-      parts.push(S(k.slabOf({ x: T.x + 70, y: T.y + 46, w: 96, d: 8, r: 1 }, z, 1.2, P, 3), { tone: "lo" })); // regla de probabilidades
+      parts.push(S(k.slabOf({ x: T.x + 12, y: T.y + 30, w: 10, d: 24, r: 1.2 }, z, 6, P, 3, 0.4), { tone: "mid" }));
+      parts.push(S(k.slabOf({ x: T.x + 70, y: T.y + 6, w: 96, d: 8, r: 1 }, z, 1.2, P, 3), { tone: "lo" }));
+      parts.push(S(k.slabOf({ x: T.x + 70, y: T.y + 46, w: 96, d: 8, r: 1 }, z, 1.2, P, 3), { tone: "lo" }));
       return parts.join("");
     } });
   add({ id: "mx-Wu", layer: 2, heavy: true, anchor: planeCentre(flatFrame("out", 30, 18, 3, 1.6), 8, 16), parent: "tray-out", role: "w", pose: { visible: false, state: {} }, info: "mx-Wu",
     build: (P, s = {}) => matrixSvg(P, { rows: 8, cols: 16, frame: flatFrame("out", 32, 18, 3, 1.6), role: s.role || "w", values: s.values || store.params0.Wu, highlight: s.highlight, colHi: s.colHi, normal: [0, 0, -0.5] }) });
-  // gradiente de W_U flotando sobre la superficie de pesos (naranja)
   add({ id: "mx-gWu", layer: 2, heavy: true, level: LEVEL.out + 2, anchor: planeCentre(flatFrame("out", 32, 18, 12, 1.6), 8, 16), parent: "tray-out", role: "g", pose: { visible: false, state: {} }, info: "mx-gWu",
     build: (P, s = {}) => (s.values ? matrixSvg(P, { rows: 8, cols: 16, frame: flatFrame("out", 32, 18, 12, 1.6), role: "g", values: s.values, normal: [0, 0, -0.4] }) : "") });
-  // barras de logits y probabilidades (16 símbolos) + tarjeta del token elegido
   add({ id: "bars-out", layer: 2, anchor: [T.x + 118, T.y + 30, TRAY_Z.out + 4], parent: "tray-out", pose: { visible: false, state: {} }, info: "bars-out",
     build: (P, s = {}) => {
       const z = TRAY_Z.out + 2.6;
@@ -2386,8 +2297,6 @@ return { TRAY, TRAYS, TRAY_NAMES, TRAY_Z, LIFT, liftOf, flatFrame, BLOCK, LEVEL,
 })();
 const __m_examples_rsi_lab_view_helpers_mjs = (() => {
 
-// Utilidades de presentación compartidas por los capítulos: números, fórmulas, procedencia,
-// tablas y gráficos SVG 2D (planos legibles).
 const f2 = (v) => (v === -Infinity ? "−∞" : v === Infinity ? "∞" : Number.isNaN(v) ? "NaN" : (v < 0 ? "−" : "") + Math.abs(v).toFixed(2));
 const f3 = (v) => (v === -Infinity ? "−∞" : (v < 0 ? "−" : "") + Math.abs(v).toFixed(3));
 const pct = (v) => `${(v * 100).toFixed(0)} %`;
@@ -2403,16 +2312,14 @@ const PROV = {
 };
 const prov = (kind, extra = "") => `<span class="prov" data-p="${kind}" title="Procedencia: ${PROV[kind]}">${PROV[kind]}${extra ? ` · ${extra}` : ""}</span>`;
 
-// Término de fórmula vinculado a un objeto de la escena (data-ref) y a un rol de color.
 const T = (text, role = "", ref = "", on = false) => `<span class="t ${role}${on ? " on" : ""}"${ref ? ` data-ref="${ref}"` : ""}>${text}</span>`;
 
 function table(head, rows, { on = -1 } = {}) {
   return `<table class="tbl"><thead><tr>${head.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((row, i) => `<tr${i === on ? ' class="on"' : ""}>${row.map((c) => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
 }
 
-// Gráfico de líneas: series = [{ values, cls, label }]; marcador opcional en x = cursor.
 function lineChart(series, { w = 360, h = 150, xLabel = "", yLabel = "", yMax, yMin = 0, cursor, marks = [], xTicks } = {}) {
-  const pad = { l: 34, r: 8, t: 8, b: 24 };
+  const pad = { l: 34, r: 8, t: yLabel ? 18 : 8, b: 24 };
   const n = Math.max(...series.map((s) => s.values.length));
   const all = series.flatMap((s) => s.values.filter(Number.isFinite));
   const top = yMax ?? Math.max(1e-9, ...all) * 1.05;
@@ -2426,7 +2333,7 @@ function lineChart(series, { w = 360, h = 150, xLabel = "", yLabel = "", yMax, y
   out.push(`<path class="ax" d="M${pad.l} ${pad.t}V${h - pad.b}H${w - pad.r}"/>`);
   const ticks = xTicks || [0, Math.floor((n - 1) / 2), n - 1];
   for (const t of ticks) out.push(`<text x="${X(t)}" y="${h - pad.b + 13}" text-anchor="middle">${t}</text>`);
-  out.push(`<text x="${w - pad.r}" y="${h - 2}" text-anchor="end">${esc(xLabel)}</text><text x="2" y="${pad.t - 1}" text-anchor="start">${esc(yLabel)}</text>`);
+  out.push(`<text x="${w - pad.r}" y="${h - 2}" text-anchor="end">${esc(xLabel)}</text><text x="2" y="${Math.max(8, pad.t - 9)}" text-anchor="start">${esc(yLabel)}</text>`);
   for (const s of series) {
     const pts = s.values.map((v, i) => (Number.isFinite(v) ? `${X(i).toFixed(1)},${Y(v).toFixed(1)}` : null)).filter(Boolean);
     out.push(`<polyline class="ln ${s.cls}" points="${pts.join(" ")}"/>`);
@@ -2438,7 +2345,6 @@ function lineChart(series, { w = 360, h = 150, xLabel = "", yLabel = "", yMax, y
   return out.join("");
 }
 
-// Barras horizontales simples (por ejemplo, probabilidades de una política).
 function barList(items, { max = 1, w = 300 } = {}) {
   return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:3px 8px;align-items:center;font-size:11.5px">${items
     .map((it) => `<span style="color:var(--ink-2)">${esc(it.label)}</span><span style="height:8px;background:#1b1d22;border-radius:2px;position:relative"><span style="position:absolute;left:0;top:0;bottom:0;width:${Math.max(0, Math.min(1, it.value / max)) * 100}%;background:var(--c-${it.role || "in"});border-radius:2px;opacity:${it.dim ? 0.4 : 1}"></span></span><span class="kv">${it.text ?? it.value.toFixed(2)}</span>`)
@@ -2452,9 +2358,6 @@ const { matrixSvg, cubeFrames, cubeSvg, planeCentre, cellCentre } = __m_examples
 const { lerp3, add3, mul3 } = __m_examples_rsi_lab_view_engine_mjs;
 const { TRAY, TRAY_Z } = __m_examples_rsi_lab_view_rack_mjs;
 const { f2, f3 } = __m_examples_rsi_lab_view_helpers_mjs;
-// Escala «tensores»: una cabeza abierta. Tres cubos de producto matricial:
-//   1) [Q K V] = X · [W_Q W_K W_V]     2) S = Q · Kᵀ     3) Z = A · V
-// Los planos son objetos con identidad propia que se trasladan entre cubos (K se transpone).
 
 
 
@@ -2471,11 +2374,9 @@ function cubeLayout(n) {
   };
 }
 
-// Submarco: columnas [from, from+count) de un marco.
 const sub = (frame, from) => ({ o: add3(frame.o, mul3(frame.u, from)), u: frame.u, v: frame.v });
 const lerpFrame = (a, b, t) => ({ o: lerp3(a.o, b.o, t), u: lerp3(a.u, b.u, t), v: lerp3(a.v, b.v, t) });
 
-// Posiciones de cada plano en cada fase.
 function framesFor(n) {
   const L = cubeLayout(n);
   return {
@@ -2487,7 +2388,7 @@ function framesFor(n) {
     K1: sub(L.c1.C, 4),
     V1: sub(L.c1.C, 8),
     Q2: L.c2.A,
-    K2: { o: L.c2.B.o, u: L.c2.B.v, v: L.c2.B.u }, // K (n×4) colocada como Kᵀ (4×n)
+    K2: { o: L.c2.B.o, u: L.c2.B.v, v: L.c2.B.u },
     S: L.c2.C,
     A3: L.c3.A,
     V3: L.c3.B,
@@ -2566,7 +2467,6 @@ function buildTensors(engine, store) {
     const head = hv();
     return { title: `Z[${i},${j}] = ${f3(head.Z[i][j])}`, rows: [["operación", `Σ_t A[${i},t]·V[t,${j}]`], ["términos", head.A[i].map((a, t) => `${f2(a)}·${f2(head.V[t][j])}`).join(" + ")], ["salida", f3(head.Z[i][j])]] };
   });
-  // Volúmenes de los cubos con la fila de productos de la celda elegida.
   for (const [id, key, dims] of [["t-cube1", "c1", (n) => [n, 8, 12]], ["t-cube2", "c2", (n) => [n, 4, n]], ["t-cube3", "c3", (n) => [n, n, 4]]]) {
     engine.add({
       id,
@@ -2595,9 +2495,6 @@ return { CELL, cubeLayout, lerpFrame, framesFor, buildTensors };
 })();
 const __m_examples_rsi_lab_model_rng_mjs = (() => {
 
-// Generador pseudoaleatorio con semilla (mulberry32) y utilidades reproducibles.
-// Todo lo aleatorio de la experiencia pasa por aquí: misma semilla, mismos números.
-
 function makeRng(seed) {
   let state = seed >>> 0;
   const next = () => {
@@ -2607,9 +2504,6 @@ function makeRng(seed) {
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
-  // Normal aproximada por suma de 12 uniformes (Irwin–Hall): media 0, varianza 1, colas en ±6.
-  // Sólo usa sumas exactas en IEEE-754, así los mismos números salen en Node y en cualquier navegador
-  // (Box–Muller usa log/sin/cos, cuyos últimos bits pueden variar entre motores de JavaScript).
   const normal = () => {
     let total = 0;
     for (let i = 0; i < 12; i++) total += next();
@@ -2637,8 +2531,6 @@ function makeRng(seed) {
   return { next, normal, int, pick, shuffle, categorical };
 }
 
-// Huella FNV-1a de 32 bits sobre los bytes Float64 de una lista de números.
-// Sirve para comprobar si un conjunto de parámetros cambió (aunque sea en un bit).
 function fingerprint(values) {
   const view = new DataView(new ArrayBuffer(8));
   let hash = 0x811c9dc5;
@@ -2656,11 +2548,8 @@ return { makeRng, fingerprint };
 })();
 const __m_examples_rsi_lab_model_agent_mjs = (() => {
 const { makeRng } = __m_examples_rsi_lab_model_rng_mjs;
-// Banco reproducible de tareas SINTÉTICAS de depuración + gestores de contexto + solucionador SIMBÓLICO.
-// Nada aquí es un LLM: el «agente» lee un registro a través de su gestor de contexto (con un
-// presupuesto de tokens) y un solucionador de reglas declaradas intenta identificar función y causa.
 
-const BUDGET = 64; // presupuesto de contexto, en «tokens» (palabras separadas por espacios)
+const BUDGET = 64;
 const TYPES = ["ERROR", "TRACE", "DEBUG", "WARN", "INFO"];
 
 const MODULES = {
@@ -2671,7 +2560,6 @@ const MODULES = {
   geo: ["distancia", "proyectar", "rumbo"],
   pay: ["cobrar", "reembolso", "total_iva"],
 };
-// Cada causa tiene una palabra clave; el solucionador la busca en DEBUG (o en el mensaje de ERROR).
 const CAUSES = {
   espacios: { debug: "la entrada ' 3' llega sin recortar espacios", key: "recortar", error: "ValueError con entrada ' 3'", errorKey: "ValueError" },
   cero: { debug: "divisor igual a 0 cuando la lista está vacía", key: "divisor", error: "ZeroDivisionError al dividir", errorKey: "ZeroDivisionError" },
@@ -2711,7 +2599,6 @@ const WARN_TEXT = [
 const words = (text) => text.trim().split(/\s+/).length;
 const line = (type, text, tags = {}) => ({ type, text, tokens: words(text), tags });
 
-// Genera una tarea a partir de una semilla. family puede forzarse.
 function makeTask(seed, family = null) {
   const rng = makeRng(seed * 9973 + 17);
   const fam = family ?? ["F1", "F2", "F3", "F4"][rng.int(0, 3)];
@@ -2727,7 +2614,6 @@ function makeTask(seed, family = null) {
 
   const startup = rng.shuffle(INFO_TEXT).slice(0, rng.int(0, 8)).map((text) => line("INFO", text));
   const warns = rng.shuffle(WARN_TEXT).slice(0, rng.int(0, 2)).map((text) => line("WARN", text));
-  // Señuelos: pruebas inestables que fallan, se reintentan y al final pasan.
   const decoyCount = fam === "F4" ? 2 : rng.int(1, 2);
   const decoyBlocks = [];
   const retryLines = [];
@@ -2758,15 +2644,14 @@ function makeTask(seed, family = null) {
   }
   if (fam === "F4") evidence.push(line("TRACE", evidence[0].text, { evidence: "E2", dup: true }));
   if (fam !== "F2") evidence.push(line("DEBUG", `DEBUG ${culprit} ${CAUSES[cause].debug}`, { evidence: "E3" }));
-  else evidence.push(line("DEBUG", `DEBUG ${culprit} entrada recibida con 3 campos`, {})); // DEBUG irrelevante
+  else evidence.push(line("DEBUG", `DEBUG ${culprit} entrada recibida con 3 campos`, {}));
   const errorText = fam === "F2" ? `ERROR ${testName} ${CAUSES[cause].error}` : `ERROR ${testName} resultado distinto del esperado`;
   const chain = [...evidence, line("ERROR", errorText, { evidence: "E1" })];
   const summary = line("INFO", `INFO resumen 41 pruebas 1 fallo ${decoyCount} inestables`);
 
-  // Orden: arranque, avisos y luego los bloques (cadena verdadera temprana o tardía).
   const early = rng.next() < 0.3;
   const blocks = early ? [chain, ...decoyBlocks] : [...decoyBlocks, chain];
-  const lateRetry = rng.next() < 0.35; // algunos reintentos terminan después del resumen
+  const lateRetry = rng.next() < 0.35;
   const lines = [...startup, ...warns.slice(0, 1), ...blocks[0], ...progress.slice(0, 1), ...blocks.slice(1).flat(), ...warns.slice(1), ...progress.slice(1)];
   if (!lateRetry) lines.push(...retryLines);
   lines.push(summary);
@@ -2781,12 +2666,9 @@ const SPLITS = {
   dev: { base: 100, count: 16, label: "desarrollo" },
   valid: { base: 200, count: 40, label: "validación" },
   test: { base: 300, count: 60, label: "prueba reservada" },
-  audit: { base: 400, count: 40, label: "auditoría" }, // sólo escenas 8 y 10: confirma promociones, nunca guía la búsqueda
+  audit: { base: 400, count: 40, label: "auditoría" },
 };
 
-// ---------- Gestores de contexto: una familia parametrizada («genoma») ----------
-// El código que se ejecuta es el mismo para todas las versiones; cada versión es una
-// configuración distinta de sus etapas. pseudocodeOf(genome) lo escribe legible.
 const VERSIONS = {
   v0: { id: "v0", name: "registros completos", dedupe: false, weights: { ERROR: 0, TRACE: 0, DEBUG: 0, WARN: 0, INFO: 0 }, link: 0, select: "orden", tie: "antiguas", keepLast: 0 },
   v1: { id: "v1", name: "evidencia relevante + sin duplicados", dedupe: true, weights: { ERROR: 3, TRACE: 2, DEBUG: 1, WARN: 0, INFO: 0 }, link: 2, select: "puntuación", tie: "recientes", keepLast: 0 },
@@ -2800,7 +2682,6 @@ const traceOf = (text) => {
   return match ? { from: match[1], to: match[2] } : null;
 };
 
-// El gestor: deduplicar → puntuar → seleccionar bajo presupuesto → restaurar orden cronológico.
 function manageContext(log, genome, budget = BUDGET) {
   const trace = [];
   let pool = log.map((entry) => ({ ...entry, full: entry.text }));
@@ -2857,7 +2738,7 @@ function manageContext(log, genome, budget = BUDGET) {
   };
   if (genome.keepLast) candidates.slice(-genome.keepLast).forEach(take);
   if (genome.select === "orden") {
-    for (const entry of candidates) if (!take(entry)) break; // llena en orden y se detiene al primer desborde
+    for (const entry of candidates) if (!take(entry)) break;
   } else {
     const ranked = [...candidates].sort((a, b) => b.score - a.score || (genome.tie === "recientes" ? b.index - a.index : a.index - b.index));
     ranked.forEach(take);
@@ -2868,7 +2749,6 @@ function manageContext(log, genome, budget = BUDGET) {
   return { context, used, trace, status };
 }
 
-// ---------- Solucionador simbólico (reglas declaradas, no un LLM) ----------
 const causeFromText = (text, type) => Object.keys(CAUSES).find((key) => text.split(/\s+/).includes(type === "ERROR" ? CAUSES[key].errorKey : CAUSES[key].key)) || null;
 
 function solve(context) {
@@ -2932,8 +2812,6 @@ function evaluate(genome, tasks, budget = BUDGET) {
   };
 }
 
-// ---------- Estadística pareada ----------
-// Bootstrap pareado (semilla fija) de la diferencia de tasas de éxito B − A sobre las MISMAS tareas.
 function pairedBootstrap(a, b, { resamples = 2000, seed = 4242 } = {}) {
   const rng = makeRng(seed);
   const diffs = a.runs.map((run, index) => (b.runs[index].success ? 1 : 0) - (run.success ? 1 : 0));
@@ -2953,7 +2831,6 @@ function pairedBootstrap(a, b, { resamples = 2000, seed = 4242 } = {}) {
   return { mean, low, high, wins, losses, ties: n - wins - losses, p: signTest(wins, losses) };
 }
 
-// Prueba de signos exacta (bilateral) sobre pares discordantes.
 function signTest(wins, losses) {
   const n = wins + losses;
   if (!n) return 1;
@@ -2973,8 +2850,6 @@ function verdictOf(ci) {
   return "sin diferencia concluyente";
 }
 
-// Métrica compuesta declarada: éxito (fracción 0–1) − 0.1 × coste normalizado (tokens / presupuesto).
-// Puerta dura: si el IC95 de Δéxito queda por debajo de 0, la candidata se rechaza aunque sea más barata.
 const COMPOSITE = { lambda: 0.1 };
 const compositeOf = (result, budget = BUDGET) => result.success - COMPOSITE.lambda * (result.cost / budget);
 
@@ -2990,7 +2865,6 @@ function promotionDecision(active, candidate, ci, budget = BUDGET) {
   };
 }
 
-// Registro de accesos: demuestra que el proponente sólo ve desarrollo y agregados de validación.
 function makeAccessLog() {
   const entries = [];
   return {
@@ -3031,8 +2905,6 @@ const k = __m_kit_iso_kit_mjs;
 const { M } = __m_examples_rsi_lab_view_lab_mjs;
 const { lamp, gauge, cartridge, tokenCard, S, L, D, at } = __m_examples_rsi_lab_view_shapes_mjs;
 const { BUDGET } = __m_examples_rsi_lab_model_agent_mjs;
-// Piezas de las escenas 6–10: estaciones A, B y C, tiras de registro en la bandeja de contexto
-// y cartuchos de versión del gestor de contexto.
 
 
 
@@ -3044,7 +2916,6 @@ function buildStations(engine, store) {
   const groupOf = (id) => (id.startsWith("a-") ? "estA" : id.startsWith("b-") ? "estB" : id.startsWith("c-") ? "estC" : id === "ctx-lines" ? "contexto" : undefined);
   const add = (object) => engine.add({ className: "pick", pose: { visible: true, state: {} }, group: groupOf(object.id), level: 1, ...object });
 
-  // ---------- Estación A: reflexión ----------
   const A = plan("estA");
   const zA = top("estA");
   add({ id: "a-gen", anchor: [A.x + 40, A.y + 40, zA + 10], info: "a-gen", build: (P, s = {}) => {
@@ -3075,7 +2946,6 @@ function buildStations(engine, store) {
     return `<g data-role="off">${S(k.slabOf(g, zA, 8, P, 3, 0.6), { tone: "lo" })}</g>` + L(k.planOutline(k.insetPlan(g, 4), zA + 8, P, 3), { tone: "faint" });
   } });
 
-  // ---------- Estación B: REINFORCE ----------
   const B = plan("estB");
   const zB = top("estB");
   add({ id: "b-policy", anchor: [B.x + 70, B.y + 60, zB + 8], info: "b-policy", build: (P, s = {}) => {
@@ -3085,12 +2955,9 @@ function buildStations(engine, store) {
     const grad = s.grad || null;
     for (let a = 0; a < 4; a++) {
       const x = B.x + 24 + a * 28;
-      // θ_a: varilla violeta (altura ∝ θ_a + 3)
       const ht = Math.max(0.6, (theta[a] + 3) * 3);
       out.push(`<g data-role="w">${S(k.slabOf({ x, y: B.y + 22, w: 7, d: 7, r: 1 }, zB + 3, ht, P, 2, 0.3), { tone: "hi" })}</g>`);
-      // π(a): barra cian (altura ∝ probabilidad)
       out.push(`<g data-role="in">${S(k.slabOf({ x, y: B.y + 40, w: 7, d: 14, r: 1 }, zB + 3, Math.max(0.4, pi[a] * 40), P, 2, 0.3), { tone: "hi", lit: s.best === a })}</g>`);
-      // gradiente ĝ_a: flecha naranja hacia arriba o abajo sobre la barra
       if (grad) {
         const g = grad[a] * 30;
         const base = zB + 3 + Math.max(0.4, pi[a] * 40) + 2;
@@ -3117,7 +2984,6 @@ function buildStations(engine, store) {
     return out.join("");
   } });
 
-  // ---------- Estación C: búsqueda evolutiva ----------
   const C = plan("estC");
   const zC = top("estC");
   add({ id: "c-archive", anchor: [C.x + 60, C.y + 60, zC + 6], info: "c-archive", build: (P, s = {}) => {
@@ -3150,10 +3016,9 @@ function buildStations(engine, store) {
     return out.join("");
   } });
 
-  // ---------- Tiras de registro en la bandeja de contexto (escena 7) ----------
   const X = plan("contexto");
   const zX = top("contexto");
-  const per = (X.w - 12) / BUDGET; // longitud por token
+  const per = (X.w - 12) / BUDGET;
   add({ id: "ctx-lines", layer: 2, anchor: [X.x + X.w / 2, X.y + X.d / 2, zX + 2], bias: 2, info: "ctx-lines", pose: { visible: false, state: {} }, build: (P, s = {}) => {
     const out = [];
     let x = X.x + 6;
@@ -3164,7 +3029,6 @@ function buildStations(engine, store) {
       out.push(`<g data-role="${role}">${S(k.slabOf({ x: x + 0.3, y: X.y + 9, w: Math.max(0.6, w - 0.6), d: 14, r: 0.6 }, zX, line.evidence ? 2.6 : 1.4, P, 2, 0.2), { tone: "hi", lit: !!line.evidence })}</g>`);
       x += w;
     }
-    // las que no caben caen fuera de la bandeja (delante, en rojo)
     let xo = X.x + 6;
     for (const line of s.dropped || []) {
       const w = line.tokens * per * 0.5;
@@ -3174,7 +3038,6 @@ function buildStations(engine, store) {
     return out.join("");
   } });
 
-  // ---------- Cartuchos de versión ----------
   const Cd = plan("codigo");
   const Ar = plan("archivo");
   const Pr = plan("proponente");
@@ -3206,9 +3069,6 @@ function buildStations(engine, store) {
 return { buildStations };
 })();
 const __m_examples_rsi_lab_model_linalg_mjs = (() => {
-
-// Álgebra lineal mínima con matrices como listas de filas (arrays de números).
-// Cada función comprueba dimensiones: un error de forma lanza una excepción.
 
 const shapeOf = (matrix) => [matrix.length, matrix.length ? matrix[0].length : 0];
 const zeros = (rows, cols) => Array.from({ length: rows }, () => new Array(cols).fill(0));
@@ -3256,7 +3116,6 @@ const sum = (list) => list.reduce((total, value) => total + value, 0);
 const columns = (matrix, from, to) => matrix.map((row) => row.slice(from, to));
 const hconcat = (blocks) => blocks[0].map((_, i) => blocks.flatMap((block) => block[i]));
 
-// softmax estable: resta el máximo finito; exp(-Infinity) = 0 exactamente.
 function softmax(vector) {
   const finite = vector.filter(Number.isFinite);
   const top = finite.length ? Math.max(...finite) : 0;
@@ -3274,7 +3133,6 @@ function layerNormRow(row, gain, bias, eps) {
   return { mean, variance, normed, out: normed.map((value, j) => value * gain[j] + bias[j]) };
 }
 
-// GELU, aproximación tanh (la que usa GPT-2): 0.5·x·(1 + tanh(√(2/π)·(x + 0.044715·x³))).
 const gelu = (x) => 0.5 * x * (1 + Math.tanh(Math.sqrt(2 / Math.PI) * (x + 0.044715 * x * x * x)));
 
 const randomMatrix = (rng, rows, cols, std) => Array.from({ length: rows }, () => Array.from({ length: cols }, () => rng.normal() * std));
@@ -3284,10 +3142,6 @@ const flatten = (matrix) => matrix.flat();
 return { shapeOf, zeros, copy, matmul, vecmat, transpose, add, addRow, scale, dot, sum, columns, hconcat, softmax, layerNormRow, gelu, randomMatrix, randomVector, flatten };
 })();
 const __m_examples_rsi_lab_model_tokenizer_mjs = (() => {
-
-// Vocabulario de JUGUETE de 16 símbolos para un fragmento de código.
-// No es la tokenización de ningún modelo comercial: es una segmentación codiciosa
-// (coincidencia más larga primero) sobre esta lista, ignorando espacios.
 
 const VOCAB = ["def", "f", "(", "x", ")", ":", "return", "+", "1", "*", "2", "if", "<", "0", "y", "-"];
 
@@ -3320,10 +3174,6 @@ const __m_examples_rsi_lab_model_transformer_mjs = (() => {
 const { makeRng, fingerprint } = __m_examples_rsi_lab_model_rng_mjs;
 const { matmul, transpose, scale, softmax, layerNormRow, gelu, randomMatrix, randomVector, addRow, add, columns, hconcat, vecmat, dot, shapeOf } = __m_examples_rsi_lab_model_linalg_mjs;
 const { VOCAB } = __m_examples_rsi_lab_model_tokenizer_mjs;
-// Transformer decoder-only DIDÁCTICO (elección de diseño, no réplica de un modelo real):
-// vocabulario 16 · d_model 8 · 2 cabezas de d_k = 4 · 2 bloques · MLP 8→32→8 · pre-LayerNorm
-//   H = X + MHA(LN(X)),  Y = H + MLP(LN(H)),  logits = LN_f(y_n) · W_U + b_U
-// Pesos aleatorios con semilla: sus predicciones no implican comprensión lingüística.
 
 
 
@@ -3358,7 +3208,6 @@ function initParams(seed = CONFIG.seed) {
   return params;
 }
 
-// Lista plana de todos los parámetros, en un orden fijo (para contar y para la huella).
 function flatParams(params) {
   const out = [...params.E.flat(), ...params.P.flat()];
   for (const block of params.blocks) {
@@ -3382,13 +3231,12 @@ const layerNorm = (matrix, ln) => {
   return { mean: rows.map((r) => r.mean), variance: rows.map((r) => r.variance), normed: rows.map((r) => r.normed), out: rows.map((r) => r.out) };
 };
 
-// Una cabeza de atención causal, con todos los intermedios.
 function attentionHead(X, Wq, Wk, Wv) {
   const n = X.length;
   const Q = matmul(X, Wq);
   const K = matmul(X, Wk);
   const V = matmul(X, Wv);
-  const S = matmul(Q, transpose(K)); // productos punto crudos Q_i · K_j
+  const S = matmul(Q, transpose(K));
   const dk = shapeOf(Wq)[1];
   const Sscaled = scale(S, 1 / Math.sqrt(dk));
   const M = causalMask(n);
@@ -3398,7 +3246,6 @@ function attentionHead(X, Wq, Wk, Wv) {
   return { Q, K, V, S, Sscaled, M, Smasked, A, Z, dk };
 }
 
-// Pasada completa con traza de cada objeto intermedio.
 function forward(params, ids) {
   const n = ids.length;
   if (n < 1 || n > CONFIG.maxLen) throw new Error(`longitud ${n} fuera de 1..${CONFIG.maxLen}`);
@@ -3435,7 +3282,6 @@ function headForward(params, h) {
 
 const argmax = (list) => list.reduce((best, value, index) => (value > list[best] ? index : best), 0);
 
-// Muestreo con temperatura T > 0: p_T(i) ∝ exp(logit_i / T). T → 0 tiende a argmax.
 function temperatureProbs(logits, temperature) {
   if (!(temperature > 0)) throw new Error("la temperatura debe ser positiva");
   return softmax(logits.map((value) => value / temperature));
@@ -3446,10 +3292,6 @@ function sampleToken(logits, temperature, rng) {
   return { id: rng.categorical(probs), probs };
 }
 
-// ---------- Caché KV ----------
-// Guarda, por bloque y cabeza, las filas K y V de posiciones ya procesadas.
-// Al generar, sólo se calcula la fila nueva. Cambiar el token en la posición p
-// invalida las entradas de posiciones ≥ p en todos los bloques (las < p siguen válidas).
 function emptyCache() {
   return { ids: [], blocks: Array.from({ length: CONFIG.blocks }, () => ({ K: [[], []], V: [[], []] })), rowsComputed: 0 };
 }
@@ -3459,7 +3301,6 @@ function invalidateFrom(cache, position) {
   return out;
 }
 
-// Procesa un token nuevo usando la caché. Devuelve la caché ampliada y los logits.
 function stepWithCache(params, cache, id) {
   const position = cache.ids.length;
   let x = params.E[id].map((value, j) => value + params.P[position][j]);
@@ -3500,7 +3341,6 @@ function prefillCache(params, ids) {
   return { cache, last };
 }
 
-// Generación autoregresiva: el contexto crece; los pesos NO cambian.
 function generate(params, ids, steps, { temperature = 0, seed = 11 } = {}) {
   const rng = makeRng(seed);
   let { cache, last } = prefillCache(params, ids);
@@ -3522,11 +3362,6 @@ const { fingerprint } = __m_examples_rsi_lab_model_rng_mjs;
 const { forward, CONFIG } = __m_examples_rsi_lab_model_transformer_mjs;
 const { softmax, layerNormRow } = __m_examples_rsi_lab_model_linalg_mjs;
 const { tokenize, VOCAB } = __m_examples_rsi_lab_model_tokenizer_mjs;
-// Entrenamiento REAL de una parte del Transformer: la cabeza de salida.
-// Cambio de escala declarado: el cuerpo (embeddings y 2 bloques) queda CONGELADO; sólo se
-// entrenan θ = {γ_f (8), β_f (8), W_U (8×16), b_U (16)} = 160 parámetros.
-//   n = (h − μ)/σ      u = γ ⊙ n + β      z = u·W_U + b_U      p = softmax(z)      L = −log p_y
-// Gradientes por retropropagación (regla de la cadena), comprobables por diferencias finitas.
 
 
 
@@ -3548,8 +3383,6 @@ function unflatHead(values) {
 const headSize = () => 2 * D + D * VSZ + VSZ;
 const headPrint = (head) => fingerprint(flatHead(head));
 
-// Ejemplos: prefijo de 6 tokens → token objetivo. Conjuntos SEPARADOS: los de validación
-// nunca intervienen en un gradiente.
 const TRAIN_TEXT = [
   ["def f(x):", "return"],
   ["if x<0:return", "0"],
@@ -3569,12 +3402,11 @@ function examplesOf(params, pairs) {
   return pairs.map(([text, target]) => {
     const ids = tokenize(text).map((piece) => piece.id);
     if (ids.length !== 6 || ids.includes(-1)) throw new Error(`ejemplo inválido: ${text}`);
-    const h = forward(params, ids).hLast; // característica congelada del cuerpo
+    const h = forward(params, ids).hLast;
     return { text, ids, target: VOCAB.indexOf(target), h };
   });
 }
 
-// Pérdida media y gradiente analítico sobre un lote.
 function lossAndGrad(head, examples) {
   const grad = { g: new Array(D).fill(0), b: new Array(D).fill(0), Wu: Array.from({ length: D }, () => new Array(VSZ).fill(0)), bu: new Array(VSZ).fill(0) };
   let loss = 0;
@@ -3585,19 +3417,19 @@ function lossAndGrad(head, examples) {
     const z = head.bu.map((bias, k) => bias + u.reduce((total, value, j) => total + value * head.Wu[j][k], 0));
     const p = softmax(z);
     const top = Math.max(...z);
-    const l = top + Math.log(z.reduce((total, value) => total + Math.exp(value - top), 0)) - z[example.target]; // −log p_y estable (log-sum-exp)
+    const l = top + Math.log(z.reduce((total, value) => total + Math.exp(value - top), 0)) - z[example.target];
     loss += l;
     each.push({ p, loss: l, z, u, n: normed, target: example.target });
-    const dz = p.map((value, k) => (value - (k === example.target ? 1 : 0)) / examples.length); // ∂L/∂z = p − e_y
+    const dz = p.map((value, k) => (value - (k === example.target ? 1 : 0)) / examples.length);
     for (let k = 0; k < VSZ; k++) grad.bu[k] += dz[k];
     const du = new Array(D).fill(0);
     for (let j = 0; j < D; j++) {
       for (let k = 0; k < VSZ; k++) {
-        grad.Wu[j][k] += u[j] * dz[k]; // ∂L/∂W_U = uᵀ (p − e_y)
-        du[j] += head.Wu[j][k] * dz[k]; // ∂L/∂u = W_U (p − e_y)
+        grad.Wu[j][k] += u[j] * dz[k];
+        du[j] += head.Wu[j][k] * dz[k];
       }
-      grad.g[j] += du[j] * normed[j]; // ∂L/∂γ = ∂L/∂u ⊙ n
-      grad.b[j] += du[j]; // ∂L/∂β = ∂L/∂u
+      grad.g[j] += du[j] * normed[j];
+      grad.b[j] += du[j];
     }
   }
   return { loss: loss / examples.length, grad, each };
@@ -3606,7 +3438,6 @@ function lossAndGrad(head, examples) {
 const lossOf = (head, examples) => lossAndGrad(head, examples).loss;
 const accuracyOf = (head, examples) => lossAndGrad(head, examples).each.filter((e) => e.p.indexOf(Math.max(...e.p)) === e.target).length / examples.length;
 
-// Diferencias finitas centrales sobre TODOS los parámetros de la cabeza.
 function finiteDifferenceCheck(head, examples, step = 1e-5) {
   const analytic = flatHead(lossAndGrad(head, examples).grad);
   const base = flatHead(head);
@@ -3628,16 +3459,12 @@ function finiteDifferenceCheck(head, examples, step = 1e-5) {
   return { worst, worstIndex, analytic, numeric, count: base.length };
 }
 
-// SGD: θ ← θ − η·g
 function sgdStep(head, grad, eta) {
   const theta = flatHead(head);
   const g = flatHead(grad);
   return { head: unflatHead(theta.map((value, index) => value - eta * g[index])), delta: g.map((value) => -eta * value) };
 }
 
-// Adam (Kingma y Ba, 2014). Estado {m, v, t}.
-//   m ← β1 m + (1−β1) g      v ← β2 v + (1−β2) g²      m̂ = m/(1−β1^t)      v̂ = v/(1−β2^t)
-//   θ ← θ − η m̂ / (√v̂ + ε)
 const ADAM = { beta1: 0.9, beta2: 0.999, eps: 1e-8 };
 const adamInit = () => ({ m: new Array(headSize()).fill(0), v: new Array(headSize()).fill(0), t: 0 });
 
@@ -3655,7 +3482,6 @@ function adamStep(head, grad, state, eta, { beta1, beta2, eps } = ADAM) {
   return { head: unflatHead(theta.map((value, index) => value + delta[index])), state: { m, v, t }, delta, mhat, vhat, c1, c2 };
 }
 
-// Ejecuta k pasos y devuelve la historia completa (para la línea de tiempo y la verificación).
 function runTraining(params, { optimizer = "sgd", eta = 0.5, steps = 40 } = {}) {
   const train = examplesOf(params, TRAIN_TEXT);
   const valid = examplesOf(params, VALID_TEXT);
@@ -3679,10 +3505,6 @@ return { headOf, withHead, flatHead, unflatHead, headSize, headPrint, TRAIN_TEXT
 })();
 const __m_examples_rsi_lab_model_reflection_mjs = (() => {
 
-// Estación A: reflexión con herramientas. Los INTENTOS son propuestas guionadas (código escrito
-// de antemano); lo que se ejecuta de verdad son las pruebas, y lo que cambia es el contexto/memoria.
-// Ningún parámetro θ del modelo se modifica (la verificación compara la huella antes y después).
-
 const TASK = {
   enunciado: "Escribe promedio(xs): la media aritmética de una lista de números; para la lista vacía, devolver 0.",
   pruebas: [
@@ -3693,20 +3515,17 @@ const TASK = {
   ],
 };
 
-// Intento 1 (guionado): olvida la lista vacía.
 function promedio_intento1(xs) {
   let suma = 0;
   for (const x of xs) suma += x;
   return suma / xs.length;
 }
-// Intento 2 (guionado, tras la nota 1): cubre la lista vacía pero redondea.
 function promedio_intento2(xs) {
   if (xs.length === 0) return 0;
   let suma = 0;
   for (const x of xs) suma += x;
   return Math.round(suma / xs.length);
 }
-// Intento 3 (guionado, tras las notas 1 y 2).
 function promedio_intento3(xs) {
   if (xs.length === 0) return 0;
   let suma = 0;
@@ -3721,7 +3540,6 @@ const ATTEMPTS = [
 ];
 const sourceOf = (attempt) => attempt.fn.toString();
 
-// Herramienta: ejecutor de pruebas (ejecución real).
 function runTests(fn) {
   return TASK.pruebas.map((prueba) => {
     let obtenido;
@@ -3738,7 +3556,6 @@ function runTests(fn) {
 
 const show = (value) => (Number.isNaN(value) ? "NaN" : JSON.stringify(value));
 
-// Nota de reflexión: plantilla fija que resume la prueba fallida observada (no es texto de un LLM).
 function reflectionNote(results) {
   const failed = results.filter((r) => !r.ok);
   if (!failed.length) return null;
@@ -3766,12 +3583,6 @@ const __m_examples_rsi_lab_model_rl_mjs = (() => {
 const { makeRng } = __m_examples_rsi_lab_model_rng_mjs;
 const { softmax } = __m_examples_rsi_lab_model_linalg_mjs;
 const { VERSIONS, runTask, makeSplit, SPLITS } = __m_examples_rsi_lab_model_agent_mjs;
-// Estación B: aprendizaje por refuerzo con una POLÍTICA PEQUEÑA (4 parámetros), no con el Transformer.
-// Acción = estrategia de lectura del registro; recompensa = 1 si el solucionador simbólico
-// acierta en una tarea de desarrollo muestreada, 0 si no (se ejecuta de verdad).
-//   π_θ(a) = softmax(θ)_a        ∇_θ log π_θ(a) = e_a − π_θ
-//   REINFORCE con baseline b:    ĝ = (1/N) Σ_i (R_i − b) ∇_θ log π_θ(a_i);   θ ← θ + α ĝ
-// b es una media móvil de recompensas de lotes ANTERIORES: no depende de las acciones del lote actual.
 
 
 
@@ -3791,7 +3602,6 @@ const gradLogPi = (theta, action) => {
   return pi.map((p, k) => (k === action ? 1 : 0) - p);
 };
 
-// Un lote de N episodios con la política actual. Semilla por lote: reproducible.
 function sampleBatch(theta, table, { n = 8, seed = 1 } = {}) {
   const rng = makeRng(seed);
   const pi = softmax(theta);
@@ -3822,7 +3632,7 @@ function runReinforce({ updates = 30, n = 8, alpha = 1.0, seed = 5, baseline0 = 
   const history = [{ update: 0, theta, pi: softmax(theta), baseline }];
   for (let u = 1; u <= updates; u++) {
     const batch = sampleBatch(theta, table, { n, seed: seed * 1000 + u });
-    const step = reinforceUpdate(theta, batch, baseline, alpha); // baseline calculado ANTES de este lote
+    const step = reinforceUpdate(theta, batch, baseline, alpha);
     theta = step.theta;
     const used = baseline;
     baseline = nextBaseline(baseline, batch);
@@ -3831,9 +3641,6 @@ function runReinforce({ updates = 30, n = 8, alpha = 1.0, seed = 5, baseline0 = 
   return { table, history, expected: table.map((row) => row.reduce((t, v) => t + v, 0) / row.length) };
 }
 
-// ---------- PPO (ampliación opcional) ----------
-// r_i(θ) = π_θ(a_i) / π_old(a_i);  L(θ) = (1/N) Σ min(r_i A_i, clip(r_i, 1−ε, 1+ε) A_i)
-// ∇L: cada término aporta A_i r_i ∇log π_θ(a_i) salvo cuando el recorte está activo (gradiente 0).
 function ppoObjective(theta, oldPi, batch, eps) {
   const pi = softmax(theta);
   return batch.reduce((total, e) => {
@@ -3872,10 +3679,6 @@ return { ACTIONS, rewardTable, gradLogPi, sampleBatch, reinforceUpdate, BASELINE
 })();
 const __m_examples_rsi_lab_model_evo_mjs = (() => {
 const { makeRng } = __m_examples_rsi_lab_model_rng_mjs;
-// Estación C: búsqueda evolutiva de PROGRAMAS. El programa es la función de prioridad de un
-// planificador de trabajos (empaquetado en línea: cada trabajo de tamaño s va a la máquina
-// abierta con mayor prioridad entre las que tienen sitio r ≥ s; si ninguna, se abre otra).
-// Las variantes se generan con mutaciones aleatorias sobre árboles de expresión (sin LLM).
 
 const CAPACITY = 100;
 const OPS = ["+", "-", "*", "min", "max"];
@@ -3883,8 +3686,8 @@ const VARS = ["s", "r", "k"];
 const CONSTS = [1, 2, 5, 10];
 
 const SEEDS = {
-  primero: ["neg", ["var", "k"]], // primer ajuste: la máquina más antigua
-  peor: ["-", ["var", "r"], ["var", "s"]], // peor ajuste: la que deja más sitio
+  primero: ["neg", ["var", "k"]],
+  peor: ["-", ["var", "r"], ["var", "s"]],
 };
 const BASELINES = {
   "primer ajuste": SEEDS.primero,
@@ -3987,7 +3790,6 @@ function mutate(program, rng) {
   return sizeOf(child) > 11 ? { program, label: "descartada (demasiado grande)", invalid: true } : { program: child, label };
 }
 
-// Celda del archivo de diversidad (MAP-Elites): tamaño × variables usadas.
 function cellOf(program) {
   const size = sizeOf(program);
   const sizeBin = size <= 2 ? 0 : size <= 4 ? 1 : size <= 7 ? 2 : 3;
@@ -3995,7 +3797,6 @@ function cellOf(program) {
   return `${sizeBin}|${used}`;
 }
 
-// Búsqueda con presupuesto total de evaluaciones fijo. perCandidate = secuencias por candidata.
 function runEvolution({ budget = 192, perCandidate = 4, temperature = 0.03, seed = 3, start = SEEDS.peor } = {}) {
   const rng = makeRng(seed);
   const archive = new Map();
@@ -4036,25 +3837,12 @@ return { CAPACITY, SEEDS, BASELINES, evalExpr, show, sizeOf, varsOf, makeSequenc
 const __m_examples_rsi_lab_model_loop_mjs = (() => {
 const { makeRng } = __m_examples_rsi_lab_model_rng_mjs;
 const { VERSIONS, BUDGET, TYPES, makeSplit, SPLITS, runTask, manageContext, pairedBootstrap, pseudocodeOf } = __m_examples_rsi_lab_model_agent_mjs;
-// Escena 8 y 10: el bucle de automejora del agente como SIMULACIÓN CONCEPTUAL.
-// Lo conceptual son las reglas del proponente (declaradas abajo, no un LLM).
-// Lo calculado de verdad: cada candidata se construye y se ejecuta sobre el banco de tareas,
-// y la promoción usa el mismo criterio estadístico de la escena 7.
-//
-// Estado del sistema S_t = (θ_t, código_t, memoria_t, estrategia_t)
-//   θ_t: modelo base CONGELADO en este experimento (no cambia nunca)
-//   código_t: genoma del gestor de contexto activo
-//   memoria_t: notas del proponente (variantes probadas y resultado)
-//   estrategia_t: tareas de validación por candidata, probabilidad de explorar
-// Fuera de S_t: infraestructura (presupuesto, entorno) y protocolo de evaluación.
 
 
 const clampW = (value) => Math.max(-1, Math.min(3, value));
 const keyOf = (genome) => JSON.stringify([genome.dedupe, TYPES.map((type) => genome.weights[type]), genome.link, genome.select, genome.tie, genome.keepLast, genome.clip || 0]);
 const withId = (genome, id, name) => ({ ...genome, weights: { ...genome.weights }, id, name });
 
-// Diagnóstico exacto de por qué falló una tarea (lo usa el informe; el analista lo VE sólo si su
-// gestor de contexto conserva las líneas DEBUG correspondientes del informe).
 function diagnose(task, run) {
   if (run.success) return [];
   const out = [];
@@ -4072,7 +3860,6 @@ function diagnose(task, run) {
   return out;
 }
 
-// Informe de fallo legible por el analista: cabecera verbosa + una línea DEBUG por diagnóstico.
 function reportOf(task, run, versionId) {
   const header = [
     `INFO ejecución de la tarea ${task.seed} con el gestor ${versionId} y presupuesto ${BUDGET}`,
@@ -4093,7 +3880,6 @@ function reportOf(task, run, versionId) {
   return lines;
 }
 
-// El analista lee cada informe A TRAVÉS de un gestor de contexto (aquí está la autorreferencia).
 function analyse(reports, analystGenome) {
   const seen = {};
   let total = 0;
@@ -4110,7 +3896,6 @@ function analyse(reports, analystGenome) {
   return { seen, total, visible, quality: total ? visible / total : 1 };
 }
 
-// Reglas declaradas del proponente.
 function propose(parent, analysis, rng, memory, failingTypes) {
   const g = withId(parent.genome, "", "");
   const ranked = Object.entries(analysis.seen).filter(([kind]) => kind !== "otro").sort((a, b) => b[1] - a[1]);
@@ -4148,7 +3933,6 @@ function propose(parent, analysis, rng, memory, failingTypes) {
     }
   }
   if (!note || memory.has(keyOf(g))) {
-    // Mutación aleatoria (sin diagnóstico visible o propuesta ya probada).
     const field = rng.pick(["dedupe", "weight", "weight", "link", "select", "tie", "clip"]);
     if (field === "dedupe") g.dedupe = !g.dedupe;
     else if (field === "weight") {
@@ -4165,8 +3949,6 @@ function propose(parent, analysis, rng, memory, failingTypes) {
 
 const validGenome = (g) => TYPES.some((type) => g.weights[type] >= 0) && g.weights.ERROR >= 0;
 
-// Corre el bucle completo. mode: "A" (proponente y estrategia fijos) o "B" (las versiones
-// promovidas pasan a analizar y a fijar la estrategia de los ciclos siguientes).
 function runLoop({
   mode = "B",
   seed = 1,
@@ -4180,15 +3962,11 @@ function runLoop({
   start = VERSIONS.v0,
   metaMutation = true,
 } = {}) {
-  // Semillas compatibles: A y B usan el MISMO flujo para padres y mutaciones; B tiene un flujo
-  // aparte para sus meta-mutaciones, así las diferencias vienen del mecanismo, no del azar.
   const rng = makeRng(seed * 131 + 1);
   const metaRng = makeRng(seed * 389 + 2);
   const noiseRng = makeRng(seed * 977 + 5);
   const dev = makeSplit(SPLITS.dev.base, SPLITS.dev.count, families);
   const valAll = makeSplit(SPLITS.valid.base, SPLITS.valid.count, families);
-  // Auditoría: tareas nuevas de las 4 familias; mide cada versión promovida (el bucle no la lee).
-  // Prueba final: reservada; se usa una sola vez, al terminar, sobre la versión resultante.
   const audit = makeSplit(SPLITS.audit.base, SPLITS.audit.count);
   const test = makeSplit(SPLITS.test.base, SPLITS.test.count);
   const auditOf = (genome) => audit.filter((task) => runTask(task, genome).success).length / audit.length;
@@ -4212,10 +3990,8 @@ function runLoop({
   const devCost = dev.length;
   while (spent + devCost + strategy.nVal <= budget) {
     const cycle = { index: cycles.length + 1, analyst: analyst.id || "v0", strategy: { ...strategy } };
-    // 1. Elegir un padre del archivo.
     const parent = rng.next() < strategy.explore && archive.length > 1 ? rng.pick(archive) : active;
     cycle.parent = parent.id;
-    // 2. Analizar registros de desarrollo del padre.
     const devRuns = dev.map((task) => runTask(task, parent.genome));
     spent += devCost;
     const failing = dev.map((task, i) => ({ task, run: devRuns[i] })).filter((x) => !x.run.success);
@@ -4225,7 +4001,6 @@ function runLoop({
     failing.forEach(({ task, run }) => diagnose(task, run).forEach((d) => (failingTypes[d.kind] = [...(failingTypes[d.kind] || []), d.type])));
     cycle.analysis = analysis;
     cycle.devSuccess = devRuns.filter((r) => r.success).length / dev.length;
-    // 3. Proponer y construir una variante.
     const proposal = propose(parent, analysis, rng, memory, failingTypes);
     counter += 1;
     const id = `c${counter}`;
@@ -4233,7 +4008,6 @@ function runLoop({
     cycle.proposal = proposal.note;
     cycle.candidate = id;
     memory.add(keyOf(genome));
-    // Meta-mutación de la estrategia (sólo modo B): el sistema también cambia cómo experimenta.
     let candidateStrategy = { ...strategy };
     if (mode === "B" && metaMutation && metaRng.next() < 0.25) {
       candidateStrategy = { ...strategy, nVal: metaRng.pick([10, 20, 40].filter((n) => n !== strategy.nVal)) };
@@ -4246,27 +4020,20 @@ function runLoop({
       continue;
     }
     cycle.built = true;
-    // 4. Ejecutar con presupuesto definido (mismas tareas para activa y candidata).
     const tasks = valAll.slice(0, strategy.nVal);
     const key = tasks.map((t) => t.seed).join(",");
     valQueries.set(key, (valQueries.get(key) || 0) + 1);
     const activeRuns = evalVal(active.genome, tasks);
     const candRuns = evalVal(genome, tasks);
     spent += strategy.nVal;
-    // proxy: fracción de líneas del contexto que son ERROR o TRACE («cuántas señales de error vemos»).
     const proxyOf = (run) => (run.managed.context.length ? run.managed.context.filter((e) => e.type === "ERROR" || e.type === "TRACE").length / run.managed.context.length : 0);
     const pack = (runs) => ({ runs, success: runs.filter((r) => r.success).length / runs.length, cost: runs.reduce((t, r) => t + r.cost, 0) / runs.length, proxy: runs.reduce((t, r) => t + proxyOf(r), 0) / runs.length });
     const a = pack(activeRuns);
     const c = pack(candRuns);
     const ci = pairedBootstrap(a, c, { resamples: 1000, seed: seed * 17 + counter });
     cycle.val = { active: a.success, candidate: c.success, ci, n: tasks.length, costA: a.cost, costC: c.cost };
-    // 5. Archivar toda variante válida.
     const version = { id, genome, parent: parent.id, strategy: candidateStrategy, cycle: cycle.index, valSuccess: c.success };
     archive.push(version);
-    // 6. Promover sólo si cumple el criterio.
-    // Criterios: «estricto» (IC95 pareado de Δéxito > 0), «ingenuo» (estimación puntual mayor),
-    // «compuesto» (éxito − λ·coste normalizado mayor, SIN puerta de corrección),
-    // «proxy» (métrica imperfecta: densidad de líneas ERROR/TRACE en el contexto).
     const composite = (x) => x.success - lambda * (x.cost / BUDGET);
     const visibleOf = (x) => (criterion === "compuesto" ? composite(x) : criterion === "proxy" ? x.proxy : x.success);
     const promote = criterion === "estricto" ? ci.low > 0 : visibleOf(c) > visibleOf(a);
@@ -4274,13 +4041,12 @@ function runLoop({
     cycle.visibleActive = visibleOf(a);
     cycle.promoted = promote;
     if (promote) {
-      version.audit = auditOf(genome); // medición independiente (el bucle NO la lee)
+      version.audit = auditOf(genome);
       cycle.auditBefore = active.audit;
       cycle.auditAfter = version.audit;
       cycle.validImprovement = version.audit > active.audit;
       active = version;
-      if (version.audit >= lastValid.audit) lastValid = version; // válida = no retrocede en auditoría
-      // 7. Usar versiones seleccionadas en ciclos posteriores (sólo modo B).
+      if (version.audit >= lastValid.audit) lastValid = version;
       if (mode === "B") {
         analyst = genome;
         strategy = candidateStrategy;
@@ -4304,7 +4070,7 @@ function runLoop({
     spent,
     startAudit: root.audit,
     finalAudit: active.audit,
-    finalTest: testOf(active.genome), // uso único de la prueba reservada
+    finalTest: testOf(active.genome),
     startTest: testOf(root.genome),
     lastValidTest: testOf(lastValid.genome),
     promotions,
@@ -4327,12 +4093,6 @@ return { diagnose, reportOf, analyse, propose, runLoop, compareModes };
 const __m_examples_rsi_lab_model_limits_mjs = (() => {
 const { runLoop } = __m_examples_rsi_lab_model_loop_mjs;
 const { VERSIONS } = __m_examples_rsi_lab_model_agent_mjs;
-// Escena 10: controles de límites. Cada control tiene un efecto DEFINIDO en runLoop:
-//   presupuesto        → budget: ejecuciones de tareas totales disponibles para el bucle
-//   ruido del evaluador → noise: probabilidad de invertir cada resultado de validación (pruebas inestables)
-//   diversidad de tareas → families: cuántas familias aparecen en desarrollo y validación (la prueba siempre tiene 4)
-//   coste de validación → nVal: tareas de validación consumidas por cada candidata
-//   diversidad de candidatos → explore: probabilidad de elegir un padre distinto de la versión activa
 
 
 const FAMILY_ORDER = ["F2", "F1", "F3", "F4"];
@@ -4364,7 +4124,6 @@ function optionsOf(values) {
   };
 }
 
-// Escenarios de fallo concretos (cada uno es sólo una combinación de controles).
 const SCENARIOS = {
   base: { label: "protocolo cuidadoso", values: { budget: 900, noise: 0, diversity: 4, nVal: 40, explore: 0.3, criterion: "estricto" }, mode: "B", seed: 2,
     lesson: "Criterio estricto (IC95 > 0), validación amplia: las promociones se confirman en la prueba independiente." },
@@ -4399,8 +4158,6 @@ const { SPLITS, makeSplit, VERSIONS, evaluate, pairedBootstrap, verdictOf, runTa
 const { runLoop } = __m_examples_rsi_lab_model_loop_mjs;
 const { runScenario, SCENARIOS, CONTROLS, optionsOf } = __m_examples_rsi_lab_model_limits_mjs;
 const { makeRng } = __m_examples_rsi_lab_model_rng_mjs;
-// Estado común: parámetros que el usuario puede cambiar + cálculos memoizados.
-// Todas las vistas leen de aquí; ninguna vista modifica un resultado calculado.
 
 
 
@@ -4413,7 +4170,7 @@ const { makeRng } = __m_examples_rsi_lab_model_rng_mjs;
 
 const DEFAULTS = {
   text: "def f(x):",
-  tokens: null, // ids si el usuario cambia tokens directamente
+  tokens: null,
   head: 0,
   block: 0,
   row: 3,
@@ -4537,7 +4294,6 @@ function makeStore() {
         return rows;
       });
     },
-    // Versión por partes (no bloquea la interfaz): una semilla por tarea.
     loopCompareAsync(done) {
       if (memo.has("loopcmp|0")) return done(memo.get("loopcmp|0"));
       if (store._pending) return store._pending.push(done);
@@ -4591,12 +4347,8 @@ return { DEFAULTS, makeStore, VOCAB, ACTIONS, VERSIONS, BUDGET, SCENARIOS, CONTR
 })();
 const __m_examples_rsi_lab_view_director_mjs = (() => {
 const { ease, lerp, lerp3 } = __m_examples_rsi_lab_view_engine_mjs;
-// Director del recorrido: línea de tiempo de capítulos → pasos (beats) → eventos.
-// Cada paso es determinista: pose(ctx, t) depende sólo del estado y de t ∈ [0, 1].
-// Los eventos son fronteras t = k/n; al cruzarlas se guarda un estado (para retroceder).
 
 function makeDirector({ chapters, engine, ref, ctx, hooks = {} }) {
-  // PACE ajusta el ritmo global del recorrido guiado (≈ 11 min a 1×); no afecta a ningún cálculo.
   const PACE = 0.86;
   const beats = [];
   chapters.forEach((chapter, c) => chapter.beats.forEach((beat, b) => beats.push({ events: 1, ...beat, dur: (beat.dur ?? 8) * PACE, chapter, c, b })));
@@ -4671,7 +4423,6 @@ function makeDirector({ chapters, engine, ref, ctx, hooks = {} }) {
   function apply() {
     const beat = beatAt();
     enter(S.beat);
-    // Con movimiento reducido no hay interpolaciones: se muestra el estado del evento en curso.
     const t = still.matches ? Math.max(1, Math.ceil(S.t * beat.events - 1e-9)) / beat.events : S.t;
     const e = eventOf(beat, t);
     if (beat.pose) beat.pose(ctx, t, e);
@@ -4686,7 +4437,6 @@ function makeDirector({ chapters, engine, ref, ctx, hooks = {} }) {
     save();
   }
 
-  // Avanza el reloj narrativo.
   function tick(dt) {
     let moving = false;
     if (S.camAnim) {
@@ -4756,7 +4506,6 @@ function makeDirector({ chapters, engine, ref, ctx, hooks = {} }) {
   function prevEvent() {
     S.playing = false;
     S.stepTo = null;
-    // estado guardado anterior distinto del actual
     const here = snapshot();
     while (S.history.length) {
       const snap = S.history.pop();
@@ -4770,7 +4519,6 @@ function makeDirector({ chapters, engine, ref, ctx, hooks = {} }) {
         return true;
       }
     }
-    // sin historia: ir al inicio del paso o al final del anterior
     if (S.t > 0) seek(S.beat, 0);
     else if (S.beat > 0) seek(S.beat - 1, 1);
     return false;
@@ -4834,7 +4582,6 @@ const { M, MAIN, BENCH, boxOf, centreOf, LAB_IDS } = __m_examples_rsi_lab_view_l
 const { TRAY, TRAYS, TRAY_Z, LIFT, liftOf } = __m_examples_rsi_lab_view_rack_mjs;
 const { ease } = __m_examples_rsi_lab_view_engine_mjs;
 const { framesFor, cubeLayout } = __m_examples_rsi_lab_view_tensors_mjs;
-// Utilidades compartidas por los capítulos: explosión del bastidor, encuadres de cámara y grupos.
 
 
 
@@ -4846,20 +4593,17 @@ const STATION_IDS = ["a-gen", "a-tests", "a-memory", "a-theta", "b-policy", "b-b
 const AGENT_IDS = ["ctx-lines", "cart-v0", "cart-v1", "cart-v2", "cart-v3"];
 const TRAY_IDS = TRAYS.flatMap((id) => [`tray-${id}`, `tray-${id}-front`]);
 
-// Visibilidad base: laboratorio siempre presente; lo demás según la escena.
 function baseVisibility(ctx, { rack = false, tensors = false, stations = true, agent = false } = {}) {
   const show = new Set([...LAB_IDS, ...(stations ? STATION_IDS : []), ...(rack ? [...TRAY_IDS, ...RACK_IDS] : []), ...(tensors ? TENSOR_IDS : []), ...(agent ? AGENT_IDS : [])]);
   for (const [id] of ctx.engine.objects) if (!id.startsWith("pulse")) ctx.engine.pose(id, { visible: show.has(id) });
 }
 
-// share ∈ [0,1]: 0 = bandejas guardadas en el gabinete, 1 = bastidor explosionado.
 function explode(ctx, share, { stagger = true, shrinkFront = true } = {}) {
   const s = Math.max(0, Math.min(1, share));
   TRAYS.forEach((id, index) => {
     const local = stagger ? ease(Math.max(0, Math.min(1, s * 1.6 - (3 - index) * 0.2))) : s;
     ctx.engine.pose(`tray-${id}`, { offset: liftOf(id, local), visible: true });
   });
-  // el frente del gabinete se dibuja delante sólo mientras las bandejas están dentro
   const front = ctx.engine.objects.get("modelo-front");
   if (front) front.level = s > 0.05 ? 5 : 100;
   ctx.engine.pose("modelo-front", { opacity: shrinkFront ? 1 - 0.6 * s : 1 });
@@ -4875,15 +4619,12 @@ function trayBox(id, share = 1, dz = 0) {
 }
 const rackCamera = (share = 1) => ({ points: [...TRAYS.flatMap((id) => trayBox(id, share)), ...k.boxCorners(M.modelo.plan, 0, 84)], pad: 24 });
 const trayCamera = (id, opts = {}) => ({ points: trayBox(id, 1, opts.dz ?? 10), pad: opts.pad ?? 40, ...opts });
-// Encaja sólo una región de una bandeja (coordenadas locales x0..x1, y0..y1).
 function trayRegion(id, [x0, y0, x1, y1], opts = {}) {
   const z = LIFT[id] + 1.4;
   const out = [];
   for (const x of [TRAY.x + x0, TRAY.x + x1]) for (const y of [TRAY.y + y0, TRAY.y + y1]) for (const dz of [0, opts.h ?? 8]) out.push([x, y, z + dz]);
   return { points: out, pad: opts.pad ?? 30, area: opts.area ?? { left: 360 }, azimuth: opts.azimuth ?? 45, elevation: opts.elevation ?? 34 };
 }
-// Retira (corte) las bandejas por encima de `keep` y su contenido.
-// share ∈ [0,1] funde progresivamente (1 = retiradas del todo); reveal funde la entrada de las de abajo.
 function cutAbove(ctx, keep, share = 1, reveal = 1) {
   const order = ["emb", "b0", "b1", "out"];
   const hide = new Set(order.slice(order.indexOf(keep) + 1));
@@ -4895,12 +4636,10 @@ function cutAbove(ctx, keep, share = 1, reveal = 1) {
     else if (rack.has(id) && !id.startsWith("card")) ctx.pose(id, { visible: true, opacity: tray === keep ? reveal : 1 });
   }
 }
-// Funde un conjunto de objetos (corte progresivo dentro de una bandeja).
 function fade(ctx, ids, value) {
   for (const id of ids) ctx.pose(id, { visible: value > 0.001, opacity: Math.max(0, Math.min(1, value)) });
 }
 
-// Cámara para un cubo de la cabeza (escala tensores), con el bastidor explosionado.
 function cubeCamera(ctx, which, opts = {}) {
   const n = ctx.store.ids().length;
   const L = cubeLayout(n);
@@ -4922,7 +4661,6 @@ const { baseVisibility, explode, labCamera, mainCamera, moduleCamera, rackCamera
 const { VERSIONS, runTask } = __m_examples_rsi_lab_model_agent_mjs;
 const { esc, prov } = __m_examples_rsi_lab_view_helpers_mjs;
 const { el } = __m_examples_rsi_lab_view_ui_mjs;
-// Capítulo 1 — El laboratorio completo y sus tres bucles.
 
 
 
@@ -4938,7 +4676,7 @@ const MODULES = [
   ["archivo", "Archivo de versiones", "guarda variantes comparables; guardar no es promover"],
 ];
 
-const DEV_TASK = 14; // tarea de desarrollo del ejemplo transversal (v0 falla, v1 acierta)
+const DEV_TASK = 14;
 
 function contextState(task, genome) {
   const run = runTask(task, genome);
@@ -5159,7 +4897,6 @@ const { VOCAB, tokenize } = __m_examples_rsi_lab_model_tokenizer_mjs;
 const { f2, f3, esc, T } = __m_examples_rsi_lab_view_helpers_mjs;
 const { el } = __m_examples_rsi_lab_view_ui_mjs;
 const { TRAY, TRAY_Z } = __m_examples_rsi_lab_view_rack_mjs;
-// Capítulo 2 — De tokens a representaciones.
 
 
 
@@ -5213,7 +4950,6 @@ function tokenDesk(ctx, desk) {
   draw();
 }
 
-// Punto junto al borde trasero de cada tabla de la bandeja de embeddings (para etiquetas).
 
 const edge = (which) => {
   const spots = { E: [6 + 32, 4], P: [6 + 20, 40], X0: [104 + 12, 4] };
@@ -5222,7 +4958,6 @@ const edge = (which) => {
 };
 
 function recompute(ctx) {
-  // todo lo que depende de los tokens se reconstruye: marcar sucios los objetos afectados
   for (const [id] of ctx.engine.objects) if (/^(mx-X0|card|t-|vec-|bars-out|card-next|mx-Wu)/.test(id)) ctx.engine.dirty(id);
   ctx.say(`Tokens: ${ctx.store.ids().map((id) => VOCAB[id]).join(" ")}. Se recalcularon las activaciones.`);
   ctx.refresh();
@@ -5382,7 +5117,6 @@ const { f2, f3, T, esc } = __m_examples_rsi_lab_view_helpers_mjs;
 const { el } = __m_examples_rsi_lab_view_ui_mjs;
 const { rackSetup } = __m_examples_rsi_lab_view_ch_c02_mjs;
 const { VOCAB } = __m_examples_rsi_lab_model_tokenizer_mjs;
-// Capítulo 3 — Atención causal por dentro (escala «tensores»).
 
 const BLOCK_PARTS = ["blk-b0", "mx-b0-wo", "mx-b0-w1", "mx-b0-w2", "vec-b0", "head-b0-0", "head-b0-1"];
 
@@ -5398,7 +5132,6 @@ const headData = (ctx) => {
   return { tr, head: tr.blocks[0].heads[ctx.user.head], block: tr.blocks[0], p: ctx.store.params0.blocks[0] };
 };
 
-// Plano de fórmulas: cada término está vinculado (color e identidad) a un objeto de la escena.
 function attnPanel(ctx, active, subst = "") {
   const on = (key) => active.includes(key);
   const html = `<div class="formula">
@@ -5436,9 +5169,7 @@ const chapter3 = {
     rackSetup(ctx);
     baseVisibility(ctx, { rack: true, tensors: true });
     explode(ctx, 1);
-    // las bandejas superiores se retiran para no tapar la cabeza abierta (corte)
     cutAbove(ctx, "b0");
-    // dentro de la bandeja del bloque 1 sólo queda la cabeza abierta (corte)
     fade(ctx, BLOCK_PARTS, 0);
     ctx.state(`head-b0-${ctx.user.head}`, { open: 1 });
     for (const id of ["t-cube1", "t-cube2", "t-cube3"]) ctx.state(id, {});
@@ -5484,7 +5215,6 @@ const chapter3 = {
       pose(ctx, t) {
         const n = ctx.store.ids().length;
         const u = ctx.still.matches ? 1 : ease(t * 1.5);
-        // corte progresivo: el resto del bloque y las bandejas superiores se retiran mientras la cabeza se abre
         cutAbove(ctx, "b0", u);
         fade(ctx, BLOCK_PARTS.filter((id) => id !== `head-b0-${ctx.user.head}`), 1 - u);
         ctx.pose(`head-b0-${ctx.user.head}`, { visible: u < 0.99, opacity: 1 - u, state: { open: u } });
@@ -5583,7 +5313,7 @@ const chapter3 = {
       id: "3.4",
       dur: 7,
       scale: "tensor",
-      camera: (ctx) => cubeCamera(ctx, "c2", { pad: 50 }),
+      camera: (ctx) => cubeCamera(ctx, "c2", { pad: 66 }),
       caption: "Las demás filas se calculan igual. <b>Escalado</b>: se divide todo por √d_k = √4 = 2 para que los productos no crezcan con la dimensión.",
       changed: { contexto: "activo" },
       more: `<p>Sin el escalado, con d_k grande los productos punto tienen varianza grande y el softmax se satura (Vaswani et al., 2017).</p>`,
@@ -5607,7 +5337,7 @@ const chapter3 = {
       id: "3.5",
       dur: 7,
       scale: "tensor",
-      camera: (ctx) => cubeCamera(ctx, "c2", { pad: 50 }),
+      camera: (ctx) => cubeCamera(ctx, "c2", { pad: 66 }),
       caption: "<b>Máscara causal M</b>: 0 donde j ≤ i (pasado y presente), −∞ donde j > i (futuro). Una posición no puede mirar tokens posteriores.",
       changed: { contexto: "activo" },
       pose(ctx) {
@@ -5627,7 +5357,7 @@ const chapter3 = {
       dur: 10,
       events: 2,
       scale: "tensor",
-      camera: (ctx) => cubeCamera(ctx, "c2", { pad: 50 }),
+      camera: (ctx) => cubeCamera(ctx, "c2", { pad: 66 }),
       caption: (ctx) => (ctx.event <= 1 ? `<b>Softmax</b> por fila: exponenciar y dividir por la suma. La fila ${rowOf(ctx)} suma 1; las posiciones futuras reciben exactamente 0.` : "Todas las filas normalizadas: <b>A</b>, una distribución de pesos por posición."),
       changed: { contexto: "activo" },
       more: `<p>softmax(z)<sub>j</sub> = e<sup>z<sub>j</sub></sup> / Σ<sub>l</sub> e<sup>z<sub>l</sub></sup>. Como e<sup>−∞</sup> = 0, la máscara se convierte en peso cero exacto.</p><p>La verificación en vivo comprueba que cada fila suma 1 (error ≤ 10⁻¹²) y que todo peso futuro es 0.</p>`,
@@ -5721,7 +5451,6 @@ const { rackSetup } = __m_examples_rsi_lab_view_ch_c02_mjs;
 const { VOCAB } = __m_examples_rsi_lab_model_tokenizer_mjs;
 const { gelu } = __m_examples_rsi_lab_model_linalg_mjs;
 const { argmax, temperatureProbs, prefillCache, stepWithCache, forward, invalidateFrom, paramPrint } = __m_examples_rsi_lab_model_transformer_mjs;
-// Capítulo 4 — Bloque completo y siguiente token.
 
 
 
@@ -5751,7 +5480,6 @@ function outPanel(ctx, active, subst) {
 }
 
 function kvDiagram(n, newRow, invalidFrom) {
-  // filas de la caché (K y V) por bloque y cabeza: cian = guardada, blanca = calculada ahora, gris = invalidada
   const cell = 13;
   const blocks = [];
   for (let b = 0; b < 2; b++)
@@ -5978,7 +5706,6 @@ const { rackSetup } = __m_examples_rsi_lab_view_ch_c02_mjs;
 const { VOCAB } = __m_examples_rsi_lab_model_tokenizer_mjs;
 const { lossAndGrad, headPrint, headOf, flatHead, ADAM } = __m_examples_rsi_lab_model_train_mjs;
 const { argmax } = __m_examples_rsi_lab_model_transformer_mjs;
-// Capítulo 5 — Cómo cambian realmente los pesos.
 
 
 
@@ -6293,7 +6020,6 @@ const { ACTIONS } = __m_examples_rsi_lab_model_rl_mjs;
 const { softmax } = __m_examples_rsi_lab_model_linalg_mjs;
 const { show: showProgram, pack, HOLDOUT_SEQS, TRAIN_SEQS, BASELINES, scoreOn } = __m_examples_rsi_lab_model_evo_mjs;
 const { paramPrint } = __m_examples_rsi_lab_model_transformer_mjs;
-// Capítulo 6 — Algoritmos que pueden contribuir a la mejora (tres estaciones).
 
 
 
@@ -6305,9 +6031,8 @@ const stationCam = (id) => () => moduleCamera([id], 18, { area: { left: 430 }, e
 
 function reflectionState(ctx, e) {
   const { log } = ctx.store.reflection();
-  // eventos: 1 intento1, 2 pruebas1, 3 nota1, 4 intento2, 5 pruebas2, 6 nota2, 7 intento3, 8 pruebas3
   const attempt = Math.min(3, Math.floor((Math.max(1, e) - 1) / 3) + 1);
-  const phase = (Math.max(1, e) - 1) % 3; // 0 intento, 1 pruebas, 2 nota
+  const phase = (Math.max(1, e) - 1) % 3;
   const entry = log[attempt - 1];
   const notes = Math.min(log.length - 1, attempt - 1 + (phase === 2 ? 1 : 0));
   return { log, attempt, phase, entry, notes };
@@ -6555,7 +6280,6 @@ const { f2, f3, esc, table, pct, pct1, prov, sgn } = __m_examples_rsi_lab_view_h
 const { el } = __m_examples_rsi_lab_view_ui_mjs;
 const { VERSIONS, pseudocodeOf, BUDGET, compositeOf, runTask } = __m_examples_rsi_lab_model_agent_mjs;
 const { contextState, logPanelHtml, DEV_TASK } = __m_examples_rsi_lab_view_ch_c01_mjs;
-// Capítulo 7 — Una automejora concreta del agente (el corazón de la experiencia).
 
 
 
@@ -6832,7 +6556,6 @@ const { f2, f3, esc, table, pct, lineChart, prov } = __m_examples_rsi_lab_view_h
 const { el } = __m_examples_rsi_lab_view_ui_mjs;
 const { VERSIONS, BUDGET, runTask, makeSplit, SPLITS } = __m_examples_rsi_lab_model_agent_mjs;
 const { reportOf, analyse, diagnose } = __m_examples_rsi_lab_model_loop_mjs;
-// Capítulo 8 — Dónde aparece la recursión.
 
 
 
@@ -6860,7 +6583,6 @@ function analysisDemo(ctx) {
 }
 
 function compareChart(rows) {
-  // final de auditoría por semilla: A (gris) y B (naranja)
   const w = 400;
   const h = 150;
   const pad = { l: 34, r: 10, t: 10, b: 26 };
@@ -7079,7 +6801,6 @@ return { chapter8 };
 const __m_examples_rsi_lab_view_ch_c09_mjs = (() => {
 const { baseVisibility, explode, moduleCamera, labCamera } = __m_examples_rsi_lab_view_common_mjs;
 const { table, prov } = __m_examples_rsi_lab_view_helpers_mjs;
-// Capítulo 9 — Conexión con investigaciones reales (fichas separadas, sin mezclar arquitecturas).
 
 
 const KIND = {
@@ -7201,11 +6922,10 @@ return { chapter9 };
 })();
 const __m_examples_rsi_lab_view_ch_c10_mjs = (() => {
 const { baseVisibility, explode, mainCamera, moduleCamera, labCamera, rackCamera, M } = __m_examples_rsi_lab_view_common_mjs;
-const { f2, esc, table, pct, lineChart } = __m_examples_rsi_lab_view_helpers_mjs;
+const { f2, esc, table, pct, lineChart, prov } = __m_examples_rsi_lab_view_helpers_mjs;
 const { el } = __m_examples_rsi_lab_view_ui_mjs;
 const { SCENARIOS, CONTROLS, CRITERIA } = __m_examples_rsi_lab_model_limits_mjs;
 const { pseudocodeOf } = __m_examples_rsi_lab_model_agent_mjs;
-// Capítulo 10 — Límites del bucle y cierre visual.
 
 
 
@@ -7218,7 +6938,7 @@ function loadScenario(ctx, name) {
   if (ctx.syncLimitsDesk) ctx.syncLimitsDesk();
 }
 
-function limitsPanel(ctx, { title, lesson } = {}) {
+function limitsPanel(ctx, { title, lesson, extra } = {}) {
   const run = ctx.store.limits();
   const vis = [];
   const aud = [run.startAudit];
@@ -7240,8 +6960,9 @@ function limitsPanel(ctx, { title, lesson } = {}) {
     ${table(["", "inicio", "final"], [["puntuación visible", f2(vis[0] ?? NaN), f2(vis[n - 1] ?? NaN)], ["auditoría (no la ve el bucle)", pct(run.startAudit), pct(run.finalAudit)], ["ciclos · promociones", "", `${run.cycles.length} · ${run.promotions}`], ["presupuesto gastado", "", `${run.spent} / ${ctx.user.limits.budget}`], ["consultas a la misma validación", "", run.maxValQueries], ["versiones en el archivo", "", run.archive.length]])}
     ${alarm ? `<div class="subst"><b class="bad-t">La puntuación visible mejora y la auditoría empeora.</b></div>` : ""}
     ${rolled ? `<div class="subst">Vuelta a la última versión válida <b>${esc(run.lastValid.id)}</b>: auditoría ${pct(run.lastValid.audit)} · prueba final (uso único) ${pct(run.lastValidTest)} frente a ${pct(run.finalTest)} de la versión descartada.</div>` : ""}
-    ${lesson ? `<div class="subst">${esc(lesson)}</div>` : ""}`;
-  ctx.panel("limits", { title: title || "Mesa de límites", provKind: "sim", html, width: 450, dock: "right", top: 140 });
+    ${lesson ? `<div class="subst">${esc(lesson)}</div>` : ""}
+    ${extra ? extra(run) : ""}`;
+  ctx.panel("limits", { title: title || "Mesa de límites", provKind: "sim", html, width: 450, dock: "right", top: 136 });
   ctx.state("evaluador", { value: Math.max(0, Math.min(1, vis[n - 1] ?? 0)), ok: !alarm && audDelta >= 0, fail: alarm });
   ctx.state("entorno", { budget: run.spent / ctx.user.limits.budget });
   ctx.state("datos", { open: "audit" });
@@ -7261,14 +6982,15 @@ const scenarioBeat = (id, name, caption, extra = {}) => ({
   pose(ctx) {
     if (ctx.user.scenario !== name) loadScenario(ctx, name);
     ctx.focus(["evaluador", "datos", "entorno", "archivo"]);
-    limitsPanel(ctx, { title: SCENARIOS[name].label, lesson: SCENARIOS[name].lesson });
+    let extra;
     if (name === "diversidad") {
       const keep = ctx.user.limits.explore;
       ctx.user.limits = { ...ctx.user.limits, explore: 0.5 };
       const other = ctx.store.limits();
       ctx.user.limits = { ...ctx.user.limits, explore: keep };
-      ctx.panel("div", { title: "Misma semilla, explorando el archivo (0.5)", provKind: "sim", top: 600, dock: "right", html: `<div class="subst">auditoría final: exploración 0 → ${pct(ctx.store.limits().finalAudit)} · exploración 0.5 → ${pct(other.finalAudit)}</div>`, width: 450 });
+      extra = (run) => `<h4 class="sub"><span>Misma semilla, explorando el archivo (0.5)</span>${prov("sim")}</h4><div class="subst">auditoría final: exploración ${keep} → ${pct(run.finalAudit)} · exploración 0.5 → ${pct(other.finalAudit)}</div>`;
     }
+    limitsPanel(ctx, { title: SCENARIOS[name].label, lesson: SCENARIOS[name].lesson, extra });
   },
   ...extra,
 });
@@ -7392,8 +7114,11 @@ const chapter10 = {
       pose(ctx) {
         ctx.user.rolledBack = true;
         ctx.focus(["codigo", "archivo", "evaluador", "cart-v1"]);
-        const { run } = limitsPanel(ctx, { title: "Vuelta atrás", lesson: "Válida = promovida sin retroceder en la auditoría. La prueba final sigue reservada: se usa una vez, para informar." });
-        ctx.panel("code", { title: `Versión restaurada: ${run.lastValid.id}`, provKind: "local", top: 600, dock: "right", html: `<pre class="code">${esc(pseudocodeOf(run.lastValid.genome))}</pre>`, width: 450 });
+        limitsPanel(ctx, {
+          title: "Vuelta atrás",
+          lesson: "Válida = promovida sin retroceder en la auditoría. La prueba final sigue reservada: se usa una vez, para informar.",
+          extra: (run) => `<h4 class="sub"><span>Versión restaurada: ${esc(run.lastValid.id)}</span>${prov("local")}</h4><pre class="code">${esc(pseudocodeOf(run.lastValid.genome))}</pre>`,
+        });
       },
     },
     {
@@ -7452,7 +7177,6 @@ const { chapter7 } = __m_examples_rsi_lab_view_ch_c07_mjs;
 const { chapter8 } = __m_examples_rsi_lab_view_ch_c08_mjs;
 const { chapter9 } = __m_examples_rsi_lab_view_ch_c09_mjs;
 const { chapter10 } = __m_examples_rsi_lab_view_ch_c10_mjs;
-// Los diez capítulos del recorrido, en orden.
 
 
 
@@ -7474,7 +7198,6 @@ const { runReflection } = __m_examples_rsi_lab_model_reflection_mjs;
 const { softmax } = __m_examples_rsi_lab_model_linalg_mjs;
 const { gradLogPi } = __m_examples_rsi_lab_model_rl_mjs;
 const { SPLITS, makeSplit, makeAccessLog } = __m_examples_rsi_lab_model_agent_mjs;
-// Verificaciones en vivo (subconjunto de verify.mjs que corre rápido en el navegador).
 
 
 
@@ -7559,7 +7282,6 @@ return { liveChecks };
 const __m_examples_rsi_lab_view_inspector_mjs = (() => {
 const { prov, esc, f2 } = __m_examples_rsi_lab_view_helpers_mjs;
 const { liveChecks } = __m_examples_rsi_lab_view_checks_mjs;
-// Inspector: profundidad opcional. Pestañas: objeto, notación, verificación (en vivo), fuentes.
 
 
 const SOURCES = [
@@ -7694,7 +7416,6 @@ function renderInspector(ctx, selection) {
     );
     return;
   }
-  // Sin selección: explicación ampliada del paso actual.
   const more = typeof beat.more === "function" ? beat.more(ctx) : beat.more;
   body.innerHTML = `<div class="kind">capítulo ${beat.c + 1} · paso ${beat.b + 1}</div><h2>${esc(beat.chapter.title)}</h2>
     ${beat.chapter.question ? `<p><b style="color:var(--ink)">${beat.chapter.question}</b></p>` : ""}
@@ -7718,7 +7439,6 @@ const { makeDirector } = __m_examples_rsi_lab_view_director_mjs;
 const { CHAPTERS } = __m_examples_rsi_lab_view_chapters_mjs;
 const { renderInspector } = __m_examples_rsi_lab_view_inspector_mjs;
 const { prov } = __m_examples_rsi_lab_view_helpers_mjs;
-// Punto de entrada: arma la interfaz, el motor, el laboratorio, el estado común y el director.
 
 
 
@@ -7742,11 +7462,19 @@ buildRack(engine, store);
 buildTensors(engine, store);
 buildStations(engine, store);
 
-// ---------------- contexto compartido por los capítulos ----------------
 const beatScoped = { labels: new Set(), panels: new Map() };
 let changedNow = {};
 let selection = null;
 let wakeLoop = () => {};
+
+function syncDisclaimer() {
+  let offset = 0;
+  for (const node of beatScoped.panels.values()) {
+    const d = node._dock;
+    if (d && d.dock === "right" && d.top < 210) offset = Math.max(offset, d.right + d.width + 14);
+  }
+  ref.disclaimer.style.right = offset ? `${offset}px` : "";
+}
 
 const ctx = {
   engine,
@@ -7773,7 +7501,6 @@ const ctx = {
   },
   focus(ids) {
     const set = ids ? new Set([].concat(ids).filter(Boolean)) : null;
-    // la bandeja (padre) de un objeto enfocado sigue visible como contexto
     if (set) for (const id of [...set]) {
       let parent = engine.objects.get(id)?.parent;
       while (parent) {
@@ -7783,7 +7510,6 @@ const ctx = {
       }
     }
     ref.svg.toggleAttribute("data-focus", !!set);
-    // lo que descansa sobre un objeto enfocado (su grupo, nivel > 0) y sus hijos también se iluminan
     for (const [id, entry] of engine.objects) entry.el.toggleAttribute("data-on", !!set && (set.has(id) || (entry.parent && set.has(entry.parent)) || (entry.group && entry.level > 0 && set.has(entry.group))));
   },
   label(id, spec) {
@@ -7810,25 +7536,30 @@ const ctx = {
     }
     const style = node.style;
     style.width = width ? `${width}px` : "";
-    style.top = `${top ?? 78}px`;
+    style.top = `calc(${top ?? 78}px + var(--chips-extra, 0px))`;
+    style.maxHeight = `calc(100% - ${top ?? 78}px - var(--chips-extra, 0px) - 104px)`;
     style.left = dock === "left" ? `${left ?? 12}px` : "";
     style.right = dock === "right" ? `${right ?? 12}px` : "";
     if (dock === "center") {
       style.left = "50%";
       style.transform = "translateX(-50%)";
     } else style.transform = "";
+    node._dock = { dock, top: top ?? 78, right: right ?? 12, width: width ?? 420 };
+    syncDisclaimer();
     return node;
   },
   closePanel(id) {
     const node = beatScoped.panels.get(id);
     if (node) node.remove();
     beatScoped.panels.delete(id);
+    syncDisclaimer();
   },
   clearBeat() {
     for (const id of beatScoped.labels) engine.unlabel(id);
     beatScoped.labels.clear();
     for (const node of beatScoped.panels.values()) node.remove();
     beatScoped.panels.clear();
+    syncDisclaimer();
     ctx.pulsesOff();
     ctx.focus(null);
   },
@@ -7903,14 +7634,12 @@ const ctx = {
     return director.S.t;
   },
   wake: () => wakeLoop(),
-  // Cámara que sigue un evento dentro de un paso (sólo en el recorrido guiado).
   follow(spec) {
     if (director.S.mode !== "tour" || director.S.manualCam) return;
     director.flyTo(director.cameraFor({ camera: spec }), 1.1);
   },
 };
 
-// ---------------- director ----------------
 const director = makeDirector({
   chapters: CHAPTERS,
   engine,
@@ -7945,7 +7674,6 @@ const director = makeDirector({
 ctx.director = director;
 ctx.theta(store.print0, "sin cambios");
 
-// ---------------- línea de tiempo ----------------
 function buildTimeline() {
   ref.timeline.innerHTML = '<div class="track"></div><div class="fill"></div>';
   const total = director.total;
@@ -7995,7 +7723,6 @@ ref.timeline.addEventListener("keydown", (event) => {
   if (event.key === "End") seekShare(0.999);
 });
 
-// ---------------- bucle de render ----------------
 let raf = 0;
 let last = 0;
 let dirtyFrame = true;
@@ -8024,6 +7751,12 @@ new ResizeObserver(() => {
   if (!director.S.manualCam) director.flyTo(director.cameraFor(director.beat), 0);
   wakeLoop();
 }).observe(ref.stage);
+new ResizeObserver(() => {
+  const h = Math.round(ref.changed.getBoundingClientRect().height);
+  if (!h) return;
+  ref.stage.style.setProperty("--chips-h", `${h}px`);
+  ref.stage.style.setProperty("--chips-extra", `${Math.max(0, h - 26)}px`);
+}).observe(ref.changed);
 function insetFor() {
   const narrow = engine.size.w < 760;
   if (!narrow) return { top: 70, bottom: 70, left: 0, right: 0 };
@@ -8033,7 +7766,6 @@ function insetFor() {
 }
 engine.setInset(insetFor());
 
-// ---------------- controles ----------------
 ref.play.addEventListener("click", () => {
   if (director.S.playing) director.pause();
   else director.play();
@@ -8100,7 +7832,6 @@ for (const [key, button] of Object.entries(ref.tabButtons))
   });
 ctx.tab = "obj";
 
-// Escalas: ir a la escala elegida dentro del capítulo actual.
 const SCALE_CHAPTER = { lab: 0, model: 1, tensor: 2 };
 let scaleHistory = [];
 for (const [key, button] of Object.entries(ref.scaleButtons))
@@ -8124,7 +7855,6 @@ function goBack() {
   wakeLoop();
 }
 
-// Cámara manual: arrastrar gira, Mayús/botón derecho/dos dedos desplaza, rueda o pellizco acerca.
 const pointers = new Map();
 let drag = null;
 let pinch = null;
@@ -8210,9 +7940,7 @@ ref.camReset.addEventListener("click", () => {
   wakeLoop();
 });
 
-// Selección e inspección: clic en un objeto o en una celda.
 function hit(event) {
-  // con captura de puntero, event.target es el SVG: se busca el elemento real bajo el puntero
   const under = document.elementFromPoint(event.clientX, event.clientY);
   const target = under && under.closest ? under : event.target.closest ? event.target : null;
   if (!target) return {};
@@ -8226,14 +7954,13 @@ function click(event) {
   if (!id) {
     selection = null;
     renderInspector(ctx, null);
-    director.apply(); // restaura el foco del paso
+    director.apply();
     wakeLoop();
     return;
   }
   const entry = engine.objects.get(id);
   const target = entry.info || id;
   engine.objects.get(id).el.setAttribute("data-sel", "");
-  // resaltar lo elegido y atenuar el resto (incluye su parte frontal o sus hijos)
   ctx.focus([id, `${id}-front`, ...(entry.parent ? [entry.parent] : [])]);
   if (cell && entry.cell) {
     const [i, j] = cell.getAttribute("data-cell").split(",").map(Number);
@@ -8270,7 +7997,6 @@ ctx.inspectFromList = (id) => {
   renderInspector(ctx, id);
 };
 
-// Teclado
 const HELP = [
   ["Espacio", "reproducir / pausar"],
   ["→ / ←", "avanzar un evento / retroceder al estado guardado anterior"],
@@ -8315,7 +8041,6 @@ window.addEventListener("keydown", (event) => {
   else if (key === "0") act(() => ref.reset.click());
 });
 
-// Automatización y QA
 window.__sceneQA = {
   get state() {
     return { beat: director.beat.id, chapter: director.beat.c + 1, t: director.S.t, event: director.eventOf(director.beat, director.S.t), playing: director.S.playing, mode: director.S.mode, camera: { ...engine.cam }, changed: changedNow, user: JSON.parse(JSON.stringify(store.user)) };

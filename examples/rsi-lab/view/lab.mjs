@@ -1,12 +1,9 @@
-// El laboratorio a escala «laboratorio»: bancos, módulos, rutas de los tres bucles y fichas
-// de información para el inspector. Representación CONCEPTUAL: posiciones sin significado físico.
 import * as k from "../../../kit/iso-kit.mjs";
 import { basePlate, cabinet, labelPlate, lamp, gauge, knob, cartridge, S, L, D, at } from "./shapes.mjs";
 
 export const MAIN = { x: -320, y: -262, w: 640, d: 524, r: 16 };
 export const BENCH = { x: 362, y: -262, w: 262, d: 524, r: 14 };
 
-// Planos de los módulos (x, y, ancho, fondo) y altura.
 export const M = {
   modelo: { plan: { x: -305, y: -247, w: 200, d: 110, r: 5 }, h: 84, name: "Modelo θ" },
   archivo: { plan: { x: -85, y: -247, w: 150, d: 72, r: 4 }, h: 18, name: "Archivo de versiones" },
@@ -30,7 +27,6 @@ export const boxOf = (id, extra = 0) => {
   return k.boxCorners(k.insetPlan(plan, -extra), 0, h + extra);
 };
 
-// Puertos en el suelo (z = 0.4) para las rutas de los bucles.
 const port = (id, side, share = 0.5) => {
   const { plan } = M[id];
   if (side === "+x") return [plan.x + plan.w + 6, plan.y + plan.d * share, 0.4];
@@ -82,9 +78,7 @@ export function pointAlong(points, s) {
   return points[points.length - 1];
 }
 
-// ---------- Constructores de módulos ----------
 function buildModeloShell(P, state = {}) {
-  // Gabinete abierto con postes, techo y paneles de vidrio (corte): la parte trasera.
   const { plan, h } = M.modelo;
   const out = [`<path class="iso-halo" d="${k.haloOf(plan, 0, 0.1, P)}" style="filter:blur(8px)"/>`];
   out.push(S(k.slabOf(plan, 0, 6, P, 6, 1), { tone: "mid", inner: L(k.sideSeam(plan, 3, P, 6), { tone: "faint" }) }));
@@ -92,10 +86,8 @@ function buildModeloShell(P, state = {}) {
   const view = k.towardViewer(P);
   const back = posts.filter(([x, y]) => (x - (plan.x + plan.w / 2)) * view[0] + (y - (plan.y + plan.d / 2)) * view[1] < 0);
   for (const [x, y] of back) out.push(S(k.slabOf({ x: x - 3, y: y - 3, w: 6, d: 6, r: 1 }, 6, h - 10, P, 2, 0.4), { tone: "mid" }));
-  // panel trasero (paredes −x y −y) como placas finas con nervios
   out.push(S(k.slabOf({ x: plan.x + 2, y: plan.y + 2, w: plan.w - 4, d: 2.4, r: 0.6 }, 6, h - 10, P, 2), { tone: "lo" }));
   out.push(S(k.slabOf({ x: plan.x + 2, y: plan.y + 2, w: 2.4, d: plan.d - 4, r: 0.6 }, 6, h - 10, P, 2), { tone: "lo" }));
-  // guías de bandejas en la pared trasera
   for (const z of [16, 32, 48, 64]) out.push(L(k.segment([plan.x + 4.4, plan.y + 4.4, z], [plan.x + plan.w - 4, plan.y + 4.4, z], P) + k.segment([plan.x + 4.4, plan.y + 4.4, z], [plan.x + 4.4, plan.y + plan.d - 4, z], P), { tone: "lo" }));
   return out.join("");
 }
@@ -106,7 +98,6 @@ function buildModeloFront(P, state = {}) {
   const view = k.towardViewer(P);
   const front = posts.filter(([x, y]) => (x - (plan.x + plan.w / 2)) * view[0] + (y - (plan.y + plan.d / 2)) * view[1] >= 0);
   for (const [x, y] of front) out.push(S(k.slabOf({ x: x - 3, y: y - 3, w: 6, d: 6, r: 1 }, 6, h - 10, P, 2, 0.4), { tone: "mid" }));
-  // marcos del vidrio en las caras frontales (+x, +y)
   const z0 = 6;
   const z1 = h - 4;
   const fx = plan.x + plan.w - 2;
@@ -116,7 +107,6 @@ function buildModeloFront(P, state = {}) {
   const poly = (pts) => `M${pts.map((p) => p.map((v) => v.toFixed(1)).join(" ")).join("L")}Z`;
   out.push(`<path class="glass" d="${poly(glassX)}"/><path class="glass" d="${poly(glassY)}"/>`);
   out.push(L(k.segment([fx, plan.y + 6, z0 + (z1 - z0) * 0.5], [fx, fy - 4, z0 + (z1 - z0) * 0.5], P) + k.segment([plan.x + 6, fy, z0 + (z1 - z0) * 0.5], [fx - 4, fy, z0 + (z1 - z0) * 0.5], P), { tone: "faint" }));
-  // techo
   out.push(S(k.slabOf(k.insetPlan(plan, -1), h - 10, 6, P, 6, 1), { tone: "mid" }));
   out.push(D(k.corners(plan, 6).map(([x, y]) => at([x, y, h - 4], P)), { size: 0.5 }));
   out.push(labelPlate({ x: plan.x + plan.w - 52, y: plan.y + 14, w: 40, d: 18, r: 1.5 }, h - 4, P));
@@ -126,7 +116,6 @@ function buildModeloFront(P, state = {}) {
 function buildDatos(P, state = {}) {
   const { plan, h } = M.datos;
   const out = [cabinet(plan, 0, h, P, { tone: "mid" })];
-  // cuatro cajones en la cara +x: desarrollo, validación, prueba (sellada), auditoría
   const names = ["dev", "valid", "test", "audit"];
   const x = plan.x + plan.w;
   const span = (plan.d - 12) / 4;
@@ -138,7 +127,6 @@ function buildDatos(P, state = {}) {
     out.push(S(k.slabOf(front, 7, h - 18, P, 2, 0.4), { tone: name === "test" ? "lo" : "mid", className: `drawer d-${name}` }));
     out.push(S(k.slabOf({ x: front.x + 3, y: y0 + span / 2 - 5, w: 2, d: 10, r: 0.8 }, 20, 4, P, 2), { tone: "mid" }));
     if (name === "test") {
-      // candado: precinto de la prueba reservada
       out.push(S(k.slabOf({ x: front.x + 3, y: y0 + span / 2 - 3, w: 3, d: 6, r: 1 }, 30, 7, P, 2), { tone: "hi" }));
       out.push(L(k.sideRing([front.x + 4.5, y0 + span / 2, 38.5], 2, "x", P, 16), { tone: "mid" }));
     }
@@ -149,7 +137,6 @@ function buildDatos(P, state = {}) {
 function buildContexto(P, state = {}) {
   const { plan, h } = M.contexto;
   const out = [S(k.slabOf(plan, 0, 4, P, 4, 0.8), { tone: "mid", className: "ctx-base" })];
-  // diez ranuras (máximo 10 posiciones) y una regla de presupuesto en el borde frontal
   const slot = (plan.w - 14) / 10;
   for (let i = 0; i < 10; i++) out.push(L(k.planOutline({ x: plan.x + 7 + i * slot + 1, y: plan.y + 6, w: slot - 2, d: plan.d - 16, r: 1 }, 4, P, 3), { tone: i < (state.used ?? 6) ? "lo" : "faint" }));
   const strip = { x: plan.x + 6, y: plan.y + plan.d - 8, w: plan.w - 12, d: 5, r: 0.8 };
@@ -166,7 +153,6 @@ function buildContexto(P, state = {}) {
 function buildHerramientas(P) {
   const { plan, h } = M.herramientas;
   const out = [cabinet(plan, 0, h, P)];
-  // ejecutor de pruebas: cuatro lámparas y una perilla; lector de registros: rodillo
   for (let i = 0; i < 4; i++) out.push(lamp(plan.x + 16 + i * 12, plan.y + 18, h, P, "off", 3));
   out.push(knob(plan.x + plan.w - 16, plan.y + 18, h, 5, P, 0.6));
   out.push(S(k.slabOf({ x: plan.x + 10, y: plan.y + 36, w: plan.w - 20, d: 22, r: 2 }, h, 3, P, 3, 0.4), { tone: "lo" }));
@@ -177,17 +163,14 @@ function buildHerramientas(P) {
 function buildEntorno(P, state = {}) {
   const { plan, h } = M.entorno;
   const out = [S(k.slabOf(plan, 0, 6, P, 5, 1), { tone: "mid" })];
-  // recinto aislado (sandbox): vidrio sobre bastidor
   const inner = k.insetPlan(plan, 6);
   out.push(S(k.slabOf(inner, 6, 2, P, 4), { tone: "lo" }));
   out.push(`<path class="glass" d="${k.slabOf(inner, 8, h - 10, P, 3).fill}"/>`);
   out.push(L(k.slabOf(inner, 8, h - 10, P, 3).outline, { tone: "lo" }));
   out.push(S(k.slabOf(k.insetPlan(plan, 4), h - 2, 2, P, 4, 0.6), { tone: "mid" }));
-  // medidor de presupuesto
   const meter = { x: plan.x + 8, y: plan.y + plan.d - 4.5, w: plan.w - 16, d: 3, r: 0.6 };
   out.push(S(k.slabOf(meter, 6, 0.6, P, 2), { tone: "lo", crease: "none" }));
   if (state.budget !== undefined) out.push(`<path class="bar" data-r="${state.budget > 0.95 ? "bad" : "g"}" d="${k.planOutline({ x: meter.x + 0.5, y: meter.y + 0.6, w: (meter.w - 1) * Math.min(1, state.budget), d: 1.8, r: 0.3 }, 6.7, P, 2)}"/>`);
-  // planificador de trabajos (bandejas de máquinas)
   for (let i = 0; i < 5; i++) out.push(S(k.slabOf({ x: inner.x + 8 + i * 18, y: inner.y + 10, w: 12, d: 22, r: 1.2 }, 8, 6 + (i % 3) * 3, P, 2, 0.3), { tone: "mid" }));
   return out.join("");
 }
@@ -195,7 +178,6 @@ function buildEntorno(P, state = {}) {
 function buildCodigo(P, state = {}) {
   const { plan, h } = M.codigo;
   const out = [cabinet(plan, 0, h, P)];
-  // ranura del gestor de contexto (cartucho) y ranura de estrategia
   const slotA = { x: plan.x + 14, y: plan.y + 16, w: 40, d: 22, r: 2 };
   const slotB = { x: plan.x + 66, y: plan.y + 16, w: 40, d: 22, r: 2 };
   out.push(L(k.planOutline(slotA, h, P, 3) + k.planOutline(slotB, h, P, 3), { tone: "lo" }));
@@ -207,7 +189,6 @@ function buildCodigo(P, state = {}) {
 function buildProponente(P, state = {}) {
   const { plan, h } = M.proponente;
   const out = [cabinet(plan, 0, h, P)];
-  // atril de análisis: placa inclinada (registros) y ranura del analista
   out.push(S(k.slabOf({ x: plan.x + 10, y: plan.y + 10, w: 50, d: 34, r: 2 }, h, 2, P, 3, 0.4), { tone: "lo" }));
   for (let i = 0; i < 5; i++) out.push(L(k.lineOnTop([plan.x + 14, plan.y + 16 + i * 5.5], [plan.x + 56 - (i % 2) * 10, plan.y + 16 + i * 5.5], h + 2, P), { tone: "lo", free: true }));
   out.push(L(k.planOutline({ x: plan.x + 70, y: plan.y + 14, w: 30, d: 20, r: 2 }, h, P, 3), { tone: "lo" }));
@@ -228,7 +209,6 @@ function buildEvaluador(P, state = {}) {
 function buildArchivo(P, state = {}) {
   const { plan, h } = M.archivo;
   const out = [S(k.slabOf(plan, 0, h - 8, P, 5, 1), { tone: "mid" })];
-  // riel con ranuras para cartuchos de versión
   out.push(S(k.slabOf(k.insetPlan(plan, 4), h - 8, 3, P, 4, 0.5), { tone: "lo" }));
   const slots = 8;
   for (let i = 0; i < slots; i++) out.push(L(k.planOutline({ x: plan.x + 10 + i * 18, y: plan.y + 12, w: 12, d: plan.d - 24, r: 1 }, h - 5, P, 2), { tone: "faint" }));
@@ -250,7 +230,6 @@ function buildRoute(id) {
     const route = ROUTES[id];
     const d = k.onTop(route.points.map(([x, y]) => [x, y]), 0.4, P);
     const cls = state.off ? "route off" : "route";
-    // terminales: cada ruta empieza y termina en un puerto (anillo + punto), nunca en el aire
     const ends = [route.points[0], route.points[route.points.length - 1]].map(([x, y]) => {
       const [sx, sy] = k.iso([x, y, 0.4], P);
       const r = 2.2 * k.cameraOf(P).k;

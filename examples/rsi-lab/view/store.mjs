@@ -1,5 +1,3 @@
-// Estado común: parámetros que el usuario puede cambiar + cálculos memoizados.
-// Todas las vistas leen de aquí; ninguna vista modifica un resultado calculado.
 import { initParams, forward, paramPrint, paramCount, generate, prefillCache, invalidateFrom, temperatureProbs, argmax, CONFIG } from "../model/transformer.mjs";
 import { tokenize, VOCAB } from "../model/tokenizer.mjs";
 import { runTraining, finiteDifferenceCheck, examplesOf, TRAIN_TEXT, VALID_TEXT, headOf, withHead, headPrint, headSize } from "../model/train.mjs";
@@ -13,7 +11,7 @@ import { makeRng } from "../model/rng.mjs";
 
 export const DEFAULTS = {
   text: "def f(x):",
-  tokens: null, // ids si el usuario cambia tokens directamente
+  tokens: null,
   head: 0,
   block: 0,
   row: 3,
@@ -137,7 +135,6 @@ export function makeStore() {
         return rows;
       });
     },
-    // Versión por partes (no bloquea la interfaz): una semilla por tarea.
     loopCompareAsync(done) {
       if (memo.has("loopcmp|0")) return done(memo.get("loopcmp|0"));
       if (store._pending) return store._pending.push(done);

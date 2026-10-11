@@ -1,26 +1,18 @@
-// Matrices como superficies inspeccionables y cubos de producto matricial.
-// Codificación: celda llena = valor positivo, celda con borde = negativo, intensidad = |valor|/máx.
-// Celdas enmascaradas (−∞) en gris con un trazo diagonal. Todo en coordenadas del mundo.
 import * as k from "../../../kit/iso-kit.mjs";
 import { add3, mul3 } from "./engine.mjs";
 
 const r1 = (v) => Math.round(v * 10) / 10;
 const pathOf = (pts) => `M${pts.map(([x, y]) => `${r1(x)} ${r1(y)}`).join("L")}Z`;
 
-// frame: { o: esquina de la celda (0,0), u: paso de columna, v: paso de fila } (vectores del mundo)
 export const cellCorner = (frame, i, j) => add3(add3(frame.o, mul3(frame.u, j)), mul3(frame.v, i));
 export const cellCentre = (frame, i, j) => add3(add3(frame.o, mul3(frame.u, j + 0.5)), mul3(frame.v, i + 0.5));
 export const planeCentre = (frame, rows, cols) => add3(add3(frame.o, mul3(frame.u, cols / 2)), mul3(frame.v, rows / 2));
 
-// Construye el marcado de una matriz.
-// spec: { rows, cols, values (matriz o null), role, frame, scaleMax, highlight: Set("i,j"), rowHi, colHi,
-//         dimCells: Set, masked: (i,j)=>bool, plate: true, title }
 export function matrixSvg(P, spec) {
   const { rows, cols, frame, role = "input", values } = spec;
   const gap = spec.gap ?? 0.08;
   const project = (point) => k.iso(point, P);
   const out = [];
-  // placa: paralelogramo con un canto que sugiere grosor
   const pad = spec.pad ?? 0.35;
   const o = add3(add3(frame.o, mul3(frame.u, -pad)), mul3(frame.v, -pad));
   const U = mul3(frame.u, cols + 2 * pad);
@@ -70,20 +62,17 @@ export function matrixSvg(P, spec) {
   return out.join("");
 }
 
-// Cubo del producto C = A·B (n×k · k×m). Ejes: k → +x, j → −y, i → −z.
-// Devuelve los marcos de A (cara +y), B (cara superior) y C (cara +x) y la geometría del volumen.
 export function cubeFrames(origin, n, kk, m, c, faceGap = 0.6) {
-  const [x0, y0, z0] = origin; // esquina frontal-superior: x = x0 + k·c, y = y0 − j·c, z = z0 − i·c
+  const [x0, y0, z0] = origin;
   return {
-    A: { o: [x0, y0 + faceGap, z0], u: [c, 0, 0], v: [0, 0, -c] }, // filas i hacia abajo, columnas k a lo largo de +x
-    B: { o: [x0, y0, z0 + faceGap], u: [0, -c, 0], v: [c, 0, 0] }, // filas k a lo largo de +x, columnas j hacia −y
-    C: { o: [x0 + kk * c + faceGap, y0, z0], u: [0, -c, 0], v: [0, 0, -c] }, // filas i, columnas j
+    A: { o: [x0, y0 + faceGap, z0], u: [c, 0, 0], v: [0, 0, -c] },
+    B: { o: [x0, y0, z0 + faceGap], u: [0, -c, 0], v: [c, 0, 0] },
+    C: { o: [x0 + kk * c + faceGap, y0, z0], u: [0, -c, 0], v: [0, 0, -c] },
     volume: { x0, y0, z0, X: kk * c, Y: m * c, Z: n * c },
     point: (i, j, t) => [x0 + (t + 0.5) * c, y0 - (j + 0.5) * c, z0 - (i + 0.5) * c],
   };
 }
 
-// Aristas visibles del volumen (líneas tenues) y, si hay celda elegida, la fila de productos.
 export function cubeSvg(P, spec) {
   const { frames, n, kk, m } = spec;
   const { x0, y0, z0, X, Y, Z } = frames.volume;
@@ -107,7 +96,6 @@ export function cubeSvg(P, spec) {
       const value = products[t];
       const radius = (0.35 + 0.65 * Math.abs(value) / max) * spec.c * 0.32 * k.cameraOf(P).k;
       line.push(`<circle class="prod ${value < 0 ? "neg" : "pos"}${shown ? "" : " pending"}" data-prod="${t}" cx="${r1(sx)}" cy="${r1(sy)}" r="${r1(radius)}"/>`);
-      // proyecciones: de A[i,t] y de B[t,j] hacia el punto del producto
       if (shown) {
         const fromA = add3(cellCentre(frames.A, i, t), [0, 0, 0]);
         const fromB = cellCentre(frames.B, t, j);

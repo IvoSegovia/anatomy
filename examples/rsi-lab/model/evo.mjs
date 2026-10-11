@@ -1,7 +1,3 @@
-// Estación C: búsqueda evolutiva de PROGRAMAS. El programa es la función de prioridad de un
-// planificador de trabajos (empaquetado en línea: cada trabajo de tamaño s va a la máquina
-// abierta con mayor prioridad entre las que tienen sitio r ≥ s; si ninguna, se abre otra).
-// Las variantes se generan con mutaciones aleatorias sobre árboles de expresión (sin LLM).
 import { makeRng } from "./rng.mjs";
 
 export const CAPACITY = 100;
@@ -10,8 +6,8 @@ const VARS = ["s", "r", "k"];
 const CONSTS = [1, 2, 5, 10];
 
 export const SEEDS = {
-  primero: ["neg", ["var", "k"]], // primer ajuste: la máquina más antigua
-  peor: ["-", ["var", "r"], ["var", "s"]], // peor ajuste: la que deja más sitio
+  primero: ["neg", ["var", "k"]],
+  peor: ["-", ["var", "r"], ["var", "s"]],
 };
 export const BASELINES = {
   "primer ajuste": SEEDS.primero,
@@ -114,7 +110,6 @@ export function mutate(program, rng) {
   return sizeOf(child) > 11 ? { program, label: "descartada (demasiado grande)", invalid: true } : { program: child, label };
 }
 
-// Celda del archivo de diversidad (MAP-Elites): tamaño × variables usadas.
 export function cellOf(program) {
   const size = sizeOf(program);
   const sizeBin = size <= 2 ? 0 : size <= 4 ? 1 : size <= 7 ? 2 : 3;
@@ -122,7 +117,6 @@ export function cellOf(program) {
   return `${sizeBin}|${used}`;
 }
 
-// Búsqueda con presupuesto total de evaluaciones fijo. perCandidate = secuencias por candidata.
 export function runEvolution({ budget = 192, perCandidate = 4, temperature = 0.03, seed = 3, start = SEEDS.peor } = {}) {
   const rng = makeRng(seed);
   const archive = new Map();

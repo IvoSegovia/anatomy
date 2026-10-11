@@ -1,5 +1,3 @@
-// Piezas de taller construidas con el kit Anatomy (sólidos sombreados en cuatro tonos,
-// biseles, tornillos, costuras, placas de rótulo). Cada función devuelve marcado SVG para P.
 import * as k from "../../../kit/iso-kit.mjs";
 
 const S = (paths, style) => k.solidSvg(paths, style);
@@ -8,7 +6,6 @@ const D = (points, style) => k.dotsSvg(points, style);
 const at = (p, P) => k.iso(p, P);
 const byDepth = (points, P) => [...points].sort((a, b) => k.depthOf([a[0], a[1], 0], P) - k.depthOf([b[0], b[1], 0], P));
 
-// Placa base sobre patas, con ranura perimetral, tornillos y regla.
 export function basePlate(plan, P, { thick = 12, foot = 6, ruler = true } = {}) {
   const out = [`<path class="iso-halo" d="${k.haloOf(plan, -thick - foot, thick, P)}"/>`];
   for (const [x, y] of byDepth(k.corners(plan, 26), P)) {
@@ -30,8 +27,6 @@ export function basePlate(plan, P, { thick = 12, foot = 6, ruler = true } = {}) 
   return out.join("");
 }
 
-// Caja de instrumento: cuerpo con bisel, costura, tapa, tornillos en la tapa y placa de rótulo frontal.
-// Rejilla de ventilación: ranuras cerradas en una cara vertical visible (+x o +y).
 function vents(plan, z0, z1, P, count = 5) {
   const [vx, vy] = k.towardViewer(P);
   const out = [];
@@ -59,7 +54,6 @@ function vents(plan, z0, z1, P, count = 5) {
 export function cabinet(plan, z, h, P, { tone = "mid", lid = 3, lit = false, screws = true, seam = true, className = "", vent = true } = {}) {
   const out = [];
   out.push(`<path class="iso-halo" d="${k.haloOf(k.insetPlan(plan, -2), z, 0.1, P)}" style="filter:blur(6px)"/>`);
-  // zócalo inferior (tono bajo) sobre el que apoya el cuerpo
   const plinth = 2.4;
   out.push(S(k.slabOf(k.insetPlan(plan, 1.6), z, plinth, P, 5), { tone: "lo", crease: "none" }));
   const body = k.slabOf(plan, z + plinth, h - lid - plinth, P, 6, 0.8);
@@ -76,7 +70,6 @@ export function cabinet(plan, z, h, P, { tone = "mid", lid = 3, lit = false, scr
   return out.join("");
 }
 
-// Placa de rótulo sobre una cara superior: tres líneas de «texto» (libres) y dos tornillos.
 export function labelPlate(plan, z, P) {
   const out = [S(k.slabOf(plan, z, 0.8, P, 3), { tone: "lo" })];
   out.push(L(k.planOutline(k.insetPlan(plan, 1.4), z + 0.8, P, 3), { tone: "faint" }));
@@ -90,7 +83,6 @@ export function labelPlate(plan, z, P) {
   return out.join("");
 }
 
-// Lámpara de estado: base, collar y cúpula; `state` = "ok" | "fail" | "off".
 export function lamp(x, y, z, P, state = "off", r = 3.2) {
   const out = [S(k.cylinder(x, y, r + 1.4, z, 1.6, P, 24), { tone: "lo" })];
   out.push(S(k.cylinder(x, y, r, z + 1.6, 2.2, P, 24, 0.4), { tone: "mid" }));
@@ -98,7 +90,6 @@ export function lamp(x, y, z, P, state = "off", r = 3.2) {
   return out.join("");
 }
 
-// Indicador de cuadrante con aguja (valor 0..1 sobre 270°).
 export function gauge(x, y, z, R, P, value = 0, { tone = "hi", needleClass = "needle" } = {}) {
   const out = [S(k.cylinder(x, y, R + 1.2, z, 2, P, 48), { tone: "lo" })];
   out.push(S(k.cylinder(x, y, R, z + 2, 4, P, 64, 0.6), { tone, crease: "lo" }));
@@ -115,7 +106,6 @@ export function gauge(x, y, z, R, P, value = 0, { tone = "hi", needleClass = "ne
   return out.join("");
 }
 
-// Perilla moleteada con puntero.
 export function knob(x, y, z, r, P, angle = 0) {
   const out = [S(k.cylinder(x, y, r, z, 3.4, P, 32), { tone: "mid" })];
   out.push(L(k.knurl(x, y, r, z, z + 3.4, 36, P), { tone: "lo" }));
@@ -123,7 +113,6 @@ export function knob(x, y, z, r, P, angle = 0) {
   return out.join("");
 }
 
-// Cartucho (versión de código): cuerpo, agarre y ventana de etiqueta.
 export function cartridge(plan, z, h, P, { tone = "hi", lit = false, className = "" } = {}) {
   const out = [S(k.slabOf(plan, z, h, P, 3, 0.5), { tone, lit, className, inner: L(k.sideSeam(plan, z + h * 0.45, P, 3), { tone: "faint" }) })];
   const grip = { x: plan.x + plan.w * 0.25, y: plan.y + plan.d * 0.3, w: plan.w * 0.5, d: plan.d * 0.4, r: 1 };
@@ -131,7 +120,6 @@ export function cartridge(plan, z, h, P, { tone = "hi", lit = false, className =
   return out.join("");
 }
 
-// Bandeja de bastidor: fondo y paredes. part = "back" (fondo + paredes traseras) | "front" (paredes delanteras).
 export function tray(plan, z, P, part = "back", { wall = 2.2, h = 5, tone = "mid", className = "" } = {}) {
   const out = [];
   const view = k.towardViewer(P);
@@ -153,14 +141,12 @@ export function tray(plan, z, P, part = "back", { wall = 2.2, h = 5, tone = "mid
   return out.join("");
 }
 
-// Tarjeta de token: losa fina con su símbolo grabado encima.
 export function tokenCard(plan, z, P, text, { lit = false, className = "card" } = {}) {
   const out = [S(k.slabOf(plan, z, 1.6, P, 3, 0.4), { tone: "hi", lit, className })];
   if (text !== undefined) out.push(k.faceTextSvg(k.topMatrix([plan.x + plan.w / 2, plan.y + plan.d * 0.62], z + 1.6, P, "x"), text, { size: Math.min(plan.d * 0.42, 4.2), tone: "hi", anchor: "middle" }));
   return out.join("");
 }
 
-// Canal en el suelo para una ruta (dos bordes tenues).
 export function channel(points, z, P) {
   return L(k.onTop(points, z, P), { tone: "faint" });
 }

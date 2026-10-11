@@ -1,4 +1,3 @@
-// Capítulo 7 — Una automejora concreta del agente (el corazón de la experiencia).
 import { baseVisibility, explode, moduleCamera, mainCamera } from "../common.mjs";
 import { f2, f3, esc, table, pct, pct1, prov, sgn } from "../helpers.mjs";
 import { el } from "../ui.mjs";

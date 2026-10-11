@@ -1,4 +1,3 @@
-// Capítulo 6 — Algoritmos que pueden contribuir a la mejora (tres estaciones).
 import { baseVisibility, explode, moduleCamera } from "../common.mjs";
 import { f2, f3, T, esc, table, lineChart, barList, pct1, prov } from "../helpers.mjs";
 import { el } from "../ui.mjs";
@@ -11,9 +10,8 @@ const stationCam = (id) => () => moduleCamera([id], 18, { area: { left: 430 }, e
 
 function reflectionState(ctx, e) {
   const { log } = ctx.store.reflection();
-  // eventos: 1 intento1, 2 pruebas1, 3 nota1, 4 intento2, 5 pruebas2, 6 nota2, 7 intento3, 8 pruebas3
   const attempt = Math.min(3, Math.floor((Math.max(1, e) - 1) / 3) + 1);
-  const phase = (Math.max(1, e) - 1) % 3; // 0 intento, 1 pruebas, 2 nota
+  const phase = (Math.max(1, e) - 1) % 3;
   const entry = log[attempt - 1];
   const notes = Math.min(log.length - 1, attempt - 1 + (phase === 2 ? 1 : 0));
   return { log, attempt, phase, entry, notes };

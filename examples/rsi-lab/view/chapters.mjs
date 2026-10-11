@@ -1,4 +1,3 @@
-// Los diez capítulos del recorrido, en orden.
 import { chapter1 } from "./ch/c01.mjs";
 import { chapter2 } from "./ch/c02.mjs";
 import { chapter3 } from "./ch/c03.mjs";

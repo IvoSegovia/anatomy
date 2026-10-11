@@ -1,9 +1,3 @@
-// Escena 10: controles de límites. Cada control tiene un efecto DEFINIDO en runLoop:
-//   presupuesto        → budget: ejecuciones de tareas totales disponibles para el bucle
-//   ruido del evaluador → noise: probabilidad de invertir cada resultado de validación (pruebas inestables)
-//   diversidad de tareas → families: cuántas familias aparecen en desarrollo y validación (la prueba siempre tiene 4)
-//   coste de validación → nVal: tareas de validación consumidas por cada candidata
-//   diversidad de candidatos → explore: probabilidad de elegir un padre distinto de la versión activa
 import { runLoop } from "./loop.mjs";
 import { VERSIONS } from "./agent.mjs";
 
@@ -36,7 +30,6 @@ export function optionsOf(values) {
   };
 }
 
-// Escenarios de fallo concretos (cada uno es sólo una combinación de controles).
 export const SCENARIOS = {
   base: { label: "protocolo cuidadoso", values: { budget: 900, noise: 0, diversity: 4, nVal: 40, explore: 0.3, criterion: "estricto" }, mode: "B", seed: 2,
     lesson: "Criterio estricto (IC95 > 0), validación amplia: las promociones se confirman en la prueba independiente." },

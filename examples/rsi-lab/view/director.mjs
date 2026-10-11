@@ -1,10 +1,6 @@
-// Director del recorrido: línea de tiempo de capítulos → pasos (beats) → eventos.
-// Cada paso es determinista: pose(ctx, t) depende sólo del estado y de t ∈ [0, 1].
-// Los eventos son fronteras t = k/n; al cruzarlas se guarda un estado (para retroceder).
 import { ease, lerp, lerp3 } from "./engine.mjs";
 
 export function makeDirector({ chapters, engine, ref, ctx, hooks = {} }) {
-  // PACE ajusta el ritmo global del recorrido guiado (≈ 11 min a 1×); no afecta a ningún cálculo.
   const PACE = 0.86;
   const beats = [];
   chapters.forEach((chapter, c) => chapter.beats.forEach((beat, b) => beats.push({ events: 1, ...beat, dur: (beat.dur ?? 8) * PACE, chapter, c, b })));
@@ -79,7 +75,6 @@ export function makeDirector({ chapters, engine, ref, ctx, hooks = {} }) {
   function apply() {
     const beat = beatAt();
     enter(S.beat);
-    // Con movimiento reducido no hay interpolaciones: se muestra el estado del evento en curso.
     const t = still.matches ? Math.max(1, Math.ceil(S.t * beat.events - 1e-9)) / beat.events : S.t;
     const e = eventOf(beat, t);
     if (beat.pose) beat.pose(ctx, t, e);
@@ -94,7 +89,6 @@ export function makeDirector({ chapters, engine, ref, ctx, hooks = {} }) {
     save();
   }
 
-  // Avanza el reloj narrativo.
   function tick(dt) {
     let moving = false;
     if (S.camAnim) {
@@ -164,7 +158,6 @@ export function makeDirector({ chapters, engine, ref, ctx, hooks = {} }) {
   function prevEvent() {
     S.playing = false;
     S.stepTo = null;
-    // estado guardado anterior distinto del actual
     const here = snapshot();
     while (S.history.length) {
       const snap = S.history.pop();
@@ -178,7 +171,6 @@ export function makeDirector({ chapters, engine, ref, ctx, hooks = {} }) {
         return true;
       }
     }
-    // sin historia: ir al inicio del paso o al final del anterior
     if (S.t > 0) seek(S.beat, 0);
     else if (S.beat > 0) seek(S.beat - 1, 1);
     return false;

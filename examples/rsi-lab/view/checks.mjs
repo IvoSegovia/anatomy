@@ -1,4 +1,3 @@
-// Verificaciones en vivo (subconjunto de verify.mjs que corre rápido en el navegador).
 import { forward, prefillCache, paramPrint, generate, initParams } from "../model/transformer.mjs";
 import { examplesOf, TRAIN_TEXT, headOf, lossAndGrad, adamStep, adamInit, flatHead, ADAM } from "../model/train.mjs";
 import { runReflection } from "../model/reflection.mjs";

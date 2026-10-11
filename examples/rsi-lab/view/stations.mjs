@@ -1,5 +1,3 @@
-// Piezas de las escenas 6–10: estaciones A, B y C, tiras de registro en la bandeja de contexto
-// y cartuchos de versión del gestor de contexto.
 import * as k from "../../../kit/iso-kit.mjs";
 import { M } from "./lab.mjs";
 import { lamp, gauge, cartridge, tokenCard, S, L, D, at } from "./shapes.mjs";
@@ -12,7 +10,6 @@ export function buildStations(engine, store) {
   const groupOf = (id) => (id.startsWith("a-") ? "estA" : id.startsWith("b-") ? "estB" : id.startsWith("c-") ? "estC" : id === "ctx-lines" ? "contexto" : undefined);
   const add = (object) => engine.add({ className: "pick", pose: { visible: true, state: {} }, group: groupOf(object.id), level: 1, ...object });
 
-  // ---------- Estación A: reflexión ----------
   const A = plan("estA");
   const zA = top("estA");
   add({ id: "a-gen", anchor: [A.x + 40, A.y + 40, zA + 10], info: "a-gen", build: (P, s = {}) => {
@@ -43,7 +40,6 @@ export function buildStations(engine, store) {
     return `<g data-role="off">${S(k.slabOf(g, zA, 8, P, 3, 0.6), { tone: "lo" })}</g>` + L(k.planOutline(k.insetPlan(g, 4), zA + 8, P, 3), { tone: "faint" });
   } });
 
-  // ---------- Estación B: REINFORCE ----------
   const B = plan("estB");
   const zB = top("estB");
   add({ id: "b-policy", anchor: [B.x + 70, B.y + 60, zB + 8], info: "b-policy", build: (P, s = {}) => {
@@ -53,12 +49,9 @@ export function buildStations(engine, store) {
     const grad = s.grad || null;
     for (let a = 0; a < 4; a++) {
       const x = B.x + 24 + a * 28;
-      // θ_a: varilla violeta (altura ∝ θ_a + 3)
       const ht = Math.max(0.6, (theta[a] + 3) * 3);
       out.push(`<g data-role="w">${S(k.slabOf({ x, y: B.y + 22, w: 7, d: 7, r: 1 }, zB + 3, ht, P, 2, 0.3), { tone: "hi" })}</g>`);
-      // π(a): barra cian (altura ∝ probabilidad)
       out.push(`<g data-role="in">${S(k.slabOf({ x, y: B.y + 40, w: 7, d: 14, r: 1 }, zB + 3, Math.max(0.4, pi[a] * 40), P, 2, 0.3), { tone: "hi", lit: s.best === a })}</g>`);
-      // gradiente ĝ_a: flecha naranja hacia arriba o abajo sobre la barra
       if (grad) {
         const g = grad[a] * 30;
         const base = zB + 3 + Math.max(0.4, pi[a] * 40) + 2;
@@ -85,7 +78,6 @@ export function buildStations(engine, store) {
     return out.join("");
   } });
 
-  // ---------- Estación C: búsqueda evolutiva ----------
   const C = plan("estC");
   const zC = top("estC");
   add({ id: "c-archive", anchor: [C.x + 60, C.y + 60, zC + 6], info: "c-archive", build: (P, s = {}) => {
@@ -118,10 +110,9 @@ export function buildStations(engine, store) {
     return out.join("");
   } });
 
-  // ---------- Tiras de registro en la bandeja de contexto (escena 7) ----------
   const X = plan("contexto");
   const zX = top("contexto");
-  const per = (X.w - 12) / BUDGET; // longitud por token
+  const per = (X.w - 12) / BUDGET;
   add({ id: "ctx-lines", layer: 2, anchor: [X.x + X.w / 2, X.y + X.d / 2, zX + 2], bias: 2, info: "ctx-lines", pose: { visible: false, state: {} }, build: (P, s = {}) => {
     const out = [];
     let x = X.x + 6;
@@ -132,7 +123,6 @@ export function buildStations(engine, store) {
       out.push(`<g data-role="${role}">${S(k.slabOf({ x: x + 0.3, y: X.y + 9, w: Math.max(0.6, w - 0.6), d: 14, r: 0.6 }, zX, line.evidence ? 2.6 : 1.4, P, 2, 0.2), { tone: "hi", lit: !!line.evidence })}</g>`);
       x += w;
     }
-    // las que no caben caen fuera de la bandeja (delante, en rojo)
     let xo = X.x + 6;
     for (const line of s.dropped || []) {
       const w = line.tokens * per * 0.5;
@@ -142,7 +132,6 @@ export function buildStations(engine, store) {
     return out.join("");
   } });
 
-  // ---------- Cartuchos de versión ----------
   const Cd = plan("codigo");
   const Ar = plan("archivo");
   const Pr = plan("proponente");

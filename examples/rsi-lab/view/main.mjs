@@ -1,4 +1,3 @@
-// Punto de entrada: arma la interfaz, el motor, el laboratorio, el estado común y el director.
 import * as k from "../../../kit/iso-kit.mjs";
 import { makeEngine, add3 } from "./engine.mjs";
 import { buildShell, renderChanged, el } from "./ui.mjs";
@@ -23,11 +22,19 @@ buildRack(engine, store);
 buildTensors(engine, store);
 buildStations(engine, store);
 
-// ---------------- contexto compartido por los capítulos ----------------
 const beatScoped = { labels: new Set(), panels: new Map() };
 let changedNow = {};
 let selection = null;
 let wakeLoop = () => {};
+
+function syncDisclaimer() {
+  let offset = 0;
+  for (const node of beatScoped.panels.values()) {
+    const d = node._dock;
+    if (d && d.dock === "right" && d.top < 210) offset = Math.max(offset, d.right + d.width + 14);
+  }
+  ref.disclaimer.style.right = offset ? `${offset}px` : "";
+}
 
 const ctx = {
   engine,
@@ -54,7 +61,6 @@ const ctx = {
   },
   focus(ids) {
     const set = ids ? new Set([].concat(ids).filter(Boolean)) : null;
-    // la bandeja (padre) de un objeto enfocado sigue visible como contexto
     if (set) for (const id of [...set]) {
       let parent = engine.objects.get(id)?.parent;
       while (parent) {
@@ -64,7 +70,6 @@ const ctx = {
       }
     }
     ref.svg.toggleAttribute("data-focus", !!set);
-    // lo que descansa sobre un objeto enfocado (su grupo, nivel > 0) y sus hijos también se iluminan
     for (const [id, entry] of engine.objects) entry.el.toggleAttribute("data-on", !!set && (set.has(id) || (entry.parent && set.has(entry.parent)) || (entry.group && entry.level > 0 && set.has(entry.group))));
   },
   label(id, spec) {
@@ -91,25 +96,30 @@ const ctx = {
     }
     const style = node.style;
     style.width = width ? `${width}px` : "";
-    style.top = `${top ?? 78}px`;
+    style.top = `calc(${top ?? 78}px + var(--chips-extra, 0px))`;
+    style.maxHeight = `calc(100% - ${top ?? 78}px - var(--chips-extra, 0px) - 104px)`;
     style.left = dock === "left" ? `${left ?? 12}px` : "";
     style.right = dock === "right" ? `${right ?? 12}px` : "";
     if (dock === "center") {
       style.left = "50%";
       style.transform = "translateX(-50%)";
     } else style.transform = "";
+    node._dock = { dock, top: top ?? 78, right: right ?? 12, width: width ?? 420 };
+    syncDisclaimer();
     return node;
   },
   closePanel(id) {
     const node = beatScoped.panels.get(id);
     if (node) node.remove();
     beatScoped.panels.delete(id);
+    syncDisclaimer();
   },
   clearBeat() {
     for (const id of beatScoped.labels) engine.unlabel(id);
     beatScoped.labels.clear();
     for (const node of beatScoped.panels.values()) node.remove();
     beatScoped.panels.clear();
+    syncDisclaimer();
     ctx.pulsesOff();
     ctx.focus(null);
   },
@@ -184,14 +194,12 @@ const ctx = {
     return director.S.t;
   },
   wake: () => wakeLoop(),
-  // Cámara que sigue un evento dentro de un paso (sólo en el recorrido guiado).
   follow(spec) {
     if (director.S.mode !== "tour" || director.S.manualCam) return;
     director.flyTo(director.cameraFor({ camera: spec }), 1.1);
   },
 };
 
-// ---------------- director ----------------
 const director = makeDirector({
   chapters: CHAPTERS,
   engine,
@@ -226,7 +234,6 @@ const director = makeDirector({
 ctx.director = director;
 ctx.theta(store.print0, "sin cambios");
 
-// ---------------- línea de tiempo ----------------
 function buildTimeline() {
   ref.timeline.innerHTML = '<div class="track"></div><div class="fill"></div>';
   const total = director.total;
@@ -276,7 +283,6 @@ ref.timeline.addEventListener("keydown", (event) => {
   if (event.key === "End") seekShare(0.999);
 });
 
-// ---------------- bucle de render ----------------
 let raf = 0;
 let last = 0;
 let dirtyFrame = true;
@@ -305,6 +311,12 @@ new ResizeObserver(() => {
   if (!director.S.manualCam) director.flyTo(director.cameraFor(director.beat), 0);
   wakeLoop();
 }).observe(ref.stage);
+new ResizeObserver(() => {
+  const h = Math.round(ref.changed.getBoundingClientRect().height);
+  if (!h) return;
+  ref.stage.style.setProperty("--chips-h", `${h}px`);
+  ref.stage.style.setProperty("--chips-extra", `${Math.max(0, h - 26)}px`);
+}).observe(ref.changed);
 function insetFor() {
   const narrow = engine.size.w < 760;
   if (!narrow) return { top: 70, bottom: 70, left: 0, right: 0 };
@@ -314,7 +326,6 @@ function insetFor() {
 }
 engine.setInset(insetFor());
 
-// ---------------- controles ----------------
 ref.play.addEventListener("click", () => {
   if (director.S.playing) director.pause();
   else director.play();
@@ -381,7 +392,6 @@ for (const [key, button] of Object.entries(ref.tabButtons))
   });
 ctx.tab = "obj";
 
-// Escalas: ir a la escala elegida dentro del capítulo actual.
 const SCALE_CHAPTER = { lab: 0, model: 1, tensor: 2 };
 let scaleHistory = [];
 for (const [key, button] of Object.entries(ref.scaleButtons))
@@ -405,7 +415,6 @@ function goBack() {
   wakeLoop();
 }
 
-// Cámara manual: arrastrar gira, Mayús/botón derecho/dos dedos desplaza, rueda o pellizco acerca.
 const pointers = new Map();
 let drag = null;
 let pinch = null;
@@ -491,9 +500,7 @@ ref.camReset.addEventListener("click", () => {
   wakeLoop();
 });
 
-// Selección e inspección: clic en un objeto o en una celda.
 function hit(event) {
-  // con captura de puntero, event.target es el SVG: se busca el elemento real bajo el puntero
   const under = document.elementFromPoint(event.clientX, event.clientY);
   const target = under && under.closest ? under : event.target.closest ? event.target : null;
   if (!target) return {};
@@ -507,14 +514,13 @@ function click(event) {
   if (!id) {
     selection = null;
     renderInspector(ctx, null);
-    director.apply(); // restaura el foco del paso
+    director.apply();
     wakeLoop();
     return;
   }
   const entry = engine.objects.get(id);
   const target = entry.info || id;
   engine.objects.get(id).el.setAttribute("data-sel", "");
-  // resaltar lo elegido y atenuar el resto (incluye su parte frontal o sus hijos)
   ctx.focus([id, `${id}-front`, ...(entry.parent ? [entry.parent] : [])]);
   if (cell && entry.cell) {
     const [i, j] = cell.getAttribute("data-cell").split(",").map(Number);
@@ -551,7 +557,6 @@ ctx.inspectFromList = (id) => {
   renderInspector(ctx, id);
 };
 
-// Teclado
 const HELP = [
   ["Espacio", "reproducir / pausar"],
   ["→ / ←", "avanzar un evento / retroceder al estado guardado anterior"],
@@ -596,7 +601,6 @@ window.addEventListener("keydown", (event) => {
   else if (key === "0") act(() => ref.reset.click());
 });
 
-// Automatización y QA
 window.__sceneQA = {
   get state() {
     return { beat: director.beat.id, chapter: director.beat.c + 1, t: director.S.t, event: director.eventOf(director.beat, director.S.t), playing: director.S.playing, mode: director.S.mode, camera: { ...engine.cam }, changed: changedNow, user: JSON.parse(JSON.stringify(store.user)) };

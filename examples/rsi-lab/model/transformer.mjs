@@ -1,7 +1,3 @@
-// Transformer decoder-only DIDÁCTICO (elección de diseño, no réplica de un modelo real):
-// vocabulario 16 · d_model 8 · 2 cabezas de d_k = 4 · 2 bloques · MLP 8→32→8 · pre-LayerNorm
-//   H = X + MHA(LN(X)),  Y = H + MLP(LN(H)),  logits = LN_f(y_n) · W_U + b_U
-// Pesos aleatorios con semilla: sus predicciones no implican comprensión lingüística.
 import { makeRng, fingerprint } from "./rng.mjs";
 import { matmul, transpose, scale, softmax, layerNormRow, gelu, randomMatrix, randomVector, addRow, add, columns, hconcat, vecmat, dot, shapeOf } from "./linalg.mjs";
 import { VOCAB } from "./tokenizer.mjs";
@@ -37,7 +33,6 @@ export function initParams(seed = CONFIG.seed) {
   return params;
 }
 
-// Lista plana de todos los parámetros, en un orden fijo (para contar y para la huella).
 export function flatParams(params) {
   const out = [...params.E.flat(), ...params.P.flat()];
   for (const block of params.blocks) {
@@ -61,13 +56,12 @@ const layerNorm = (matrix, ln) => {
   return { mean: rows.map((r) => r.mean), variance: rows.map((r) => r.variance), normed: rows.map((r) => r.normed), out: rows.map((r) => r.out) };
 };
 
-// Una cabeza de atención causal, con todos los intermedios.
 export function attentionHead(X, Wq, Wk, Wv) {
   const n = X.length;
   const Q = matmul(X, Wq);
   const K = matmul(X, Wk);
   const V = matmul(X, Wv);
-  const S = matmul(Q, transpose(K)); // productos punto crudos Q_i · K_j
+  const S = matmul(Q, transpose(K));
   const dk = shapeOf(Wq)[1];
   const Sscaled = scale(S, 1 / Math.sqrt(dk));
   const M = causalMask(n);
@@ -77,7 +71,6 @@ export function attentionHead(X, Wq, Wk, Wv) {
   return { Q, K, V, S, Sscaled, M, Smasked, A, Z, dk };
 }
 
-// Pasada completa con traza de cada objeto intermedio.
 export function forward(params, ids) {
   const n = ids.length;
   if (n < 1 || n > CONFIG.maxLen) throw new Error(`longitud ${n} fuera de 1..${CONFIG.maxLen}`);
@@ -114,7 +107,6 @@ export function headForward(params, h) {
 
 export const argmax = (list) => list.reduce((best, value, index) => (value > list[best] ? index : best), 0);
 
-// Muestreo con temperatura T > 0: p_T(i) ∝ exp(logit_i / T). T → 0 tiende a argmax.
 export function temperatureProbs(logits, temperature) {
   if (!(temperature > 0)) throw new Error("la temperatura debe ser positiva");
   return softmax(logits.map((value) => value / temperature));
@@ -125,10 +117,6 @@ export function sampleToken(logits, temperature, rng) {
   return { id: rng.categorical(probs), probs };
 }
 
-// ---------- Caché KV ----------
-// Guarda, por bloque y cabeza, las filas K y V de posiciones ya procesadas.
-// Al generar, sólo se calcula la fila nueva. Cambiar el token en la posición p
-// invalida las entradas de posiciones ≥ p en todos los bloques (las < p siguen válidas).
 export function emptyCache() {
   return { ids: [], blocks: Array.from({ length: CONFIG.blocks }, () => ({ K: [[], []], V: [[], []] })), rowsComputed: 0 };
 }
@@ -138,7 +126,6 @@ export function invalidateFrom(cache, position) {
   return out;
 }
 
-// Procesa un token nuevo usando la caché. Devuelve la caché ampliada y los logits.
 export function stepWithCache(params, cache, id) {
   const position = cache.ids.length;
   let x = params.E[id].map((value, j) => value + params.P[position][j]);
@@ -179,7 +166,6 @@ export function prefillCache(params, ids) {
   return { cache, last };
 }
 
-// Generación autoregresiva: el contexto crece; los pesos NO cambian.
 export function generate(params, ids, steps, { temperature = 0, seed = 11 } = {}) {
   const rng = makeRng(seed);
   let { cache, last } = prefillCache(params, ids);

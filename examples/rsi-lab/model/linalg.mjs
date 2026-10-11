@@ -1,6 +1,3 @@
-// Álgebra lineal mínima con matrices como listas de filas (arrays de números).
-// Cada función comprueba dimensiones: un error de forma lanza una excepción.
-
 export const shapeOf = (matrix) => [matrix.length, matrix.length ? matrix[0].length : 0];
 export const zeros = (rows, cols) => Array.from({ length: rows }, () => new Array(cols).fill(0));
 export const copy = (matrix) => matrix.map((row) => [...row]);
@@ -47,7 +44,6 @@ export const sum = (list) => list.reduce((total, value) => total + value, 0);
 export const columns = (matrix, from, to) => matrix.map((row) => row.slice(from, to));
 export const hconcat = (blocks) => blocks[0].map((_, i) => blocks.flatMap((block) => block[i]));
 
-// softmax estable: resta el máximo finito; exp(-Infinity) = 0 exactamente.
 export function softmax(vector) {
   const finite = vector.filter(Number.isFinite);
   const top = finite.length ? Math.max(...finite) : 0;
@@ -65,7 +61,6 @@ export function layerNormRow(row, gain, bias, eps) {
   return { mean, variance, normed, out: normed.map((value, j) => value * gain[j] + bias[j]) };
 }
 
-// GELU, aproximación tanh (la que usa GPT-2): 0.5·x·(1 + tanh(√(2/π)·(x + 0.044715·x³))).
 export const gelu = (x) => 0.5 * x * (1 + Math.tanh(Math.sqrt(2 / Math.PI) * (x + 0.044715 * x * x * x)));
 
 export const randomMatrix = (rng, rows, cols, std) => Array.from({ length: rows }, () => Array.from({ length: cols }, () => rng.normal() * std));

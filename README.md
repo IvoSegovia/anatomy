@@ -195,6 +195,7 @@ Each framework-free example has a Node build script that writes standalone pages
 | [`test-rig`](examples/test-rig) | A production figure from a React/Next.js site: a glass button on a spring-mounted carriage, a finger probe on a rail, and a dial gauge reading the lean. 53 solids. No build script: copy it into a React app. | none |
 | [`spot-plate`](examples/spot-plate) | A second figure from the same site: six pairs of glass drops on a spot plate that run together into one piece of glass as a fan of feeler blades opens. Each pair is drawn from one distance field. No build script: copy it into a React app. | none |
 | [`turning-dial`](examples/turning-dial) | The 3D mode: a combination dial that turns in true 3D with a small robot hand on it, a three-hinge finger that lifts, and a pod that breaks off as a free body. `stress.mjs` is a 380-part hand in a cluttered workshop, used to measure performance. | `node examples/turning-dial/build.mjs` |
+| [`rsi-lab`](examples/rsi-lab) | An interactive lesson in Spanish on recursive self-improvement, from a toy Transformer to an agent that improves its own context manager. A dark isometric lab at three scales (lab, model, tensors), a 10-chapter guided tour with saved states, and an inspector; every number is computed in the page, cited, or labelled as a conceptual simulation. Dark theme only; `verify.mjs` runs 45 numeric checks. See its [README](examples/rsi-lab/README.md). | `node examples/rsi-lab/build.mjs` |
 
 `node examples/raptor-engine/build.mjs --audit`, `node examples/arcade-cabinet/build.mjs --audit` and `node examples/turning-dial/build.mjs --light --audit` also run the geometry audit. The 3D audit is slow; see [`references/3d.md`](references/3d.md).
 
@@ -237,7 +238,7 @@ anatomy/
 │   ├── inline-kit.mjs        the kit as source, to inline into a standalone page
 │   ├── turn-check.mjs        3D checks in the browser (with turn-fidelity.mjs)
 │   └── turn-bench.mjs        3D timing in Node
-├── examples/                 eight complete figures, built pages committed
+├── examples/                 nine complete figures, built pages committed
 ├── evals/evals.json          test prompts and what a good answer contains
 └── .github/                  issue forms, PR template, CI, README images
 ```

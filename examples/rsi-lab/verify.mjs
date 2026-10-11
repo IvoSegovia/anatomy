@@ -1,5 +1,3 @@
-// Verificación numérica independiente de todos los modelos de la experiencia.
-// Uso: node examples/rsi-lab/verify.mjs   (sale con código 1 si algo falla)
 import { initParams, forward, paramCount, paramPrint, prefillCache, stepWithCache, invalidateFrom, generate, temperatureProbs, CONFIG, causalMask } from "./model/transformer.mjs";
 import { tokenize } from "./model/tokenizer.mjs";
 import { examplesOf, TRAIN_TEXT, VALID_TEXT, headOf, lossAndGrad, finiteDifferenceCheck, sgdStep, adamStep, adamInit, flatHead, runTraining, ADAM } from "./model/train.mjs";
@@ -16,7 +14,6 @@ const results = [];
 const check = (name, ok, detail = "") => results.push({ name, ok: !!ok, detail });
 const close = (a, b, tol) => Math.abs(a - b) <= tol;
 
-// ---------- Transformer ----------
 const params = initParams();
 const print0 = paramPrint(params);
 const ids = tokenize("def f(x):").map((t) => t.id);
@@ -49,7 +46,7 @@ const full = forward(params, [...ids, gen.generated[0].id]);
 const cached = stepWithCache(params, prefillCache(params, ids).cache, gen.generated[0].id);
 check("paso con caché = recomputar todo (7 tokens)", Math.max(...cached.logits.map((v, i) => Math.abs(v - full.logits[i]))) < 1e-12);
 const changed = [...ids];
-changed[3] = 14; // x → y
+changed[3] = 14;
 const kept = invalidateFrom(prefillCache(params, ids).cache, 3);
 const fresh = prefillCache(params, changed).cache;
 let prefixSame = true;
@@ -60,7 +57,6 @@ const tp = temperatureProbs(trace.logits, 0.7);
 check("muestreo con temperatura: distribución suma 1", close(tp.reduce((t, v) => t + v, 0), 1, 1e-12));
 check("inferencia y generación NO cambian θ (huella)", paramPrint(params) === print0, print0);
 
-// ---------- Entrenamiento ----------
 const train = examplesOf(params, TRAIN_TEXT);
 const valid = examplesOf(params, VALID_TEXT);
 check("ejemplos de entrenamiento y validación disjuntos", train.every((t) => valid.every((v) => v.text !== t.text)));
@@ -70,7 +66,6 @@ check("gradiente analítico vs diferencias finitas (160 parámetros)", fd.worst 
 const { grad } = lossAndGrad(head0, train);
 const sgd = sgdStep(head0, grad, 0.5);
 check("SGD: θ' = θ − η g exactamente", flatHead(sgd.head).every((v, i) => v === flatHead(head0)[i] - 0.5 * flatHead(grad)[i]));
-// Adam: implementación de referencia escalar, escrita aparte.
 let refTheta = flatHead(head0);
 let refM = refTheta.map(() => 0);
 let refV = refTheta.map(() => 0);
@@ -105,7 +100,6 @@ check("η=1.2: algún paso EMPEORA la pérdida de entrenamiento y luego converge
 const run3 = runTraining(params, { eta: 3, steps: 8 });
 check("η=3: la pérdida diverge", run3.history[8].train > 100 * run3.history[0].train);
 check("el entrenamiento no modifica el cuerpo congelado", paramPrint(params) === print0);
-// Si se cambian los objetivos de VALIDACIÓN, la trayectoria de θ debe ser idéntica.
 const altValid = VALID_TEXT.map(([text]) => [text, "-"]);
 const runAlt = (() => {
   const original = VALID_TEXT.map((pair) => [...pair]);
@@ -117,14 +111,12 @@ const runAlt = (() => {
 const runRef = runTraining(params, { eta: 0.5, steps: 10 });
 check("la validación no entra en el gradiente (cambiar sus objetivos no altera θ)", runAlt.history.every((h, i) => h.print === runRef.history[i].print) && runAlt.history[5].valid !== runRef.history[5].valid);
 
-// ---------- Reflexión ----------
 const before = paramPrint(params);
 const reflection = runReflection();
 check("reflexión: el intento 3 pasa todas las pruebas ejecutadas", reflection.log[reflection.log.length - 1].passed === 4);
 check("reflexión: la memoria cambia (2 notas)", reflection.memory.length === 2);
 check("reflexión: θ sin cambios", paramPrint(params) === before);
 
-// ---------- RL ----------
 const theta = [0.3, -0.2, 0.5, 0.1];
 const pi = softmax(theta);
 let rlErr = 0;
@@ -155,14 +147,12 @@ for (let k = 0; k < 4; k++) {
 }
 check("PPO: gradiente del objetivo recortado = diferencias finitas", ppoErr < 1e-6, ppoErr.toExponential(2));
 
-// ---------- Evolución ----------
 const e1 = runEvolution();
 const e2 = runEvolution();
 check("búsqueda evolutiva reproducible con semilla", JSON.stringify(e1.events.map((e) => [e.text, e.score])) === JSON.stringify(e2.events.map((e) => [e.text, e.score])));
 check("presupuesto de evaluaciones respetado", e1.spent <= 192, `${e1.spent}/192`);
 check("secuencias de reserva distintas de las de entrenamiento", HOLDOUT_SEQS.every((s) => TRAIN_SEQS.every((t) => JSON.stringify(t) !== JSON.stringify(s))));
 
-// ---------- Agente y protocolo ----------
 const sets = Object.fromEntries(Object.entries(SPLITS).map(([k, s]) => [k, makeSplit(s.base, s.count)]));
 const seedsOf = (list) => new Set(list.map((t) => t.seed));
 const allSeeds = Object.values(sets).map(seedsOf);
@@ -182,7 +172,6 @@ check("v0 → v1: mejora; v1 → v2: regresión; v1 → v3: sin diferencia concl
 check("versiones comparadas con las mismas tareas y presupuesto", ["v1", "v2", "v3"].every((v) => ev[v].runs.every((r, i) => r.seed === ev.v0.runs[i].seed)));
 check("bootstrap reproducible", JSON.stringify(pairedBootstrap(ev.v1, ev.v3)) === JSON.stringify(pairedBootstrap(ev.v1, ev.v3)));
 
-// ---------- Bucle recursivo (simulación conceptual) ----------
 const loopPrint = paramPrint(params);
 const A = runLoop({ mode: "A", seed: 3 });
 const B = runLoop({ mode: "B", seed: 3 });

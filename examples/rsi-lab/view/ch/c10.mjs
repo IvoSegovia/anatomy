@@ -1,6 +1,5 @@
-// Capítulo 10 — Límites del bucle y cierre visual.
 import { baseVisibility, explode, mainCamera, moduleCamera, labCamera, rackCamera, M } from "../common.mjs";
-import { f2, esc, table, pct, lineChart } from "../helpers.mjs";
+import { f2, esc, table, pct, lineChart, prov } from "../helpers.mjs";
 import { el } from "../ui.mjs";
 import { SCENARIOS, CONTROLS, CRITERIA } from "../../model/limits.mjs";
 import { pseudocodeOf } from "../../model/agent.mjs";
@@ -12,7 +11,7 @@ function loadScenario(ctx, name) {
   if (ctx.syncLimitsDesk) ctx.syncLimitsDesk();
 }
 
-function limitsPanel(ctx, { title, lesson } = {}) {
+function limitsPanel(ctx, { title, lesson, extra } = {}) {
   const run = ctx.store.limits();
   const vis = [];
   const aud = [run.startAudit];
@@ -34,8 +33,9 @@ function limitsPanel(ctx, { title, lesson } = {}) {
     ${table(["", "inicio", "final"], [["puntuación visible", f2(vis[0] ?? NaN), f2(vis[n - 1] ?? NaN)], ["auditoría (no la ve el bucle)", pct(run.startAudit), pct(run.finalAudit)], ["ciclos · promociones", "", `${run.cycles.length} · ${run.promotions}`], ["presupuesto gastado", "", `${run.spent} / ${ctx.user.limits.budget}`], ["consultas a la misma validación", "", run.maxValQueries], ["versiones en el archivo", "", run.archive.length]])}
     ${alarm ? `<div class="subst"><b class="bad-t">La puntuación visible mejora y la auditoría empeora.</b></div>` : ""}
     ${rolled ? `<div class="subst">Vuelta a la última versión válida <b>${esc(run.lastValid.id)}</b>: auditoría ${pct(run.lastValid.audit)} · prueba final (uso único) ${pct(run.lastValidTest)} frente a ${pct(run.finalTest)} de la versión descartada.</div>` : ""}
-    ${lesson ? `<div class="subst">${esc(lesson)}</div>` : ""}`;
-  ctx.panel("limits", { title: title || "Mesa de límites", provKind: "sim", html, width: 450, dock: "right", top: 140 });
+    ${lesson ? `<div class="subst">${esc(lesson)}</div>` : ""}
+    ${extra ? extra(run) : ""}`;
+  ctx.panel("limits", { title: title || "Mesa de límites", provKind: "sim", html, width: 450, dock: "right", top: 136 });
   ctx.state("evaluador", { value: Math.max(0, Math.min(1, vis[n - 1] ?? 0)), ok: !alarm && audDelta >= 0, fail: alarm });
   ctx.state("entorno", { budget: run.spent / ctx.user.limits.budget });
   ctx.state("datos", { open: "audit" });
@@ -55,14 +55,15 @@ const scenarioBeat = (id, name, caption, extra = {}) => ({
   pose(ctx) {
     if (ctx.user.scenario !== name) loadScenario(ctx, name);
     ctx.focus(["evaluador", "datos", "entorno", "archivo"]);
-    limitsPanel(ctx, { title: SCENARIOS[name].label, lesson: SCENARIOS[name].lesson });
+    let extra;
     if (name === "diversidad") {
       const keep = ctx.user.limits.explore;
       ctx.user.limits = { ...ctx.user.limits, explore: 0.5 };
       const other = ctx.store.limits();
       ctx.user.limits = { ...ctx.user.limits, explore: keep };
-      ctx.panel("div", { title: "Misma semilla, explorando el archivo (0.5)", provKind: "sim", top: 600, dock: "right", html: `<div class="subst">auditoría final: exploración 0 → ${pct(ctx.store.limits().finalAudit)} · exploración 0.5 → ${pct(other.finalAudit)}</div>`, width: 450 });
+      extra = (run) => `<h4 class="sub"><span>Misma semilla, explorando el archivo (0.5)</span>${prov("sim")}</h4><div class="subst">auditoría final: exploración ${keep} → ${pct(run.finalAudit)} · exploración 0.5 → ${pct(other.finalAudit)}</div>`;
     }
+    limitsPanel(ctx, { title: SCENARIOS[name].label, lesson: SCENARIOS[name].lesson, extra });
   },
   ...extra,
 });
@@ -186,8 +187,11 @@ export const chapter10 = {
       pose(ctx) {
         ctx.user.rolledBack = true;
         ctx.focus(["codigo", "archivo", "evaluador", "cart-v1"]);
-        const { run } = limitsPanel(ctx, { title: "Vuelta atrás", lesson: "Válida = promovida sin retroceder en la auditoría. La prueba final sigue reservada: se usa una vez, para informar." });
-        ctx.panel("code", { title: `Versión restaurada: ${run.lastValid.id}`, provKind: "local", top: 600, dock: "right", html: `<pre class="code">${esc(pseudocodeOf(run.lastValid.genome))}</pre>`, width: 450 });
+        limitsPanel(ctx, {
+          title: "Vuelta atrás",
+          lesson: "Válida = promovida sin retroceder en la auditoría. La prueba final sigue reservada: se usa una vez, para informar.",
+          extra: (run) => `<h4 class="sub"><span>Versión restaurada: ${esc(run.lastValid.id)}</span>${prov("local")}</h4><pre class="code">${esc(pseudocodeOf(run.lastValid.genome))}</pre>`,
+        });
       },
     },
     {

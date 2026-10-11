@@ -1,7 +1,3 @@
-// Estación A: reflexión con herramientas. Los INTENTOS son propuestas guionadas (código escrito
-// de antemano); lo que se ejecuta de verdad son las pruebas, y lo que cambia es el contexto/memoria.
-// Ningún parámetro θ del modelo se modifica (la verificación compara la huella antes y después).
-
 export const TASK = {
   enunciado: "Escribe promedio(xs): la media aritmética de una lista de números; para la lista vacía, devolver 0.",
   pruebas: [
@@ -12,20 +8,17 @@ export const TASK = {
   ],
 };
 
-// Intento 1 (guionado): olvida la lista vacía.
 function promedio_intento1(xs) {
   let suma = 0;
   for (const x of xs) suma += x;
   return suma / xs.length;
 }
-// Intento 2 (guionado, tras la nota 1): cubre la lista vacía pero redondea.
 function promedio_intento2(xs) {
   if (xs.length === 0) return 0;
   let suma = 0;
   for (const x of xs) suma += x;
   return Math.round(suma / xs.length);
 }
-// Intento 3 (guionado, tras las notas 1 y 2).
 function promedio_intento3(xs) {
   if (xs.length === 0) return 0;
   let suma = 0;
@@ -40,7 +33,6 @@ export const ATTEMPTS = [
 ];
 export const sourceOf = (attempt) => attempt.fn.toString();
 
-// Herramienta: ejecutor de pruebas (ejecución real).
 export function runTests(fn) {
   return TASK.pruebas.map((prueba) => {
     let obtenido;
@@ -57,7 +49,6 @@ export function runTests(fn) {
 
 const show = (value) => (Number.isNaN(value) ? "NaN" : JSON.stringify(value));
 
-// Nota de reflexión: plantilla fija que resume la prueba fallida observada (no es texto de un LLM).
 export function reflectionNote(results) {
   const failed = results.filter((r) => !r.ok);
   if (!failed.length) return null;

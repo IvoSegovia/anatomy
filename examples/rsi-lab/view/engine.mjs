@@ -1,6 +1,3 @@
-// Motor de escena: proyección isométrica del kit Anatomy + cámara + objetos + etiquetas.
-// La geometría se construye con el kit a escala base (BASE) y la cámara aplica zoom/desplazamiento
-// como transformación 2D. Girar (acimut/elevación) reconstruye los trazados de lo visible.
 import * as k from "../../../kit/iso-kit.mjs";
 
 export const BASE = 8;
@@ -34,7 +31,7 @@ export function makeEngine({ stage, svg, labelLayer }) {
   let inset = { top: 0, right: 0, bottom: 0, left: 0 };
   let orderKey = ["", "", "", "", ""];
   let lod = 1;
-  let fast = false; // detalle reducido mientras se arrastra la cámara
+  let fast = false;
   let lastMs = 0;
 
   const measure = () => {
@@ -43,7 +40,6 @@ export function makeEngine({ stage, svg, labelLayer }) {
     svg.setAttribute("viewBox", `0 0 ${size.w} ${size.h}`);
   };
 
-  // Mundo → pantalla (px del escenario).
   const factor = () => cam.scale / BASE;
   const centre = () => [inset.left + (size.w - inset.left - inset.right) / 2, inset.top + (size.h - inset.top - inset.bottom) / 2];
   function toScreen(point) {
@@ -74,7 +70,6 @@ export function makeEngine({ stage, svg, labelLayer }) {
     objects.delete(id);
   }
 
-  // Cambia la pose de un objeto. `state` (datos que cambian la forma) obliga a reconstruir.
   function pose(id, next) {
     const entry = objects.get(id);
     if (!entry) return;
@@ -121,8 +116,6 @@ export function makeEngine({ stage, svg, labelLayer }) {
     cam.scale = Math.max(0.25, Math.min(40, cam.scale));
   }
 
-  // Encaje: escala y objetivo para que estos puntos quepan en el área útil.
-  // area: márgenes extra (px) ocupados por planos acoplados; el encuadre se centra en el resto.
   function fit(points, { pad = 24, azimuth = cam.azimuth, elevation = cam.elevation, maxScale = 40, area = {} } = {}) {
     const unit = { origin: [0, 0], scale: 1, azimuth, elevation };
     const flat = points.map((point) => k.iso(point, unit));
@@ -134,10 +127,8 @@ export function makeEngine({ stage, svg, labelLayer }) {
     const w = size.w - inset.left - inset.right - extra.left - extra.right - pad * 2;
     const h = size.h - inset.top - inset.bottom - extra.top - extra.bottom - pad * 2;
     const scale = Math.min(maxScale, Math.min(w / Math.max(1e-6, Math.max(...xs) - Math.min(...xs)), h / Math.max(1e-6, Math.max(...ys) - Math.min(...ys))));
-    // objetivo: el punto del mundo que debe quedar en el centro del escenario
     const shift = [(extra.left - extra.right) / 2 / (scale * UNIT), (extra.top - extra.bottom) / 2 / (scale * UNIT)];
     const mid = [(Math.max(...xs) + Math.min(...xs)) / 2 - shift[0] * UNIT, (Math.max(...ys) + Math.min(...ys)) / 2 - shift[1] * UNIT];
-    // resolver un punto 3D que proyecte a `mid` en el plano z = media de los puntos
     const zMid = points.reduce((t, p) => t + p[2], 0) / points.length;
     const target = unproject(mid, zMid, unit);
     return { scale, target, azimuth, elevation };
@@ -145,13 +136,11 @@ export function makeEngine({ stage, svg, labelLayer }) {
 
   function unproject([sx, sy], z, projection) {
     const { sinA, cosA, sinE, cosE, k: kk } = k.cameraOf(projection);
-    // sx = (x sinA − y cosA)kk ; sy = ((x cosA + y sinA) sinE − z cosE)kk
     const a = sx / kk;
     const b = (sy / kk + z * cosE) / sinE;
     return [a * sinA + b * cosA, -a * cosA + b * sinA, z];
   }
 
-  // Pantalla → mundo sobre un plano z (para orbitar alrededor del punto bajo el puntero).
   function screenToWorld([px, py], z = cam.target[2]) {
     const t = k.iso(cam.target, P);
     const f = factor();
@@ -208,8 +197,6 @@ export function makeEngine({ stage, svg, labelLayer }) {
     }
     buckets.forEach((list, index) => {
       if (index === 0) return;
-      // Orden jerárquico: los miembros de un grupo se ordenan por (nivel, profundidad) y el
-      // grupo entero ocupa la profundidad de su ancla entre los demás objetos.
       const groups = new Map();
       const top = [];
       for (const item of list) {
@@ -323,7 +310,6 @@ export function makeEngine({ stage, svg, labelLayer }) {
     set lod(value) {
       lod = value;
     },
-    // Activa el modo rápido sólo si el último fotograma fue costoso.
     setFast(on) {
       const next = on && lastMs > 24;
       if (next === fast) return;

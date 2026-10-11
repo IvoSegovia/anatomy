@@ -1,5 +1,3 @@
-// Pruebas de interacción en Chromium headless: controles, cámara, inspección, teclado y recálculo.
-// Uso: node examples/rsi-lab/qa-interact.mjs [--out dir] [--size 1440x900] [--reduced]
 import { createRequire } from "node:module";
 import { mkdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -36,7 +34,6 @@ const check = (name, ok, detail = "") => {
 const state = () => page.evaluate(() => window.__sceneQA.state);
 const shot = (name) => page.screenshot({ path: join(out, `${name}.png`) });
 
-// Reproducir / pausar
 let s0 = await state();
 await page.click(".play");
 await page.waitForTimeout(1500);
@@ -49,7 +46,6 @@ await page.waitForTimeout(800);
 const still = await state();
 check("pausar congela el instante", !still.playing && still.t === paused.t && still.beat === paused.beat);
 
-// Avanzar un evento y retroceder (estado guardado)
 await page.evaluate(() => window.__sceneQA.seek(1, 1, 0));
 await page.waitForTimeout(200);
 const before = await state();
@@ -64,14 +60,12 @@ await page.waitForTimeout(300);
 const back = await state();
 check("← restaura el estado guardado anterior", back.beat === after.beat && back.event === after.event, `vuelve al evento ${back.event}`);
 
-// Capítulos
 await page.click('.chapters button:nth-child(3)');
 await page.waitForTimeout(1800);
 const ch3 = await state();
 check("botón de capítulo 3", ch3.chapter === 3, ch3.beat);
 await shot("i-ch3");
 
-// Celda: tooltip con operandos
 await page.evaluate(() => window.__sceneQA.seek(3, 3, 1));
 await page.waitForTimeout(500);
 const cellBox = await page.evaluate(() => {
@@ -92,7 +86,6 @@ if (cellBox) {
   check("clic en celda la fija en el inspector", /celda 3,1/.test(insp), insp.slice(0, 60));
 } else check("celda S[3,1] presente", false);
 
-// Selección de objeto e inspector con entradas/salidas recorribles
 await page.evaluate(() => window.__sceneQA.seek(1, 1, 1));
 await page.waitForTimeout(400);
 const evalBox = await page.evaluate(() => {
@@ -113,7 +106,6 @@ if (goButtons.length) {
 }
 await shot("i-inspect");
 
-// Pestaña de verificación en vivo
 await page.click('[data-tab="checks"]');
 await page.waitForTimeout(1200);
 const checks = await page.evaluate(() => document.querySelector(".insp-body").textContent);
@@ -122,7 +114,6 @@ check("verificación en vivo: todas correctas", m && m[1] === m[2], m ? m[0] : c
 await shot("i-checks");
 await page.click('[data-tab="obj"]');
 
-// Cámara: girar, zoom, restablecer
 const cam0 = (await state()).camera;
 const box = await page.evaluate(() => {
   const b = document.querySelector(".stage").getBoundingClientRect();
@@ -143,18 +134,15 @@ const backBtn = await page.$(".back-tour.on");
 check("aparece «volver a la cámara guiada»", !!backBtn);
 await shot("i-camera");
 await page.keyboard.press("r");
-// el vuelo avanza con dt ≤ 50 ms por fotograma: esperar a que termine en lugar de un tiempo fijo
 await page.waitForFunction(() => !window.__sceneQA.director.S.camAnim, null, { timeout: 8000 }).catch(() => {});
 const cam3 = (await state()).camera;
 check("R restablece la cámara guiada", Math.abs(cam3.azimuth - cam0.azimuth) < 0.5, `acimut ${cam3.azimuth.toFixed(1)}`);
 
-// Modo exploración
 await page.click(".mode button:nth-child(2)");
 await page.waitForTimeout(200);
 check("modo exploración", (await state()).mode === "free");
 await page.click(".mode button:nth-child(1)");
 
-// Recalcular al cambiar un token (capítulo 2)
 await page.evaluate(() => window.__sceneQA.seek(2, 4, 1));
 await page.waitForTimeout(400);
 const x0Before = await page.evaluate(() => window.__sceneQA.store.trace().X0[3].join(","));
@@ -168,7 +156,6 @@ if (sel) {
   await shot("i-retoken");
 } else check("selector de token presente", false);
 
-// Mesa de control del capítulo 5: η y paso
 await page.evaluate(() => window.__sceneQA.seek(5, 6, 1));
 await page.waitForTimeout(500);
 const eta = await page.$('.desk input[aria-label^="Tasa de aprendizaje"]');
@@ -182,20 +169,17 @@ if (eta) {
   check("η desde la mesa de control", Math.abs(u.eta - 1.2) < 0.01, `η = ${u.eta}`);
 }
 
-// Reiniciar
 await page.click(".transport .icon-btn");
 await page.waitForTimeout(400);
 const reset = await state();
 check("reiniciar vuelve al paso 1.1 y a los valores iniciales", reset.beat === "1.1" && reset.user.text === "def f(x):" && reset.user.eta === 0.5);
 
-// Inspector oculto/visible con I
 await page.keyboard.press("i");
 await page.waitForTimeout(200);
 const hidden = await page.evaluate(() => document.querySelector(".inspector").hasAttribute("hidden"));
 check("I oculta el inspector", hidden);
 await page.keyboard.press("i");
 
-// Sin desbordamiento horizontal
 const scroll = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
 check("sin desplazamiento horizontal de la página", scroll);
 

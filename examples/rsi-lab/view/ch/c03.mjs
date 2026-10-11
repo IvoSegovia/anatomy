@@ -1,4 +1,3 @@
-// Capítulo 3 — Atención causal por dentro (escala «tensores»).
 import { baseVisibility, explode, cubeCamera, trayCamera, framesFor, TENSOR_IDS, cutAbove, fade } from "../common.mjs";
 
 const BLOCK_PARTS = ["blk-b0", "mx-b0-wo", "mx-b0-w1", "mx-b0-w2", "vec-b0", "head-b0-0", "head-b0-1"];
@@ -16,7 +15,6 @@ const headData = (ctx) => {
   return { tr, head: tr.blocks[0].heads[ctx.user.head], block: tr.blocks[0], p: ctx.store.params0.blocks[0] };
 };
 
-// Plano de fórmulas: cada término está vinculado (color e identidad) a un objeto de la escena.
 function attnPanel(ctx, active, subst = "") {
   const on = (key) => active.includes(key);
   const html = `<div class="formula">
@@ -54,9 +52,7 @@ export const chapter3 = {
     rackSetup(ctx);
     baseVisibility(ctx, { rack: true, tensors: true });
     explode(ctx, 1);
-    // las bandejas superiores se retiran para no tapar la cabeza abierta (corte)
     cutAbove(ctx, "b0");
-    // dentro de la bandeja del bloque 1 sólo queda la cabeza abierta (corte)
     fade(ctx, BLOCK_PARTS, 0);
     ctx.state(`head-b0-${ctx.user.head}`, { open: 1 });
     for (const id of ["t-cube1", "t-cube2", "t-cube3"]) ctx.state(id, {});
@@ -102,7 +98,6 @@ export const chapter3 = {
       pose(ctx, t) {
         const n = ctx.store.ids().length;
         const u = ctx.still.matches ? 1 : ease(t * 1.5);
-        // corte progresivo: el resto del bloque y las bandejas superiores se retiran mientras la cabeza se abre
         cutAbove(ctx, "b0", u);
         fade(ctx, BLOCK_PARTS.filter((id) => id !== `head-b0-${ctx.user.head}`), 1 - u);
         ctx.pose(`head-b0-${ctx.user.head}`, { visible: u < 0.99, opacity: 1 - u, state: { open: u } });
@@ -201,7 +196,7 @@ export const chapter3 = {
       id: "3.4",
       dur: 7,
       scale: "tensor",
-      camera: (ctx) => cubeCamera(ctx, "c2", { pad: 50 }),
+      camera: (ctx) => cubeCamera(ctx, "c2", { pad: 66 }),
       caption: "Las demás filas se calculan igual. <b>Escalado</b>: se divide todo por √d_k = √4 = 2 para que los productos no crezcan con la dimensión.",
       changed: { contexto: "activo" },
       more: `<p>Sin el escalado, con d_k grande los productos punto tienen varianza grande y el softmax se satura (Vaswani et al., 2017).</p>`,
@@ -225,7 +220,7 @@ export const chapter3 = {
       id: "3.5",
       dur: 7,
       scale: "tensor",
-      camera: (ctx) => cubeCamera(ctx, "c2", { pad: 50 }),
+      camera: (ctx) => cubeCamera(ctx, "c2", { pad: 66 }),
       caption: "<b>Máscara causal M</b>: 0 donde j ≤ i (pasado y presente), −∞ donde j > i (futuro). Una posición no puede mirar tokens posteriores.",
       changed: { contexto: "activo" },
       pose(ctx) {
@@ -245,7 +240,7 @@ export const chapter3 = {
       dur: 10,
       events: 2,
       scale: "tensor",
-      camera: (ctx) => cubeCamera(ctx, "c2", { pad: 50 }),
+      camera: (ctx) => cubeCamera(ctx, "c2", { pad: 66 }),
       caption: (ctx) => (ctx.event <= 1 ? `<b>Softmax</b> por fila: exponenciar y dividir por la suma. La fila ${rowOf(ctx)} suma 1; las posiciones futuras reciben exactamente 0.` : "Todas las filas normalizadas: <b>A</b>, una distribución de pesos por posición."),
       changed: { contexto: "activo" },
       more: `<p>softmax(z)<sub>j</sub> = e<sup>z<sub>j</sub></sup> / Σ<sub>l</sub> e<sup>z<sub>l</sub></sup>. Como e<sup>−∞</sup> = 0, la máscara se convierte en peso cero exacto.</p><p>La verificación en vivo comprueba que cada fila suma 1 (error ≤ 10⁻¹²) y que todo peso futuro es 0.</p>`,

@@ -1,4 +1,3 @@
-// Capítulo 2 — De tokens a representaciones.
 import { baseVisibility, explode, trayCamera, rackCamera, trayRegion, cutAbove, fade } from "../common.mjs";
 import { VOCAB, tokenize } from "../../model/tokenizer.mjs";
 import { f2, f3, esc, T } from "../helpers.mjs";
@@ -53,7 +52,6 @@ export function tokenDesk(ctx, desk) {
   draw();
 }
 
-// Punto junto al borde trasero de cada tabla de la bandeja de embeddings (para etiquetas).
 import { TRAY, TRAY_Z } from "../rack.mjs";
 const edge = (which) => {
   const spots = { E: [6 + 32, 4], P: [6 + 20, 40], X0: [104 + 12, 4] };
@@ -62,7 +60,6 @@ const edge = (which) => {
 };
 
 export function recompute(ctx) {
-  // todo lo que depende de los tokens se reconstruye: marcar sucios los objetos afectados
   for (const [id] of ctx.engine.objects) if (/^(mx-X0|card|t-|vec-|bars-out|card-next|mx-Wu)/.test(id)) ctx.engine.dirty(id);
   ctx.say(`Tokens: ${ctx.store.ids().map((id) => VOCAB[id]).join(" ")}. Se recalcularon las activaciones.`);
   ctx.refresh();

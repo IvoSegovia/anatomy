@@ -1,4 +1,3 @@
-// Capítulo 5 — Cómo cambian realmente los pesos.
 import { explode, trayRegion, rackCamera, cutAbove } from "../common.mjs";
 import { f2, f3, T, esc, lineChart, prov } from "../helpers.mjs";
 import { el } from "../ui.mjs";

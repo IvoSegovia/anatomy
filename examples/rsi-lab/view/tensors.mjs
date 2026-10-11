@@ -1,6 +1,3 @@
-// Escala «tensores»: una cabeza abierta. Tres cubos de producto matricial:
-//   1) [Q K V] = X · [W_Q W_K W_V]     2) S = Q · Kᵀ     3) Z = A · V
-// Los planos son objetos con identidad propia que se trasladan entre cubos (K se transpone).
 import { matrixSvg, cubeFrames, cubeSvg, planeCentre, cellCentre } from "./matrix.mjs";
 import { lerp3, add3, mul3 } from "./engine.mjs";
 import { TRAY, TRAY_Z } from "./rack.mjs";
@@ -18,11 +15,9 @@ export function cubeLayout(n) {
   };
 }
 
-// Submarco: columnas [from, from+count) de un marco.
 const sub = (frame, from) => ({ o: add3(frame.o, mul3(frame.u, from)), u: frame.u, v: frame.v });
 export const lerpFrame = (a, b, t) => ({ o: lerp3(a.o, b.o, t), u: lerp3(a.u, b.u, t), v: lerp3(a.v, b.v, t) });
 
-// Posiciones de cada plano en cada fase.
 export function framesFor(n) {
   const L = cubeLayout(n);
   return {
@@ -34,7 +29,7 @@ export function framesFor(n) {
     K1: sub(L.c1.C, 4),
     V1: sub(L.c1.C, 8),
     Q2: L.c2.A,
-    K2: { o: L.c2.B.o, u: L.c2.B.v, v: L.c2.B.u }, // K (n×4) colocada como Kᵀ (4×n)
+    K2: { o: L.c2.B.o, u: L.c2.B.v, v: L.c2.B.u },
     S: L.c2.C,
     A3: L.c3.A,
     V3: L.c3.B,
@@ -113,7 +108,6 @@ export function buildTensors(engine, store) {
     const head = hv();
     return { title: `Z[${i},${j}] = ${f3(head.Z[i][j])}`, rows: [["operación", `Σ_t A[${i},t]·V[t,${j}]`], ["términos", head.A[i].map((a, t) => `${f2(a)}·${f2(head.V[t][j])}`).join(" + ")], ["salida", f3(head.Z[i][j])]] };
   });
-  // Volúmenes de los cubos con la fila de productos de la celda elegida.
   for (const [id, key, dims] of [["t-cube1", "c1", (n) => [n, 8, 12]], ["t-cube2", "c2", (n) => [n, 4, n]], ["t-cube3", "c3", (n) => [n, n, 4]]]) {
     engine.add({
       id,

@@ -1,6 +1,3 @@
-// Generador pseudoaleatorio con semilla (mulberry32) y utilidades reproducibles.
-// Todo lo aleatorio de la experiencia pasa por aquí: misma semilla, mismos números.
-
 export function makeRng(seed) {
   let state = seed >>> 0;
   const next = () => {
@@ -10,9 +7,6 @@ export function makeRng(seed) {
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
-  // Normal aproximada por suma de 12 uniformes (Irwin–Hall): media 0, varianza 1, colas en ±6.
-  // Sólo usa sumas exactas en IEEE-754, así los mismos números salen en Node y en cualquier navegador
-  // (Box–Muller usa log/sin/cos, cuyos últimos bits pueden variar entre motores de JavaScript).
   const normal = () => {
     let total = 0;
     for (let i = 0; i < 12; i++) total += next();
@@ -40,8 +34,6 @@ export function makeRng(seed) {
   return { next, normal, int, pick, shuffle, categorical };
 }
 
-// Huella FNV-1a de 32 bits sobre los bytes Float64 de una lista de números.
-// Sirve para comprobar si un conjunto de parámetros cambió (aunque sea en un bit).
 export function fingerprint(values) {
   const view = new DataView(new ArrayBuffer(8));
   let hash = 0x811c9dc5;

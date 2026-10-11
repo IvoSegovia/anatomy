@@ -1,5 +1,3 @@
-// Utilidades de presentación compartidas por los capítulos: números, fórmulas, procedencia,
-// tablas y gráficos SVG 2D (planos legibles).
 export const f2 = (v) => (v === -Infinity ? "−∞" : v === Infinity ? "∞" : Number.isNaN(v) ? "NaN" : (v < 0 ? "−" : "") + Math.abs(v).toFixed(2));
 export const f3 = (v) => (v === -Infinity ? "−∞" : (v < 0 ? "−" : "") + Math.abs(v).toFixed(3));
 export const pct = (v) => `${(v * 100).toFixed(0)} %`;
@@ -15,16 +13,14 @@ export const PROV = {
 };
 export const prov = (kind, extra = "") => `<span class="prov" data-p="${kind}" title="Procedencia: ${PROV[kind]}">${PROV[kind]}${extra ? ` · ${extra}` : ""}</span>`;
 
-// Término de fórmula vinculado a un objeto de la escena (data-ref) y a un rol de color.
 export const T = (text, role = "", ref = "", on = false) => `<span class="t ${role}${on ? " on" : ""}"${ref ? ` data-ref="${ref}"` : ""}>${text}</span>`;
 
 export function table(head, rows, { on = -1 } = {}) {
   return `<table class="tbl"><thead><tr>${head.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((row, i) => `<tr${i === on ? ' class="on"' : ""}>${row.map((c) => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
 }
 
-// Gráfico de líneas: series = [{ values, cls, label }]; marcador opcional en x = cursor.
 export function lineChart(series, { w = 360, h = 150, xLabel = "", yLabel = "", yMax, yMin = 0, cursor, marks = [], xTicks } = {}) {
-  const pad = { l: 34, r: 8, t: 8, b: 24 };
+  const pad = { l: 34, r: 8, t: yLabel ? 18 : 8, b: 24 };
   const n = Math.max(...series.map((s) => s.values.length));
   const all = series.flatMap((s) => s.values.filter(Number.isFinite));
   const top = yMax ?? Math.max(1e-9, ...all) * 1.05;
@@ -38,7 +34,7 @@ export function lineChart(series, { w = 360, h = 150, xLabel = "", yLabel = "", 
   out.push(`<path class="ax" d="M${pad.l} ${pad.t}V${h - pad.b}H${w - pad.r}"/>`);
   const ticks = xTicks || [0, Math.floor((n - 1) / 2), n - 1];
   for (const t of ticks) out.push(`<text x="${X(t)}" y="${h - pad.b + 13}" text-anchor="middle">${t}</text>`);
-  out.push(`<text x="${w - pad.r}" y="${h - 2}" text-anchor="end">${esc(xLabel)}</text><text x="2" y="${pad.t - 1}" text-anchor="start">${esc(yLabel)}</text>`);
+  out.push(`<text x="${w - pad.r}" y="${h - 2}" text-anchor="end">${esc(xLabel)}</text><text x="2" y="${Math.max(8, pad.t - 9)}" text-anchor="start">${esc(yLabel)}</text>`);
   for (const s of series) {
     const pts = s.values.map((v, i) => (Number.isFinite(v) ? `${X(i).toFixed(1)},${Y(v).toFixed(1)}` : null)).filter(Boolean);
     out.push(`<polyline class="ln ${s.cls}" points="${pts.join(" ")}"/>`);
@@ -50,7 +46,6 @@ export function lineChart(series, { w = 360, h = 150, xLabel = "", yLabel = "", 
   return out.join("");
 }
 
-// Barras horizontales simples (por ejemplo, probabilidades de una política).
 export function barList(items, { max = 1, w = 300 } = {}) {
   return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:3px 8px;align-items:center;font-size:11.5px">${items
     .map((it) => `<span style="color:var(--ink-2)">${esc(it.label)}</span><span style="height:8px;background:#1b1d22;border-radius:2px;position:relative"><span style="position:absolute;left:0;top:0;bottom:0;width:${Math.max(0, Math.min(1, it.value / max)) * 100}%;background:var(--c-${it.role || "in"});border-radius:2px;opacity:${it.dim ? 0.4 : 1}"></span></span><span class="kv">${it.text ?? it.value.toFixed(2)}</span>`)
