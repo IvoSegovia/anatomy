@@ -57,6 +57,11 @@ jobs:
           node examples/raptor-engine/build.mjs
           node examples/raptor-engine/build.mjs --light
 
+      - name: RSI lab
+        run: |
+          node examples/rsi-lab/build.mjs
+          node examples/rsi-lab/verify.mjs
+
       - name: Committed pages are unchanged
         run: |
           git status --short
