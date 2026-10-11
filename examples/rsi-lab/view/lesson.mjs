@@ -11,6 +11,7 @@ const PLAIN = {
   infra: ["Infraestructura", "el presupuesto y el entorno donde se ejecuta"],
 };
 const OP_NAME = Object.fromEntries(SOUND_OPS.map((o) => [o.op, o.name]));
+const CLOSE = '<button class="x" data-act="close-box" aria-label="Cerrar">×</button>';
 
 export const plainOf = (html) =>
   String(html || "")
@@ -62,6 +63,8 @@ export function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }
     armCount: 0,
     timer: null,
     waitUntil: 0,
+    waitStart: 0,
+    waitTotal: 0,
     remaining: null,
     entering: false,
     explored: false,
@@ -144,6 +147,8 @@ export function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }
   function enter(i, phase = "orient", { push = true, restore = null } = {}) {
     clearTimer();
     cancelSound();
+    L.remaining = null;
+    L.waitTotal = 0;
     L.frozen = false;
     L.i = Math.max(0, Math.min(steps.length - 1, i));
     const s = step();
@@ -215,6 +220,8 @@ export function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }
     }
     if (director.S.stepTo === null && u >= 1 - 1e-6) {
       L.armed = null;
+      L.waitTotal = 0;
+      L.remaining = null;
       L.phase = s.result ? "result" : "done";
       applyLook();
       pushStack();
@@ -277,8 +284,11 @@ export function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }
       return;
     }
     const html = textOf(L.phase === "result" ? s.result : s.orient);
-    const wait = L.remaining ?? readSeconds(html) * 1000;
+    const full = (L.narrator ? readSeconds(html) : wordsOf(html) ? 2.5 : 0) * 1000;
+    const wait = L.remaining ?? full;
     L.remaining = null;
+    L.waitTotal = Math.max(full, wait);
+    L.waitStart = performance.now() - (L.waitTotal - wait);
     L.waitUntil = performance.now() + wait;
     L.timer = setTimeout(() => {
       L.timer = null;
@@ -306,8 +316,16 @@ export function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }
     notify();
     renderTransport();
   }
+  function waitShare() {
+    if (!L.waitTotal) return 0;
+    const now = L.auto && L.timer ? performance.now() : L.remaining !== null ? L.waitUntil - L.remaining : L.waitStart;
+    return Math.max(0, Math.min(1, (now - L.waitStart) / L.waitTotal));
+  }
   function pause(reason = "") {
-    if (L.auto && L.timer) L.remaining = Math.max(0, L.waitUntil - performance.now());
+    if (L.auto && L.timer) {
+      L.remaining = Math.max(0, L.waitUntil - performance.now());
+      L.waitUntil = performance.now();
+    }
     L.auto = false;
     clearTimer();
     if (L.phase === "act" && director.S.stepTo !== null) {
@@ -354,37 +372,35 @@ export function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }
     if (!L.box) return "";
     if (L.box.kind === "simple") {
       const c = concepts[s.concept];
-      return `<div class="g-box"><div class="g-box-h">Más simple · ${esc(c.title)}</div>${richText(textOf(c.simple))}</div>`;
+      return `<div class="g-box"><div class="g-box-h">Más simple · ${esc(c.title)}${CLOSE}</div>${richText(textOf(c.simple))}</div>`;
     }
     if (L.box.kind === "example") {
       const c = concepts[s.concept];
       const ex = (s.example || c.example)(ctx);
-      return `<div class="g-box"><div class="g-box-h">Ejemplo · ${esc(c.title)} ${ex.prov ? `<span class="prov" data-p="${ex.prov}">${ex.prov === "local" ? "resultado calculado" : ex.prov === "ilus" ? "ejemplo ilustrativo" : ex.prov === "sim" ? "simulación conceptual" : "resultado citado"}</span>` : ""}</div>${richText(ex.html)}</div>`;
+      return `<div class="g-box"><div class="g-box-h">Ejemplo · ${esc(c.title)}${CLOSE} ${ex.prov ? `<span class="prov" data-p="${ex.prov}">${ex.prov === "local" ? "resultado calculado" : ex.prov === "ilus" ? "ejemplo ilustrativo" : ex.prov === "sim" ? "simulación conceptual" : "resultado citado"}</span>` : ""}</div>${richText(ex.html)}</div>`;
     }
     if (L.box.kind === "term") {
       const c = concepts[L.box.key];
       if (!c) return "";
       const ex = c.example ? c.example(ctx) : null;
       const where = c.where ? (typeof c.where === "function" ? c.where(ctx) : c.where) : null;
-      return `<div class="g-box"><div class="g-box-h">Glosario · ${esc(c.title)}</div><p>${richText(textOf(c.def))}</p>${ex ? `<p class="g-ex">${richText(ex.html)}</p>` : ""}${where && where.length ? `<button class="btn" data-act="show" data-ids="${where.join(",")}">Mostrar en la escena</button>` : `<p class="kv">No tiene un objeto propio en esta escena.</p>`}</div>`;
+      return `<div class="g-box"><div class="g-box-h">Glosario · ${esc(c.title)}${CLOSE}</div><p>${richText(textOf(c.def))}</p>${ex ? `<p class="g-ex">${richText(ex.html)}</p>` : ""}${where && where.length ? `<button class="btn" data-act="show" data-ids="${where.join(",")}">Mostrar en la escena</button>` : `<p class="kv">No tiene un objeto propio en esta escena.</p>`}</div>`;
     }
     if (L.box.kind === "more") {
       const more = typeof s.beat.more === "function" ? s.beat.more(ctx) : s.beat.more;
-      return `<div class="g-box"><div class="g-box-h">Ampliación</div>${more || "<p>Sin ampliación para este paso.</p>"}</div>`;
+      return `<div class="g-box"><div class="g-box-h">Ampliación${CLOSE}</div>${more || "<p>Sin ampliación para este paso.</p>"}</div>`;
     }
-    if (L.box.kind === "sounds") return soundsHtml();
     return "";
   }
 
   function soundsHtml() {
     const on = sound.enabled;
-    return `<div class="g-box"><div class="g-box-h">Sonidos</div>
-      <p>Cada familia de operaciones tiene una señal propia. La explicación completa está en el texto: los sonidos sólo ayudan a reconocer la operación.</p>
-      <div class="snd-ctl"><button class="btn" data-act="sound-toggle" aria-pressed="${on}">${on ? "Desactivar sonidos" : "Activar sonidos"}</button>
-      <label>volumen <input type="range" min="0" max="1" step="0.05" value="${sound.prefs.volume}" data-act="volume" aria-label="Volumen general"></label>
-      <button class="btn" data-act="mute" aria-pressed="${sound.prefs.muted}">${sound.prefs.muted ? "Quitar silencio" : "Silencio (X)"}</button></div>
-      <ul class="legend-snd">${SOUND_OPS.map((o) => `<li><button class="btn" data-act="listen" data-op="${o.op}" ${on ? "" : "disabled"}>Escuchar</button><div><b>${esc(o.name)}</b> · <span class="kv">${esc(o.hint)}</span><br><span>${esc(o.when)}</span></div></li>`).join("")}</ul>
-      <p class="kv">${esc(SOUND_NOTE)}</p></div>`;
+    return `<div class="set-row"><button class="btn${on ? " primary" : ""}" data-act="sound-toggle" aria-pressed="${on}">${on ? "Sonidos activos" : "Activar sonidos"}</button>
+      <label class="set-inline">volumen <input type="range" min="0" max="1" step="0.05" value="${sound.prefs.volume}" data-act="volume" aria-label="Volumen general"></label>
+      <label class="set-inline"><input type="checkbox" data-act="mute" ${sound.prefs.muted ? "checked" : ""}> silencio (X)</label></div>
+      <p class="kv">Cada familia de operaciones tiene una señal propia. Todo se entiende sin sonido.</p>
+      <details><summary>Qué suena en cada operación</summary><ul class="legend-snd">${SOUND_OPS.map((o) => `<li><button class="btn" data-act="listen" data-op="${o.op}" ${on ? "" : "disabled"}>▶</button><div><b>${esc(o.name)}</b> · <span class="kv">${esc(o.hint)}</span><br><span>${esc(o.when)}</span></div></li>`).join("")}</ul>
+      <p class="kv">${esc(SOUND_NOTE)}</p></details>`;
   }
 
   function primaryLabel() {
@@ -421,20 +437,19 @@ export function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }
       <h2>${esc(beat.chapter.title)}</h2>
       ${phaseList()}
       ${main}
+      ${L.auto && L.timer ? `<div class="g-wait" role="progressbar" aria-label="Tiempo de lectura antes de seguir"><i style="width:${(waitShare() * 100).toFixed(1)}%"></i></div>` : ""}
       <div class="g-actions">
         <button class="btn primary" data-act="primary">${primaryLabel()}</button>
-        ${hasAct(s) ? '<button class="btn" data-act="repeat" title="Repetir esta operación (R)">Repetir esta operación</button>' : ""}
-        ${L.i > 0 ? '<button class="btn ghost" data-act="back" title="Volver (←)">Atrás</button>' : ""}
+        ${hasAct(s) ? '<button class="btn" data-act="repeat" title="Repetir esta operación (R)">↻ Repetir</button>' : ""}
+        ${L.i > 0 ? '<button class="btn ghost" data-act="back" title="Volver (←)">← Atrás</button>' : ""}
       </div>
       <div class="g-help">
-        ${c ? `<button class="btn ghost" data-act="simple" aria-pressed="${L.box?.kind === "simple"}">Explicámelo más simple</button><button class="btn ghost" data-act="example" aria-pressed="${L.box?.kind === "example"}">Ver un ejemplo</button>` : ""}
-        ${beat.more ? `<button class="btn ghost" data-act="more" aria-pressed="${L.box?.kind === "more"}">Ampliar</button>` : ""}
-        <button class="btn ghost" data-act="sounds" aria-pressed="${L.box?.kind === "sounds"}">Sonidos</button>
+        ${c ? `<button class="link" data-act="simple" aria-pressed="${L.box?.kind === "simple"}">Más simple</button><button class="link" data-act="example" aria-pressed="${L.box?.kind === "example"}">Un ejemplo</button>` : ""}
+        ${beat.more ? `<button class="link" data-act="more" aria-pressed="${L.box?.kind === "more"}">Ampliar</button>` : ""}
       </div>
       ${boxHtml()}
       <details class="g-fixed"><summary>Qué cambia y qué permanece fijo</summary>${changedBox()}</details>
       <details class="g-trail"><summary>Lo leído en este capítulo (${trail.length})</summary>${trail.map((entry) => `<div class="g-old"><span class="kv">${esc(entry.id)}</span> ${richText(entry.html)}</div>`).join("")}</details>
-      ${L.auto ? `<p class="kv auto-note">Reproducción automática: lectura estimada a ${L.wpm} palabras por minuto, más 2,5 s; mínimo 6 s. Es una estimación de diseño, no una medida de tu lectura.</p>` : ""}
       ${s.missing ? '<p class="kv">Este paso todavía no tiene guion propio.</p>' : ""}
     </div>`;
   }
@@ -442,15 +457,10 @@ export function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }
   function render() {
     if (!steps.length) return;
     const s = step();
-    if (ctx.tab === "guide") {
-      ref.inspBody.innerHTML = L.narrator ? guideHtml() : `<div class="guide off"><p>El narrador escrito está oculto. Pulsá <b>N</b> o el botón «Narrador» para mostrarlo.</p></div>`;
-    }
+    if (ctx.tab === "guide") ref.inspBody.innerHTML = guideHtml();
     const act = textOf(s.act);
-    ref.capStep.textContent = `${s.beat.c + 1}.${s.beat.b + 1}${s.parts > 1 ? ` · ${s.part}/${s.parts}` : ""} · ${s.beat.chapter.title}`;
-    let cap = "";
-    if (L.phase === "act") cap = `▸ ${richText(act)}`;
-    else if (s.cap) cap = richText(textOf(s.cap));
-    ref.capText.innerHTML = cap;
+    const cap = !L.narrator && L.phase === "act" ? `▸ ${plainOf(act)}` : "";
+    ref.capText.textContent = cap;
     ref.caption.classList.toggle("empty", !cap);
     renderTransport();
     notify();
@@ -459,8 +469,8 @@ export function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }
   function renderTransport() {
     const s = step();
     if (!s) return;
-    ref.learnPrimary.textContent = primaryLabel();
-    ref.learnRepeat.disabled = !hasAct(s);
+    ref.next.title = `${primaryLabel()} (→ o Intro)`;
+    ref.next.setAttribute("aria-label", primaryLabel());
     ref.play.textContent = L.auto ? "❚❚" : "▶";
     ref.play.setAttribute("aria-label", L.auto ? "Pausar la reproducción automática" : "Reproducción automática");
     ref.play.title = L.auto ? "Pausar (espacio)" : `Reproducción automática: avanza solo, con ${L.wpm} palabras por minuto de lectura (espacio)`;
@@ -476,7 +486,8 @@ export function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }
     if (L.phase === "act") {
       const span = endT(s) - startT(s);
       within = orient + (span > 0 ? Math.max(0, Math.min(1, (director.S.t - startT(s)) / span)) : 1) * anim;
-    } else if (L.phase === "result" || L.phase === "done") within = orient + anim;
+    } else if (L.phase === "result" || L.phase === "done") within = orient + anim + waitShare() * readSeconds(textOf(s.result));
+    else within = waitShare() * orient;
     return starts[L.i] + Math.min(est, within);
   }
   function seekShare(share) {
@@ -507,7 +518,10 @@ export function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }
     if (act === "primary") next();
     else if (act === "repeat") repeat();
     else if (act === "back") prev();
-    else if (["simple", "example", "more", "sounds"].includes(act)) {
+    else if (act === "close-box") {
+      L.box = null;
+      render();
+    } else if (["simple", "example", "more"].includes(act)) {
       interrupt(act);
       L.box = L.box && L.box.kind === act ? null : { kind: act };
       render();
@@ -515,13 +529,12 @@ export function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }
       ctx.spotlight(button.getAttribute("data-ids").split(","), "");
     } else if (act === "sound-toggle") {
       (sound.enabled ? Promise.resolve(sound.disable()) : sound.enable()).then(() => render());
-    } else if (act === "mute") {
-      sound.setMuted(!sound.prefs.muted);
-      render();
     } else if (act === "listen") sound.preview(button.getAttribute("data-op"));
   }
   function handleInput(event) {
-    if (event.target.getAttribute("data-act") === "volume") sound.setVolume(Number(event.target.value));
+    const act = event.target.getAttribute("data-act");
+    if (act === "volume") sound.setVolume(Number(event.target.value));
+    if (act === "mute") sound.setMuted(event.target.checked);
   }
   function handleHover(event) {
     const button = event.target.closest("[data-ref]");
@@ -578,9 +591,13 @@ export function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }
       listeners.add(fn);
     },
     setNarrator(on) {
+      if (L.narrator === on) return;
       L.narrator = on;
+      if (L.auto && L.timer) schedule();
       render();
     },
+    soundsHtml,
+    waitShare,
     setWpm(wpm) {
       L.wpm = wpm;
       recompute();

@@ -127,10 +127,12 @@ const guideOff = await page.evaluate(() => {
   q.go(q.lesson.steps.findIndex((s) => s.id === "3.6a"), "result");
   return document.querySelector(".insp-body .g-text:not(.dim)").textContent;
 });
-await page.click(".sound-btn");
+await page.click('[data-tab="settings"]');
+await page.click('[data-act="sound-toggle"]');
 await page.waitForTimeout(400);
+await page.click('[data-tab="guide"]');
 const audio = await page.evaluate(() => ({ enabled: window.__sceneQA.sound.enabled, state: window.__sceneQA.sound.state }));
-check("«Activar sonidos» crea y reanuda el AudioContext desde un clic", audio.enabled && audio.state === "running", audio.state);
+check("«Activar sonidos» (Ajustes) crea y reanuda el AudioContext desde un clic", audio.enabled && audio.state === "running", audio.state);
 const guideOn = await page.evaluate(() => document.querySelector(".insp-body .g-text:not(.dim)").textContent);
 check("la explicación es idéntica con el sonido activado o apagado", guideOn === guideOff);
 
@@ -141,7 +143,7 @@ const settle = () => page.waitForFunction(() => window.__sceneQA.director.S.step
 
 await page.evaluate((i) => window.__sceneQA.go(i), await idx("3.2a"));
 let n0 = await logLen();
-await page.click(".learn-primary");
+await page.click(".transport .next");
 await settle();
 await page.waitForTimeout(500);
 let played = (await logFrom(n0)).filter((e) => e.played);
@@ -157,7 +159,7 @@ await page.waitForTimeout(400);
 check("buscar en la línea de tiempo no reproduce sonidos intermedios", (await logFrom(n0)).every((e) => !e.played));
 
 await page.evaluate((i) => window.__sceneQA.go(i), await idx("3.3b"));
-await page.click(".learn-primary");
+await page.click(".transport .next");
 await page.waitForTimeout(500);
 await page.click(".play");
 await page.click(".play");
@@ -192,7 +194,7 @@ check("X silencia al instante (las señales se registran, no suenan)", muted.som
 await page.keyboard.press("x");
 
 await page.evaluate((i) => window.__sceneQA.go(i), await idx("3.3b"));
-await page.click(".learn-primary");
+await page.click(".transport .next");
 await page.waitForTimeout(300);
 await page.evaluate(() => {
   Object.defineProperty(document, "hidden", { value: true, configurable: true });
@@ -209,7 +211,7 @@ await page.evaluate(() => {
 if (reduced) {
   await page.evaluate((i) => window.__sceneQA.go(i), await idx("3.2a"));
   n0 = await logLen();
-  await page.click(".learn-primary");
+  await page.click(".transport .next");
   await page.waitForTimeout(900);
   const red = (await logFrom(n0)).filter((e) => e.played);
   check("movimiento reducido: la operación salta al resultado y sus dos señales suenan escalonadas", red.length === 2 && (await page.evaluate(() => window.__sceneQA.lesson.L.phase)) === "result");

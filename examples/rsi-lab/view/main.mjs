@@ -8,8 +8,9 @@ import { buildStations } from "./stations.mjs";
 import { makeStore } from "./store.mjs";
 import { makeDirector } from "./director.mjs";
 import { CHAPTERS } from "./chapters.mjs";
-import { renderInspector } from "./inspector.mjs";
-import { prov } from "./helpers.mjs";
+import { renderInspector, infoFor } from "./inspector.mjs";
+import { nameOf } from "./names.mjs";
+import { prov, esc } from "./helpers.mjs";
 import { makeBus } from "./bus.mjs";
 import { makeSound, renderOffline, SOUND_OPS } from "./sound.mjs";
 import { makeLesson, plainOf, wordsOf } from "./lesson.mjs";
@@ -32,14 +33,8 @@ let changedNow = {};
 let selection = null;
 let wakeLoop = () => {};
 
-function syncDisclaimer() {
-  let offset = 0;
-  for (const node of beatScoped.panels.values()) {
-    const d = node._dock;
-    if (d && d.dock === "right" && d.top < 210) offset = Math.max(offset, d.right + d.width + 14);
-  }
-  ref.disclaimer.style.right = offset ? `${offset}px` : "";
-}
+const windows = { closed: new Set(), auto: !matchMedia("(max-width: 760px)").matches };
+const syncDisclaimer = () => {};
 
 const ctx = {
   engine,
@@ -92,24 +87,26 @@ const ctx = {
       node = el("div", { class: "plane on", "data-panel": id });
       ref.planes.append(node);
       beatScoped.panels.set(id, node);
+      node.classList.toggle("min", windows.closed.has(id) || !windows.auto);
     }
-    const head = title || provKind ? `<h4><span>${title}</span>${provKind ? prov(provKind, provText) : ""}</h4>` : "";
-    const content = head + html;
+    const head = `<h4><button class="pl-toggle" data-pl="${id}" title="Mostrar u ocultar esta ventana (V: todas)"><span class="pl-arrow" aria-hidden="true">▾</span><span>${title || "Datos"}</span></button>${provKind ? prov(provKind, provText) : ""}<button class="x" data-pl="${id}" aria-label="Cerrar la ventana «${String(title || "Datos").replace(/<[^>]+>/g, "")}»">×</button></h4>`;
+    const content = head + `<div class="pl-body">${html}</div>`;
     if (node._html !== content) {
       node.innerHTML = content;
       node._html = content;
     }
     const style = node.style;
+    const y = Math.max(12, (top ?? 78) - 64);
     style.width = width ? `${width}px` : "";
-    style.top = `calc(${top ?? 78}px + var(--chips-extra, 0px))`;
-    style.maxHeight = dock === "left" ? `calc(100% - ${top ?? 78}px - var(--chips-extra, 0px) - var(--desk-h, 0px) - 40px)` : `calc(100% - ${top ?? 78}px - var(--chips-extra, 0px) - 104px)`;
-    style.left = dock === "left" ? `${left ?? 12}px` : "";
+    style.top = `${y}px`;
+    style.maxHeight = dock === "left" ? `calc(100% - ${y}px - var(--desk-h, 40px) - 24px)` : `calc(100% - ${y}px - 64px)`;
+    style.left = dock === "left" ? (left !== undefined ? `${left}px` : "calc(var(--rail-w, 140px) + 20px)") : "";
     style.right = dock === "right" ? `${right ?? 12}px` : "";
     if (dock === "center") {
       style.left = "50%";
       style.transform = "translateX(-50%)";
     } else style.transform = "";
-    node._dock = { dock, top: top ?? 78, right: right ?? 12, width: width ?? 420 };
+    node._dock = { dock, top: y, right: right ?? 12, width: width ?? 420 };
     syncDisclaimer();
     return node;
   },
@@ -120,6 +117,7 @@ const ctx = {
     syncDisclaimer();
   },
   clearBeat() {
+    if (ctx.unpick) ctx.unpick();
     for (const id of beatScoped.labels) engine.unlabel(id);
     beatScoped.labels.clear();
     for (const node of beatScoped.panels.values()) node.remove();
@@ -133,7 +131,7 @@ const ctx = {
     renderChanged(ref, changedNow, fixedNote);
   },
   theta(print, note = "", flash = false) {
-    ref.theta.innerHTML = `<span>θ modelo: 2048 parámetros</span><span class="print${flash ? " flash" : ""}" title="Huella FNV-1a de todos los parámetros: cambia si cambia un solo bit">huella ${print}</span><span>${note}</span>`;
+    ref.theta.innerHTML = `<span class="h">θ · 2048 parámetros</span><span class="print${flash ? " flash" : ""}" title="Huella FNV-1a de todos los parámetros del modelo: cambia si cambia un solo bit. ${note}">${print}</span><span class="note">${note}</span>`;
   },
   pulse(i, spec) {
     const id = `pulse${i}`;
@@ -155,20 +153,22 @@ const ctx = {
     }
     ref.desk.classList.add("on");
     ref.stage.classList.add("has-desk");
-    if (engine.size.w < 760 && !ref.desk.dataset.touched) {
-      ref.desk.classList.add("min");
-      ref.stage.classList.add("desk-min");
-    }
-    const toggle = el("button", { "aria-expanded": ref.desk.classList.contains("min") ? "false" : "true", title: "Plegar o desplegar la mesa de control" }, ref.desk.classList.contains("min") ? "desplegar" : "plegar");
-    toggle.addEventListener("click", () => {
-      ref.desk.dataset.touched = "1";
-      const min = ref.desk.classList.toggle("min");
-      ref.stage.classList.toggle("desk-min", min);
-      toggle.textContent = min ? "desplegar" : "plegar";
-      toggle.setAttribute("aria-expanded", min ? "false" : "true");
-    });
-    ref.desk.append(el("h3", {}, el("span", {}, `Mesa de control · ${title}`), toggle));
-    build(ref.desk);
+    ref.desk.classList.toggle("min", ref.desk.dataset.open !== "1");
+    const open = !ref.desk.classList.contains("min");
+    const toggle = el("button", { class: "pl-toggle", "aria-expanded": open ? "true" : "false", title: "Mostrar u ocultar los controles de esta escena" }, el("span", { class: "pl-arrow", "aria-hidden": "true" }, open ? "▾" : "▸"), el("span", {}, `Mesa de control · ${title}`));
+    const close = el("button", { class: "x", "aria-label": "Cerrar la mesa de control" }, "×");
+    const flip = (next) => {
+      ref.desk.dataset.open = next ? "1" : "";
+      ref.desk.classList.toggle("min", !next);
+      toggle.setAttribute("aria-expanded", next ? "true" : "false");
+      toggle.firstChild.textContent = next ? "▾" : "▸";
+    };
+    toggle.addEventListener("click", () => flip(ref.desk.classList.contains("min")));
+    close.addEventListener("click", () => flip(false));
+    ref.desk.append(el("h3", {}, toggle, close));
+    const body = el("div", { class: "desk-body" });
+    ref.desk.append(body);
+    build(body);
   },
   refresh() {
     director.apply();
@@ -189,6 +189,7 @@ const ctx = {
   scale(name) {
     for (const [key, button] of Object.entries(ref.scaleButtons)) button.setAttribute("aria-current", key === name ? "true" : "false");
     ctx.currentScale = name;
+    ref.backScale.hidden = name === "lab";
   },
   get beat() {
     return director.beat;
@@ -217,6 +218,8 @@ const director = makeDirector({
         button.setAttribute("aria-current", i === c ? "true" : "false");
         button.classList.toggle("done", i < c);
       });
+      ref.chapterBtn.innerHTML = `<span class="n">${c + 1}</span><span class="t">${esc(chapter.title)}</span><span class="caret" aria-hidden="true">▾</span>`;
+      ref.chapterBtn.setAttribute("aria-label", `Capítulo ${c + 1} de ${CHAPTERS.length}: ${chapter.title}. Elegir capítulo`);
       ref.desk.classList.remove("on");
       ref.stage.classList.remove("has-desk");
       app.classList.toggle("show-theta", !!chapter.showTheta);
@@ -279,18 +282,7 @@ ctx.spotlight = (ids, label) => {
   }, 2600);
   wakeLoop();
 };
-const refreshSound = () => {
-  ref.soundBtn.setAttribute("aria-pressed", sound.enabled ? "true" : "false");
-  ref.soundBtn.textContent = sound.enabled ? (sound.prefs.muted ? "Sonido en silencio" : "Sonidos activos") : sound.prefs.wanted ? "Activar sonidos (recordado)" : "Activar sonidos";
-};
-sound.onChange(refreshSound);
-refreshSound();
-ref.soundBtn.addEventListener("click", async () => {
-  if (sound.enabled) sound.disable();
-  else await sound.enable();
-  refreshSound();
-  if (ctx.tab === "guide") lesson.render();
-});
+sound.onChange(() => ctx.tab === "settings" && renderSettings());
 
 function buildTimeline() {
   ref.timeline.innerHTML = '<div class="track"></div><div class="fill"></div>';
@@ -319,7 +311,12 @@ function updateTimeline() {
   ref.timeline.setAttribute("aria-valuenow", String(Math.round(share * 100)));
   ref.timeline.setAttribute("aria-valuetext", `Capítulo ${step.beat.c + 1}, paso ${step.id}, ${step.index + 1} de ${lesson.steps.length}`);
   ref.backTour.classList.toggle("on", director.S.manualCam);
+  const bar = ref.inspBody.querySelector(".g-wait i");
+  if (bar) bar.style.width = `${(lesson.waitShare() * 100).toFixed(1)}%`;
 }
+setInterval(() => {
+  if (lesson.L.auto && lesson.L.timer && !document.hidden) updateTimeline();
+}, 200);
 function seekShare(share) {
   lesson.seekShare(share);
   wakeLoop();
@@ -370,11 +367,9 @@ new ResizeObserver(() => {
   ref.stage.style.setProperty("--desk-h", `${on ? Math.round(ref.desk.getBoundingClientRect().height) : 0}px`);
 }).observe(ref.desk);
 new ResizeObserver(() => {
-  const h = Math.round(ref.changed.getBoundingClientRect().height);
-  if (!h) return;
-  ref.stage.style.setProperty("--chips-h", `${h}px`);
-  ref.stage.style.setProperty("--chips-extra", `${Math.max(0, h - 26)}px`);
-}).observe(ref.changed);
+  const w = Math.round(ref.rail.getBoundingClientRect().width);
+  if (w) ref.stage.style.setProperty("--rail-w", `${w}px`);
+}).observe(ref.rail);
 function insetFor() {
   const narrow = engine.size.w < 760;
   if (!narrow) return { top: 70, bottom: 70, left: 0, right: 0 };
@@ -397,15 +392,7 @@ ref.prev.addEventListener("click", () => {
   lesson.prev();
   wakeLoop();
 });
-ref.learnPrimary.addEventListener("click", () => {
-  lesson.next();
-  wakeLoop();
-});
-ref.learnRepeat.addEventListener("click", () => {
-  lesson.repeat();
-  wakeLoop();
-});
-ref.reset.addEventListener("click", () => {
+function resetLesson() {
   lesson.pause();
   store.restore(JSON.parse(JSON.stringify(ctx.defaults)));
   lesson.L.stack = [];
@@ -416,19 +403,20 @@ ref.reset.addEventListener("click", () => {
   lesson.enter(0);
   director.flyTo(director.cameraFor(director.beat));
   wakeLoop();
-});
+}
 ctx.defaults = JSON.parse(JSON.stringify(store.user));
-ref.speedSel.addEventListener("change", () => {
-  director.S.speed = Number(ref.speedSel.value);
-  wakeLoop();
-});
-ref.wpmSel.addEventListener("change", () => {
-  lesson.setWpm(Number(ref.wpmSel.value));
-  buildTimeline();
-  wakeLoop();
+const openChapters = (open) => {
+  ref.chapterList.hidden = !open;
+  ref.chapterBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  if (open) (ref.chapterList.querySelector('[aria-current="true"]') || ref.chapterButtons[0]).focus();
+};
+ref.chapterBtn.addEventListener("click", () => openChapters(ref.chapterList.hidden));
+document.addEventListener("pointerdown", (event) => {
+  if (!ref.chapterList.hidden && !ref.chapterMenu.contains(event.target)) openChapters(false);
 });
 ref.chapterButtons.forEach((button, c) =>
   button.addEventListener("click", () => {
+    openChapters(false);
     lesson.goToChapter(c);
     director.flyTo(director.cameraFor(director.beat));
     wakeLoop();
@@ -436,31 +424,34 @@ ref.chapterButtons.forEach((button, c) =>
 );
 const setMode = (mode) => {
   director.setMode(mode);
-  ref.modeTour.setAttribute("aria-pressed", mode === "tour" ? "true" : "false");
-  ref.modeFree.setAttribute("aria-pressed", mode === "free" ? "true" : "false");
   app.classList.toggle("explore", mode === "free");
   if (mode === "free") lesson.pause("explorar");
+  if (ctx.tab === "settings") renderSettings();
   wakeLoop();
 };
-const setNarrator = (on) => {
-  lesson.setNarrator(on);
-  app.classList.toggle("no-narrator", !on);
-  ref.narratorBtn.setAttribute("aria-pressed", on ? "true" : "false");
-  if (!on && ctx.tab === "guide" && !ref.inspector.hasAttribute("hidden")) {
-    ref.inspector.dataset.closedByNarrator = "1";
-    toggleInspector(false);
-  } else if (on && ref.inspector.dataset.closedByNarrator) {
-    delete ref.inspector.dataset.closedByNarrator;
-    toggleInspector(true);
+const setWindows = (open) => {
+  windows.auto = open;
+  if (open) windows.closed.clear();
+  for (const [id, node] of beatScoped.panels) {
+    node.classList.toggle("min", !open);
+    if (!open) windows.closed.add(id);
   }
-  wakeLoop();
+  if (ctx.tab === "settings") renderSettings();
 };
-ref.narratorBtn.addEventListener("click", () => setNarrator(!lesson.L.narrator));
-ref.modeTour.addEventListener("click", () => setMode("tour"));
-ref.modeFree.addEventListener("click", () => setMode("free"));
+ref.planes.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-pl]");
+  if (!button) return;
+  const id = button.getAttribute("data-pl");
+  const node = beatScoped.panels.get(id);
+  if (!node) return;
+  const close = button.classList.contains("x") ? true : !node.classList.contains("min");
+  node.classList.toggle("min", close);
+  if (close) windows.closed.add(id);
+  else windows.closed.delete(id);
+});
 ref.backTour.addEventListener("click", () => {
   director.guidedCamera();
-  selectTab("guide");
+  if (director.S.mode === "free") setMode("tour");
   lesson.applyLook();
   wakeLoop();
 });
@@ -468,6 +459,8 @@ const toggleInspector = (force) => {
   const open = force ?? ref.inspector.hasAttribute("hidden");
   ref.inspector.toggleAttribute("hidden", !open);
   ref.inspectorToggle.setAttribute("aria-pressed", open ? "true" : "false");
+  app.classList.toggle("no-narrator", !open);
+  lesson.setNarrator(open);
   requestAnimationFrame(() => {
     engine.measure();
     wakeLoop();
@@ -480,13 +473,73 @@ function selectTab(key) {
   renderInspector(ctx, selection);
 }
 for (const [key, button] of Object.entries(ref.tabButtons)) button.addEventListener("click", () => selectTab(key));
+const HELP = [
+  ["Espacio", "reproducción automática / pausa"],
+  ["→ o Intro", "siguiente: «Ver la operación» o «Continuar»"],
+  ["←", "volver a la fase anterior, con sus parámetros"],
+  ["R", "repetir esta operación"],
+  ["N o I", "mostrar u ocultar el panel con la explicación"],
+  ["V", "mostrar u ocultar las ventanas de datos"],
+  ["X", "silenciar o reactivar los sonidos"],
+  ["[ / ]", "capítulo anterior / siguiente"],
+  ["+ / −", "acercar / alejar"],
+  ["Q / E, W / S", "girar / inclinar la cámara"],
+  ["C", "volver a la cámara guiada"],
+  ["M", "alternar Aprender / Explorar"],
+  ["Esc", "cerrar el rótulo o volver a la escala anterior"],
+  ["0", "reiniciar"],
+];
+function renderSettings() {
+  const speed = director.S.speed;
+  ref.inspBody.innerHTML = `<div class="settings">
+    <h2>Ajustes</h2>
+    <h3>Sonido</h3>${lesson.soundsHtml()}
+    <h3>Reproducción</h3>
+    <div class="set-row"><label class="set-inline">animación <select data-set="speed" aria-label="Velocidad de la animación">${[0.5, 0.75, 1, 1.5, 2].map((v) => `<option value="${v}" ${v === speed ? "selected" : ""}>${v}×</option>`).join("")}</select></label>
+    <label class="set-inline">lectura <select data-set="wpm" aria-label="Ritmo de lectura de la reproducción automática">${[110, 140, 170].map((v) => `<option value="${v}" ${v === lesson.L.wpm ? "selected" : ""}>${v} palabras/min</option>`).join("")}</select></label></div>
+    <p class="kv">La velocidad sólo cambia el ritmo de los movimientos; no cambia ningún cálculo. Con el panel oculto, la reproducción automática no espera el tiempo de lectura.</p>
+    <h3>Escena</h3>
+    <label class="set-check"><input type="checkbox" data-set="windows" ${windows.auto ? "checked" : ""}> Abrir las ventanas de datos (fórmulas, registros, tablas) al llegar a cada paso</label>
+    <label class="set-check"><input type="checkbox" data-set="explore" ${director.S.mode === "free" ? "checked" : ""}> Explorar libremente: cámara libre, sin seguir la explicación (M)</label>
+    <div class="set-row"><button class="btn" data-set="reset">Reiniciar la lección (0)</button></div>
+    <h3>Ratón y táctil</h3>
+    <p>Arrastrar: mover la vista. Rueda o pellizco: acercar o alejar. Botón derecho o Mayús + arrastrar: girar. Clic en un objeto o una celda: su nombre y qué hace, encima de él.</p>
+    <h3>Teclado</h3><dl class="io">${HELP.map(([a, b]) => `<dt class="kv">${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>
+  </div>`;
+}
+ctx.renderSettings = renderSettings;
+function settingsAction(event) {
+  const target = event.target;
+  const set = target.getAttribute && target.getAttribute("data-set");
+  if (event.type === "click") {
+    const button = target.closest("[data-act],[data-set]");
+    if (!button) return;
+    const act = button.getAttribute("data-act");
+    if (act === "sound-toggle") (sound.enabled ? Promise.resolve(sound.disable()) : sound.enable()).then(renderSettings);
+    else if (act === "listen") sound.preview(button.getAttribute("data-op"));
+    else if (button.getAttribute("data-set") === "reset") resetLesson();
+    return;
+  }
+  if (target.getAttribute("data-act")) return lesson.handleInput(event);
+  if (set === "speed") director.S.speed = Number(target.value);
+  else if (set === "wpm") {
+    lesson.setWpm(Number(target.value));
+    buildTimeline();
+  } else if (set === "windows") setWindows(target.checked);
+  else if (set === "explore") setMode(target.checked ? "free" : "tour");
+  wakeLoop();
+}
 ref.inspBody.addEventListener("click", (event) => {
   if (ctx.tab === "guide") {
     lesson.handleClick(event);
     wakeLoop();
-  }
+  } else if (ctx.tab === "settings") settingsAction(event);
 });
-ref.inspBody.addEventListener("input", (event) => ctx.tab === "guide" && lesson.handleInput(event));
+ref.inspBody.addEventListener("change", (event) => ctx.tab === "settings" && settingsAction(event));
+ref.inspBody.addEventListener("input", (event) => {
+  if (ctx.tab === "guide") lesson.handleInput(event);
+  else if (ctx.tab === "settings" && event.target.getAttribute("data-act") === "volume") lesson.handleInput(event);
+});
 ref.inspBody.addEventListener("pointerover", (event) => ctx.tab === "guide" && lesson.handleHover(event));
 ref.inspBody.addEventListener("pointerout", (event) => ctx.tab === "guide" && lesson.handleLeave(event));
 ref.desk.addEventListener("input", () => lesson.interrupt("parámetro"), true);
@@ -514,6 +567,14 @@ function goBack() {
   wakeLoop();
 }
 
+let awakeTimer = null;
+const wakeControls = () => {
+  ref.stage.classList.add("awake");
+  clearTimeout(awakeTimer);
+  awakeTimer = setTimeout(() => ref.stage.classList.remove("awake"), 2500);
+};
+ref.stage.addEventListener("pointermove", wakeControls);
+ref.stage.addEventListener("pointerdown", wakeControls);
 const pointers = new Map();
 let drag = null;
 let pinch = null;
@@ -532,7 +593,7 @@ ref.svg.addEventListener("pointerdown", (event) => {
     drag = null;
     return;
   }
-  drag = { x: event.clientX, y: event.clientY, az: engine.cam.azimuth, el: engine.cam.elevation, target: [...engine.cam.target], pan: event.shiftKey || event.button === 2, moved: false };
+  drag = { x: event.clientX, y: event.clientY, az: engine.cam.azimuth, el: engine.cam.elevation, target: [...engine.cam.target], pan: !(event.shiftKey || event.button === 2), moved: false };
 });
 ref.svg.addEventListener("pointermove", (event) => {
   if (pointers.has(event.pointerId)) pointers.set(event.pointerId, [event.clientX, event.clientY]);
@@ -609,12 +670,48 @@ function hit(event) {
   const obj = target.closest("[data-obj]");
   return { cell, obj, id: obj && obj.getAttribute("data-obj") };
 }
+const firstSentence = (html) => {
+  const text = String(html || "").replace(/<[^>]+>/g, "").trim();
+  const cut = text.search(/[.:;](\s|$)/);
+  const sentence = cut > 20 ? text.slice(0, cut + 1) : text;
+  return sentence.length > 150 ? `${sentence.slice(0, 147)}…` : sentence;
+};
+function unpick() {
+  engine.unlabel("pick");
+  ref.tip.classList.remove("pinned", "on");
+  for (const node of ref.svg.querySelectorAll("[data-sel]")) node.removeAttribute("data-sel");
+}
+ctx.unpick = unpick;
+function pickCard(title, text, { more = false } = {}) {
+  return `<span class="pick-card"><button class="x" data-pick="close" aria-label="Cerrar">×</button><b>${title}</b>${text ? `<em>${text}</em>` : ""}${more ? '<button class="link" data-pick="more">Detalles en el panel ›</button>' : ""}</span>`;
+}
+ref.labels.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-pick]");
+  if (!button) return;
+  if (button.getAttribute("data-pick") === "more") {
+    if (ref.inspector.hasAttribute("hidden")) toggleInspector(true);
+    selectTab("obj");
+  }
+  unpick();
+  director.apply();
+  wakeLoop();
+});
+ref.tip.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-pick]");
+  if (!button) return;
+  if (button.getAttribute("data-pick") === "more") {
+    if (ref.inspector.hasAttribute("hidden")) toggleInspector(true);
+    selectTab("obj");
+  }
+  unpick();
+  wakeLoop();
+});
 function click(event) {
   const { cell, id } = hit(event);
-  for (const node of ref.svg.querySelectorAll("[data-sel]")) node.removeAttribute("data-sel");
+  unpick();
   if (!id) {
     selection = null;
-    if (ctx.tab !== "guide") renderInspector(ctx, null);
+    if (ctx.tab === "obj") renderInspector(ctx, null);
     director.apply();
     wakeLoop();
     return;
@@ -625,15 +722,30 @@ function click(event) {
   ctx.focus([id, `${id}-front`, ...(entry.parent ? [entry.parent] : [])]);
   if (cell && entry.cell) {
     const [i, j] = cell.getAttribute("data-cell").split(",").map(Number);
-    selection = { id: target, cell: entry.cell(i, j), obj: id, i, j };
+    const info = entry.cell(i, j);
+    selection = { id: target, cell: info, obj: id, i, j };
     if (entry.onCell) entry.onCell(i, j, ctx);
-  } else selection = target;
+    if (info) {
+      const row = info.rows.find(([key]) => /\[i,j\]|salida|resultado/i.test(key)) || info.rows.find(([key]) => /operación/.test(key));
+      const owner = nameOf(id);
+      ref.tip.innerHTML = pickCard(`${owner ? `${esc(owner[0])} · ` : ""}${info.title}`, row ? `${row[0]}: ${row[1]}` : "", { more: true });
+      const box = ref.stage.getBoundingClientRect();
+      ref.tip.style.left = `${Math.max(8, Math.min(box.width - 300, event.clientX - box.left - 120))}px`;
+      ref.tip.style.top = `${Math.max(8, event.clientY - box.top - 96)}px`;
+      ref.tip.classList.add("on", "pinned");
+    }
+  } else {
+    selection = target;
+    const info = infoFor(ctx, target);
+    const named = nameOf(id) || (info ? [info.title, firstSentence(info.what)] : [id, ""]);
+    engine.label("pick", { obj: id, dz: 6, cls: "tag pick", html: pickCard(esc(named[0]), esc(named[1]), { more: !!info }) });
+  }
   lesson.interrupt("inspección");
-  if (ref.inspector.hasAttribute("hidden")) toggleInspector(true);
-  selectTab("obj");
+  if (ctx.tab === "obj") renderInspector(ctx, selection);
   wakeLoop();
 }
 function hover(event) {
+  if (ref.tip.classList.contains("pinned")) return;
   const { cell, id } = hit(event);
   const entry = id && engine.objects.get(id);
   if (cell && entry && entry.cell) {
@@ -651,34 +763,15 @@ function hover(event) {
   }
   ref.tip.classList.remove("on");
 }
-ref.svg.addEventListener("pointerleave", () => ref.tip.classList.remove("on"));
+ref.svg.addEventListener("pointerleave", () => ref.tip.classList.contains("pinned") || ref.tip.classList.remove("on"));
 ctx.inspectFromList = (id) => {
   selection = id;
   renderInspector(ctx, id);
 };
 
-const HELP = [
-  ["Intro", "acción principal: «Ver la operación» o «Continuar»"],
-  ["→ / ←", "avanzar a la fase siguiente / volver a la anterior, con sus parámetros"],
-  ["R", "repetir esta operación"],
-  ["Espacio", "reproducción automática / pausa"],
-  ["N", "mostrar u ocultar el narrador escrito"],
-  ["X", "silenciar o reactivar los sonidos al instante"],
-  ["[ / ]", "capítulo anterior / siguiente"],
-  ["Q / E", "girar la cámara (acimut entre 0° y 90°)"],
-  ["W / S", "inclinar la cámara (elevación entre 18° y 62°)"],
-  ["+ / −", "acercar / alejar"],
-  ["C", "volver a la cámara guiada"],
-  ["I", "mostrar u ocultar el panel lateral"],
-  ["M", "alternar Aprender / Explorar"],
-  ["Esc", "volver a la escala anterior"],
-  ["0", "reiniciar"],
-  ["Mayús + arrastrar", "desplazar la cámara"],
-];
 ref.help.addEventListener("click", () => {
-  selection = { help: HELP };
-  toggleInspector(true);
-  selectTab("obj");
+  if (ref.inspector.hasAttribute("hidden")) toggleInspector(true);
+  selectTab("settings");
 });
 window.addEventListener("keydown", (event) => {
   if (event.target.closest && event.target.closest("input, select, textarea")) return;
@@ -696,7 +789,8 @@ window.addEventListener("keydown", (event) => {
   else if (key === "ArrowRight") act(() => lesson.next());
   else if (key === "ArrowLeft") act(() => lesson.prev());
   else if (key === "r" || key === "R") act(() => lesson.repeat());
-  else if (key === "n" || key === "N") act(() => setNarrator(!lesson.L.narrator));
+  else if (key === "n" || key === "N") act(() => toggleInspector());
+  else if (key === "v" || key === "V") act(() => setWindows(![...beatScoped.panels.values()].some((node) => !node.classList.contains("min"))));
   else if (key === "x" || key === "X") act(() => sound.setMuted(!sound.prefs.muted));
   else if (key === "]") act(() => lesson.goToChapter(Math.min(9, lesson.step.beat.c + 1)));
   else if (key === "[") act(() => lesson.goToChapter(Math.max(0, lesson.step.beat.c - (lesson.step.index > lesson.steps.findIndex((s) => s.beat.c === lesson.step.beat.c) ? 0 : 1))));
@@ -709,8 +803,8 @@ window.addEventListener("keydown", (event) => {
   else if (key === "c" || key === "C") act(() => (director.guidedCamera(), lesson.applyLook()));
   else if (key === "i" || key === "I") act(() => toggleInspector());
   else if (key === "m" || key === "M") act(() => setMode(director.S.mode === "tour" ? "free" : "tour"));
-  else if (key === "Escape") act(() => goBack());
-  else if (key === "0") act(() => ref.reset.click());
+  else if (key === "Escape") act(() => (engine.labels.has("pick") || ref.tip.classList.contains("pinned") || !ref.chapterList.hidden ? (unpick(), openChapters(false), director.apply()) : goBack()));
+  else if (key === "0") act(() => resetLesson());
   else if (key === "?" || key === "h" || key === "H") act(() => ref.help.click());
 });
 

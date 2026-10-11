@@ -12,9 +12,19 @@ pensamiento de modelos reales.
 
 ## Abrir
 
-Abrir `rsi-lab.html` en un navegador (doble clic). Es un único archivo de unos 633 KB: no necesita
+Abrir `rsi-lab.html` en un navegador (doble clic). Es un único archivo de unos 650 KB: no necesita
 servidor, red ni credenciales. Abre en el modo **Aprender paso a paso**, con la pestaña **Guía**
-del panel lateral a la vista. «Explorar» libera la cámara y los controles.
+del panel lateral a la vista.
+
+La pantalla tiene pocos controles a la vista:
+
+- **Arriba**: el título, un menú con los 10 capítulos, «Panel» y «?».
+- **Abajo**: ◀, ▶ (reproducción automática), ▶| (siguiente) y la línea de tiempo.
+- **Sobre la escena**: la columna «¿Qué cambió?» a la izquierda y, si el paso la usa, una ventana
+  de datos con su botón ×. Los botones de cámara y escala aparecen sólo al mover el ratón sobre la
+  escena.
+
+Sonido, velocidades, modo Explorar, reinicio y atajos están en la pestaña **Ajustes** del panel.
 
 Reconstruir la página después de cambiar las fuentes (Node 20 o posterior, sin dependencias):
 
@@ -61,57 +71,74 @@ fases:
 
 En la Guía:
 
-- «Repetir esta operación» la vuelve a animar con su sonido.
-- «Explicámelo más simple» da una explicación propia de cada concepto, no una plantilla.
-- «Ver un ejemplo» muestra números pequeños con su procedencia.
+- «↻ Repetir» vuelve a animar la operación con su sonido.
+- «Más simple» da una explicación propia de cada concepto, no una plantilla.
+- «Un ejemplo» muestra números pequeños con su procedencia.
+- Cada explicación desplegada se cierra con su ×.
 - Cada término con subrayado punteado abre el glosario (82 entradas: definición, ejemplo y dónde
   está en la escena).
 - Cada nombre de objeto marcado con ◉ lo señala en la escena.
 - Debajo queda el historial de texto del capítulo.
 
-Cuando se activa ▶, cada fase espera su tiempo de lectura antes de pasar a la siguiente.
-Inspeccionar una celda o un módulo, cambiar un parámetro, girar la cámara o abrir una explicación
+Cuando se activa ▶, cada fase espera su tiempo de lectura antes de pasar a la siguiente. Mientras
+tanto el reloj avanza y una barra bajo el texto muestra cuánto falta. Con el panel oculto no hay
+nada que leer, así que cada fase espera sólo 2,5 s.
+
+Inspeccionar una celda o un módulo, cambiar un parámetro, mover la cámara o abrir una explicación
 pausa la lección sin perder el punto. Al continuar, el texto se recalcula con los valores nuevos.
 
 La pestaña Guía mide 400 px (340 px entre 760 y 1100 px), con texto de 17,5 px (17 px en
 pantallas medianas y estrechas). En pantallas estrechas la lectura pasa a una sección debajo de la
-escena. En Aprender se ocultan las huellas,
-las comprobaciones y los detalles del renderer: siguen en las pestañas Verificación y Notación.
-El narrador escrito se oculta y se vuelve a mostrar con la tecla **N** o con su botón.
+escena. En Aprender se ocultan las huellas, las comprobaciones y los detalles del renderer: siguen
+en la pestaña Referencias. El narrador escrito es la Guía del panel: **N** (o «Panel») lo oculta y
+lo vuelve a mostrar.
+
+### Ventanas de datos
+
+Las fórmulas, registros y tablas de cada paso aparecen en ventanas sobre la escena:
+
+- **×** las pliega a una pestaña con su título, y un clic en el título las vuelve a abrir;
+- la ventana cerrada sigue cerrada en los pasos siguientes;
+- **V** pliega o despliega todas;
+- en Ajustes se puede pedir que no se abran solas.
+
+La mesa de control de cada escena empieza plegada.
 
 ## Controles
 
 | Tecla | Acción |
 |---|---|
-| Intro | acción principal: «Ver la operación» o «Continuar» |
-| → / ← | fase siguiente / fase anterior, con sus parámetros |
-| R | repetir esta operación |
 | Espacio | reproducción automática / pausa |
-| N | mostrar u ocultar el narrador escrito |
+| → o Intro | siguiente: «Ver la operación» o «Continuar» |
+| ← | fase anterior, con sus parámetros |
+| R | repetir esta operación |
+| N o I | mostrar u ocultar el panel (y con él el narrador) |
+| V | plegar o desplegar las ventanas de datos |
 | X | silenciar o reactivar los sonidos al instante |
 | [ / ] | capítulo anterior / siguiente |
-| Q / E, W / S | girar / inclinar la cámara |
 | + / − | acercar / alejar |
+| Q / E, W / S | girar / inclinar la cámara |
 | C | volver a la cámara guiada |
-| I | mostrar u ocultar el panel lateral |
 | M | alternar Aprender / Explorar |
-| Esc | volver a la escala anterior |
+| Esc | cerrar el rótulo o volver a la escala anterior |
 | 0 | reiniciar |
 
 Con el ratón:
 
-- arrastrar gira la cámara; Mayús + arrastrar o el botón derecho la desplaza; la rueda acerca;
-- un clic en un módulo, una matriz o una celda abre su ficha: función, entradas y salidas
-  recorribles, operandos y procedencia de cada número.
+- arrastrar mueve la vista, sin tope; la rueda acerca y aleja;
+- el botón derecho (o Mayús) + arrastrar gira la cámara, entre 0° y 90° de acimut;
+- un clic en un módulo, una matriz o una celda muestra encima su nombre y qué hace (o el valor de
+  la celda). «Detalles en el panel» abre la ficha completa: entradas y salidas recorribles,
+  operandos y procedencia de cada número. Esc o × cierra el rótulo.
 
-El selector «animación» sólo cambia la velocidad de los movimientos. «ppm» cambia el tiempo de
+En Ajustes, «animación» sólo cambia la velocidad de los movimientos y «lectura» cambia el tiempo de
 lectura en la reproducción automática. Con «reducir movimiento» del sistema, cada operación salta a
 su resultado sin interpolar.
 
 ## Sonido
 
-Los sonidos están apagados al abrir. «Activar sonidos» crea el `AudioContext` de Web Audio desde
-ese clic. Hay control de volumen y silencio inmediato (X), y las preferencias se recuerdan en el
+Los sonidos están apagados al abrir. «Activar sonidos», en Ajustes, crea el `AudioContext` de Web
+Audio desde ese clic. Hay control de volumen y silencio inmediato (X), y las preferencias se recuerdan en el
 navegador. No hay música ni voz.
 
 Cada operación visible emite **un** sonido por señal. Se descartan las repeticiones a menos de
@@ -166,7 +193,7 @@ escucha corresponde siempre al mismo evento.
 Cada panel y cada ejemplo lleva una etiqueta:
 
 - **resultado calculado**: se calcula en la página con código de `model/` y se comprueba en
-  `verify.mjs` o en la pestaña Verificación del inspector.
+  `verify.mjs` o con «Verificación en vivo», en la pestaña Referencias.
 - **resultado citado**: cifras de artículos (capítulo 9), con fuente, fecha, tipo de evidencia y
   límites.
 - **ejemplo ilustrativo**: vocabulario inventado, propuestas guionadas, analogías.
@@ -182,7 +209,7 @@ rsi-lab/
 ├── build.mjs            empaquetador mínimo de módulos ES → un solo HTML
 ├── verify.mjs           69 comprobaciones en Node (modelos, presupuesto, ruta de datos, guion)
 ├── qa.mjs               capturas de los 135 pasos (orientación y resultado) y errores de consola
-├── qa-interact.mjs      33 comprobaciones de interacción (Playwright)
+├── qa-interact.mjs      50 comprobaciones de interacción (Playwright)
 ├── qa-audio.mjs         16 comprobaciones de señales de audio y disciplina de eventos (17 con --reduced)
 ├── model/               modelos puros, sin DOM: se ejecutan igual en Node y en el navegador
 │   ├── rng.mjs          mulberry32, normal de Irwin–Hall, huella FNV-1a
@@ -199,6 +226,7 @@ rsi-lab/
 └── view/
     ├── engine.mjs       motor SVG isométrico: cámara, orden de pintado jerárquico, etiquetas
     ├── director.mjs     capítulos → escenas → eventos, cámara guiada, animación hasta un evento
+    ├── names.mjs        nombre y descripción breve de cada objeto que se puede tocar
     ├── lesson.mjs       modo Aprender: pasos, fases, lectura automática, historial, Guía
     ├── bus.mjs          fuente única de eventos semánticos
     ├── sound.mjs        paleta Web Audio, preferencias, límites de superposición
@@ -396,10 +424,17 @@ renderizado por software). Las comprobaciones son de tres tipos:
 
 **Comprobaciones en el navegador**
 
-- Pestaña Verificación del inspector: 14 comprobaciones recalculadas en el navegador. Incluyen la
+- «Verificación en vivo» (pestaña Referencias): 14 comprobaciones recalculadas en el navegador. Incluyen la
   ruta real (`runLoop` con observador de `runTask`). Todas son correctas.
-- `node examples/rsi-lab/qa-interact.mjs`: **33/33** (31/31 con `--reduced`, donde no hay
+- `node examples/rsi-lab/qa-interact.mjs`: **50/50** (48/48 con `--reduced`, donde no hay
   animación que congelar). Cubre:
+  - interfaz mínima: tres botones arriba, tres abajo y ninguna leyenda fija sobre la escena;
+  - ▶ hace avanzar el reloj y la barra de lectura enseguida; con el panel oculto no espera la
+    lectura;
+  - × pliega una ventana de datos y la deja plegada en el paso siguiente; V pliega todas;
+  - el clic en un módulo o una celda muestra su rótulo encima, sin cambiar de pestaña;
+  - arrastrar desplaza sin tope, también con zoom y el panel abierto; botón derecho gira;
+  - menú de capítulos y pestaña Ajustes (sonido, ritmo, ventanas, reinicio, atajos);
   - fases orientación → operación → resultado, ← y → con sus parámetros;
   - abrir el glosario a mitad de una operación la congela, y «Seguir la operación» la completa;
   - «Repetir» que vuelve a emitir sus eventos una vez;
@@ -407,7 +442,7 @@ renderizado por software). Las comprobaciones son de tres tipos:
   - reproducción automática con espera mínima de lectura, y pausa que congela el punto;
   - inspección de celdas y módulos que pausa, y verificación en vivo;
   - cámara y «Volver a la explicación»;
-  - N que oculta y muestra el narrador;
+  - N que oculta y muestra el panel con el narrador;
   - texto recalculado al cambiar la cabeza, un token o η;
   - reinicio, y sin desplazamiento horizontal.
 - `node examples/rsi-lab/qa-audio.mjs`: **16/16** (17/17 con `--reduced`). Renderiza cada familia

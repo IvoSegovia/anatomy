@@ -125,6 +125,7 @@
   --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink-2);font:13px/1.5 var(--sans);-webkit-font-smoothing:antialiased;overflow:hidden}
 button,select,input{font:inherit;color:inherit}
@@ -136,13 +137,19 @@ button{cursor:pointer}
 .top{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 14px;border-bottom:1px solid var(--line);background:var(--panel);min-width:0}
 .brand{color:var(--ink);font-weight:600;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
 .brand small{color:var(--ink-3);font-weight:400;margin-left:8px}
-.chapters{display:flex;gap:3px;margin-left:auto;flex:none}
-.chapters button{width:26px;height:24px;border:1px solid var(--line-2);background:transparent;border-radius:4px;color:var(--ink-3);font:11px var(--mono)}
-.chapters button[aria-current="true"]{border-color:var(--c-in);color:var(--ink);background:#47c9dd14}
-.chapters button.done{color:var(--ink-2)}
-.mode{display:flex;border:1px solid var(--line-2);border-radius:5px;overflow:hidden;flex:none}
-.mode button{border:0;background:transparent;padding:3px 10px;color:var(--ink-3);font-size:12px}
-.mode button[aria-pressed="true"]{background:var(--panel-2);color:var(--ink)}
+.top .spacer{flex:1}
+.chapter-menu{position:relative;flex:0 1 auto;min-width:0}
+.chapter-btn{display:flex;align-items:center;gap:8px;max-width:100%;border:1px solid var(--line-2);background:transparent;border-radius:6px;height:28px;padding:0 10px 0 4px;color:var(--ink-2);font-size:12.5px;min-width:0}
+.chapter-btn:hover{border-color:var(--ink-4);color:var(--ink)}
+.chapter-btn .n,.chapter-list .n{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:4px;background:var(--panel-2);font:11px var(--mono);color:var(--ink);flex:none}
+.chapter-btn .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.chapter-btn .caret{color:var(--ink-3);font-size:10px}
+.chapter-list{position:absolute;left:0;top:34px;z-index:20;list-style:none;margin:0;padding:6px;min-width:320px;background:var(--panel);border:1px solid var(--line-2);border-radius:8px;box-shadow:0 14px 40px #000c}
+.chapter-list button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;padding:6px 8px;border-radius:5px;color:var(--ink-2);font-size:13px;text-align:left}
+.chapter-list button:hover,.chapter-list button:focus-visible{background:var(--panel-2);color:var(--ink)}
+.chapter-list button[aria-current="true"]{color:var(--ink)}
+.chapter-list button[aria-current="true"] .n{background:#47c9dd33}
+.chapter-list button.done .n{color:var(--ink-3)}
 .icon-btn{border:1px solid var(--line-2);background:transparent;border-radius:5px;height:26px;min-width:26px;padding:0 8px;color:var(--ink-2);font-size:12px;display:inline-flex;align-items:center;justify-content:center;gap:5px}
 .icon-btn:hover{border-color:var(--ink-4);color:var(--ink)}
 .icon-btn[aria-pressed="true"]{border-color:var(--c-in);color:var(--ink)}
@@ -241,41 +248,55 @@ button{cursor:pointer}
 
 .hud{position:absolute;pointer-events:none;z-index:3}
 .hud *{pointer-events:auto}
-.changed{left:12px;top:10px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;max-width:calc(100% - 320px)}
-.changed .h{font:10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-right:4px}
+.rail{left:10px;top:12px;display:flex;flex-direction:column;gap:10px}
+.changed{display:flex;flex-direction:column;gap:2px;align-items:stretch}
+.changed .h{font:9.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-4);margin-bottom:3px}
 .chip{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px;border-radius:11px;border:1px solid var(--line-2);background:#0e0f12d9;font:11px var(--sans);color:var(--ink-3)}
-.chip i{width:7px;height:7px;border-radius:50%;background:var(--c-off);font-style:normal}
+.changed .chip{height:17px;padding:0;border:0;background:transparent;border-radius:0;font-size:10.5px;gap:6px}
+.changed .chip b{font-weight:400;min-width:84px}
+.changed .chip em{font-size:9.5px;color:var(--ink-4)}
+.chip i{width:7px;height:7px;border-radius:50%;background:var(--c-off);font-style:normal;flex:none}
 .chip[data-s="cambió"]{color:#ffd6ad;border-color:#ff9b3f88}
+.changed .chip[data-s="cambió"] em{color:#ffb877}
+.changed .chip[data-s="activo"] em{color:#8fdbe8}
 .chip[data-s="cambió"] i{background:var(--c-g);box-shadow:0 0 6px var(--c-g)}
 .chip[data-s="activo"]{color:#bfeef5;border-color:#47c9dd66}
 .chip[data-s="activo"] i{background:var(--c-in)}
 .chip b{font-weight:500;color:inherit}
 .chip em{font-style:normal;color:var(--ink-4);font-size:10px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.theta{left:12px;top:calc(14px + var(--chips-h,26px));font:11px var(--mono);color:var(--ink-3);display:flex;gap:8px;align-items:center}
-.theta .print{color:var(--ink-2);border:1px solid var(--line-2);padding:1px 6px;border-radius:3px}
+.theta{font:10px var(--mono);color:var(--ink-4);display:flex;flex-direction:column;gap:2px;max-width:140px}
+.theta .h{letter-spacing:.06em;text-transform:uppercase;font-size:9.5px}
+.theta .print{color:var(--ink-2);border:1px solid var(--line-2);padding:0 5px;border-radius:3px;align-self:flex-start}
+.theta .note{font-size:9.5px;line-height:1.3}
 .theta .print.flash{border-color:var(--c-g);color:#ffd6ad}
-.scalemap{right:12px;top:10px;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.scalemap{right:10px;bottom:10px;display:flex;align-items:center;gap:6px}
+.scalemap .icon-btn{height:24px;min-width:24px;padding:0 6px;background:#0e0f12d9}
+.autohide{opacity:0;transition:opacity .25s;pointer-events:none}
+.autohide *{pointer-events:none}
+.stage.awake .autohide,.autohide:focus-within,.explore .autohide{opacity:1;pointer-events:auto}
+.stage.awake .autohide *,.autohide:focus-within *,.explore .autohide *{pointer-events:auto}
 .scales{display:flex;align-items:center;border:1px solid var(--line-2);border-radius:6px;background:#0e0f12d9;overflow:hidden}
-.scales button{border:0;background:transparent;padding:4px 9px;font:11px var(--sans);color:var(--ink-3)}
+.scales button{border:0;background:transparent;padding:3px 8px;font:11px var(--sans);color:var(--ink-3)}
 .scales button[aria-current="true"]{color:var(--ink);background:var(--panel-2)}
 .scales .sep{color:var(--ink-4);font-size:10px}
 .camtools{display:flex;gap:4px}
-.disclaimer{right:12px;top:108px;font:10.5px/1.35 var(--sans);color:var(--ink-4);max-width:240px;text-align:right}
-.caption{left:50%;bottom:12px;transform:translateX(-50%);width:min(720px,calc(100% - 48px));text-align:center}
-.stage.has-desk .caption{left:332px;right:16px;width:auto;transform:none}
-.stage.has-desk.desk-min .caption{left:50%;right:auto;width:min(720px,calc(100% - 48px));transform:translateX(-50%)}
-.caption .step{font:10px var(--mono);letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase}
-.caption .txt{margin-top:3px;color:var(--ink);font-size:14px;line-height:1.45;text-shadow:0 1px 8px #000}
-.caption .txt b{color:#fff;font-weight:600}
-.back-tour{display:none;margin-top:6px}
+.caption{left:50%;bottom:52px;transform:translateX(-50%);width:min(560px,calc(100% - 48px));text-align:center}
+.caption .txt{color:var(--ink);font-size:14px;line-height:1.45;text-shadow:0 1px 8px #000}
+.caption .txt:empty{display:none}
+.back-tour{display:none;left:50%;bottom:12px;transform:translateX(-50%);padding:5px 12px;font-size:12.5px}
 .back-tour.on{display:inline-flex}
 
-.desk{left:12px;bottom:12px;width:306px;max-height:calc(100% - 200px);overflow:auto;background:#0e0f12eb;border:1px solid var(--line-2);border-radius:8px;padding:10px 12px;display:none}
+.desk{left:10px;bottom:10px;width:300px;max-height:calc(100% - 200px);overflow:auto;background:#0e0f12eb;border:1px solid var(--line-2);border-radius:8px;padding:8px 10px;display:none}
 .desk.on{display:block}
-.desk h3{margin:0 0 6px;font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;gap:8px}
-.desk h3 button{border:0;background:transparent;color:var(--ink-3);font:11px var(--mono);padding:0 2px}
-.desk.min>*:not(h3){display:none}
-.desk.min{width:auto}
+.desk h3{margin:0;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.desk-body{margin-top:6px}
+.desk.min .desk-body,.desk.min h3 .x{display:none}
+.desk.min{width:auto;padding:4px 8px}
+.pl-toggle{display:inline-flex;align-items:center;gap:6px;border:0;background:transparent;padding:0;font:600 10.5px var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);text-align:left;min-width:0}
+.pl-toggle:hover{color:var(--ink)}
+.pl-arrow{font-size:10px;color:var(--ink-4)}
+.x{border:0;background:transparent;color:var(--ink-3);font-size:16px;line-height:1;padding:0 2px;margin-left:auto;flex:none}
+.x:hover{color:var(--ink)}
 .desk .row{display:flex;align-items:center;gap:8px;margin:6px 0;flex-wrap:wrap}
 .desk label{font-size:12px;color:var(--ink-2)}
 .desk input[type=range]{flex:1;min-width:110px;accent-color:var(--c-g)}
@@ -288,9 +309,16 @@ button{cursor:pointer}
 .btn:hover{border-color:var(--ink-4)}
 .btn.warn{border-color:#ff9b3f88}
 
-.plane{position:absolute;z-index:2;background:#0d0e11ee;border:1px solid var(--line-2);border-radius:8px;padding:10px 12px;color:var(--ink-2);font-size:12.5px;max-width:420px;display:none;box-shadow:0 10px 30px #0008;overflow:auto;scrollbar-width:thin}
+.plane{position:absolute;z-index:2;background:#0d0e11e6;border:1px solid var(--line-2);border-radius:8px;padding:8px 10px;color:var(--ink-2);font-size:12.5px;max-width:420px;display:none;box-shadow:0 8px 24px #0006;overflow:auto;scrollbar-width:thin}
 .plane.on{display:block}
-.plane h4{margin:0 0 6px;font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);display:flex;gap:8px;align-items:center;justify-content:space-between}
+.plane h4{margin:0 0 6px;font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);display:flex;gap:8px;align-items:center}
+.plane h4 .prov{margin-left:auto}
+.plane h4 .prov+.x{margin-left:0}
+.plane.min{width:auto!important;max-width:280px;padding:4px 8px;overflow:hidden}
+.plane.min .pl-body,.plane.min h4 .prov,.plane.min h4 .x{display:none}
+.plane.min h4{margin:0}
+.plane.min .pl-arrow{transform:rotate(-90deg)}
+.plane.min .pl-toggle span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .plane h4.sub{margin-top:10px;padding-top:8px;border-top:1px solid var(--line)}
 .formula{font:15px/1.6 "Cambria Math","STIX Two Math","Latin Modern Math",Georgia,serif;color:var(--ink);white-space:nowrap}
 .formula .t{padding:0 2px;border-radius:3px;transition:background .3s,color .3s}
@@ -326,6 +354,16 @@ pre.code .hl{background:#ffffff12;display:block;color:var(--ink)}
 .legend{display:flex;gap:12px;flex-wrap:wrap;font:11px var(--sans);color:var(--ink-3);margin-top:4px}
 .legend i{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:5px;background:currentColor}
 
+.tip.pinned{pointer-events:auto;padding:0;border:0;background:transparent;box-shadow:none;max-width:300px}
+.labels .lbl.pick{z-index:4}
+.lbl.pick>span{padding:0;border:0;background:transparent}
+.pick-card{display:flex!important;flex-direction:column;gap:3px;position:relative;width:max-content;max-width:260px;white-space:normal;pointer-events:auto;padding:8px 26px 8px 10px!important;border:1px solid #47c9dd88!important;border-radius:7px;background:#0b0c0ff2!important;box-shadow:0 8px 24px #000a;font:12px/1.4 var(--sans);color:var(--ink-2);text-align:left}
+.pick-card b{font-weight:600;color:var(--ink);font-size:12.5px}
+.pick-card em{font-style:normal}
+.pick-card .x{position:absolute;right:6px;top:5px;font-size:14px}
+.pick-card .link{align-self:flex-start;margin-top:2px}
+.link{border:0;background:transparent;padding:0;color:#9fdbe6;font-size:12.5px;border-bottom:1px solid #9fdbe644}
+.link:hover,.link[aria-pressed="true"]{color:#e8f9ff;border-bottom-color:#9fdbe6}
 .tip{position:absolute;z-index:6;pointer-events:none;background:#0b0c0ff2;border:1px solid var(--line-2);border-radius:6px;padding:8px 10px;font:11.5px/1.45 var(--mono);color:var(--ink-2);max-width:340px;display:none;box-shadow:0 8px 24px #000a}
 .tip.on{display:block}
 .tip .tt{font:600 11px var(--mono);color:var(--ink);margin-bottom:3px}
@@ -368,47 +406,40 @@ details summary{cursor:pointer;color:var(--ink-2);font-size:12px}
 .timeline .num{position:absolute;top:-1px;font:9.5px var(--mono);color:var(--ink-4);transform:translateX(3px)}
 .timeline .head{position:absolute;top:8px;width:2px;height:14px;background:#fff;border-radius:1px}
 .clock{font:11px var(--mono);color:var(--ink-3);white-space:nowrap;min-width:92px;text-align:right}
-.speed select{background:var(--panel-2);border:1px solid var(--line-2);border-radius:5px;padding:2px 4px;font-size:12px}
-.speed label{font-size:11px;color:var(--ink-3)}
+.transport .next{font-size:11px}
 
-@media (max-width:1100px){.inspector{width:340px}.guide .g-text{font-size:17px}}
+@media (max-width:1100px){.inspector{width:340px}.guide .g-text{font-size:17px}.chapter-btn .t{max-width:220px}}
 @media (max-width:760px){
   #app{grid-template-rows:auto 1fr auto}
   .top{flex-wrap:wrap;height:auto;padding:6px 8px;gap:6px}
   .brand small{display:none}
-  .chapters{margin-left:0;overflow:auto;max-width:100%}
-  .chapters button{width:24px}
-  .changed{left:8px;right:8px;top:6px;max-width:none;gap:3px}
+  .chapter-menu{flex:1 1 auto}
+  .chapter-list{min-width:0;width:calc(100vw - 16px)}
+  .rail{left:6px;top:6px}
   .changed .h{display:none}
-  .chip{height:19px;padding:0 6px;font-size:10px}
-  .chip em{display:none}
-  .theta{left:8px;top:calc(10px + var(--chips-h,44px));font-size:10px;gap:5px}
-  .theta>span:last-child,.theta>span:first-child{display:none}
-  .disclaimer{display:block;left:8px;right:auto;top:72px;text-align:left;max-width:60%;font-size:9.5px}
-  .disclaimer .long{display:none}
-  .disclaimer .short{display:inline}
-  .scalemap{top:54px;right:8px;bottom:auto;gap:4px}
-  .scalemap .camtools .icon-btn:not(:last-child){display:none}
+  .changed .chip{height:14px;font-size:9.5px}
+  .changed .chip b{min-width:72px}
+  .changed .chip[data-s="fijo"]{display:none}
+  .rail{padding:4px 7px}
+  .theta .note{display:none}
+  .scalemap{right:6px;bottom:6px;gap:4px}
+  .scalemap .camtools .icon-btn:nth-child(-n+2){display:none}
   .scales button{padding:3px 6px;font-size:10.5px}
-  .backscale{display:none}
-  .caption,.stage.has-desk .caption,.stage.has-desk.desk-min .caption{left:8px;right:8px;bottom:8px;top:auto;width:auto;transform:none;text-align:left;background:#0b0c0fe6;border:1px solid var(--line-2);border-radius:8px;padding:6px 9px}
-  .caption .txt{font-size:12.5px;text-shadow:none}
-  .planes{position:absolute;left:8px;right:8px;bottom:var(--cap-h,86px);max-height:30%;overflow:auto;display:flex;flex-direction:column;gap:6px;z-index:2}
+  .caption{left:8px;right:8px;bottom:40px;width:auto;transform:none;text-align:left}
+  .caption .txt{font-size:12.5px}
+  .planes{position:absolute;left:8px;right:8px;bottom:8px;max-height:45%;overflow:auto;display:flex;flex-direction:column;align-items:flex-start;gap:6px;z-index:2}
   .plane{position:relative!important;left:auto!important;right:auto!important;top:auto!important;transform:none!important;width:auto!important;max-width:none;box-shadow:none;font-size:11.5px}
   .formula{font-size:13px;white-space:normal}
-  .desk{left:auto;right:8px;top:98px;bottom:auto;width:min(320px,calc(100% - 16px));max-height:48%}
+  .desk{left:auto;right:8px;top:6px;bottom:auto;width:min(320px,calc(100% - 16px));max-height:48%}
   .desk.min{width:auto}
   .transport{flex-wrap:wrap;gap:6px;padding:6px 8px}
   .timeline{order:-1;flex:1 1 100%}
   .clock{min-width:0}
-  .speed label{display:none}
   #app{grid-template-rows:auto minmax(220px,40vh) minmax(0,1fr) auto;grid-template-columns:minmax(0,1fr)}
   .brand{display:none}
   .top .icon-btn{height:24px;padding:0 6px;font-size:11px}
-  .mode button{padding:2px 7px;font-size:11px}
-  .transport .speed label,.transport .clock{display:none}
+  .transport .clock{display:none}
   .transport .icon-btn{height:26px}
-  .transport .speed select{font-size:11px;padding:1px 2px}
   .guide .g-text.dim{font-size:13px}
   .insp-tabs button{padding:6px 2px;font-size:11.5px}
   .insp-body{padding:10px 12px 20px}
@@ -417,11 +448,8 @@ details summary{cursor:pointer;color:var(--ink-2);font-size:12px}
   .inspector[hidden]{display:none}
   .transport{grid-row:4}
   .guide .g-text{font-size:17px;line-height:1.55}
-  .learnbar{order:-2;flex:1 1 100%;justify-content:stretch}
-  .learnbar .btn{flex:1}
-  .opchip{top:auto;bottom:calc(var(--cap-h,70px) + 4px)}
+  .opchip{top:auto;bottom:40px}
 }
-.disclaimer .short{display:none}
 .glass{fill:#9fdbe60c;stroke:#9fdbe633;stroke-width:.6}
 
 .guide{padding-bottom:10px}
@@ -434,7 +462,11 @@ details summary{cursor:pointer;color:var(--ink-2);font-size:12px}
 .guide .phases{display:flex;gap:4px;list-style:none;padding:0;margin:10px 0 0}
 .guide .phases li{font:10.5px var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-4);border:1px solid var(--line-2);border-radius:10px;padding:2px 8px}
 .guide .phases li[aria-current]{color:var(--ink);border-color:var(--c-in);background:#47c9dd14}
-.guide .g-actions,.guide .g-help{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.guide .g-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.guide .g-help{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px}
+.g-wait{height:3px;margin-top:10px;background:#1c1e23;border-radius:2px;overflow:hidden}
+.g-wait i{display:block;height:100%;background:var(--c-in);opacity:.7}
+.g-box-h .x{font-size:15px}
 .btn.primary{background:#47c9dd1f;border-color:#47c9dd99;color:#e8f9ff;font-weight:500;padding:6px 12px;font-size:13.5px}
 .btn.primary:hover{background:#47c9dd33;border-color:var(--c-in)}
 .btn.ghost{background:transparent;color:var(--ink-2)}
@@ -463,22 +495,30 @@ details summary{cursor:pointer;color:var(--ink-2);font-size:12px}
 .snd-ctl input{accent-color:var(--c-in)}
 .auto-note{margin-top:10px}
 .guide.off p{font-size:14px}
-.opchip{left:50%;top:44px;transform:translateX(-50%);pointer-events:none;opacity:0;transition:opacity .2s}
+.opchip{left:50%;top:12px;transform:translateX(-50%);pointer-events:none;opacity:0;transition:opacity .2s}
 .opchip.on{opacity:1}
 .opchip span{display:inline-block;font:12px var(--sans);color:var(--ink);background:#0b0c0fe6;border:1px solid var(--line-2);border-radius:12px;padding:3px 10px}
-.narrator-off{right:12px;bottom:12px;display:none;font:11px var(--mono);color:var(--ink-3);background:#0b0c0fd9;border:1px solid var(--line-2);border-radius:5px;padding:3px 8px}
-.no-narrator .narrator-off{display:block}
-.no-narrator .caption{display:none}
-.caption.empty .txt{display:none}
+.settings h3{margin-top:18px}
+.set-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0}
+.set-inline{display:inline-flex;gap:6px;align-items:center;font-size:12.5px;color:var(--ink-2)}
+.set-inline select{background:var(--panel-2);border:1px solid var(--line-2);border-radius:5px;padding:2px 4px;font-size:12px}
+.set-inline input[type=range]{accent-color:var(--c-in);width:110px}
+.set-check{display:flex;gap:8px;align-items:flex-start;margin:8px 0;font-size:13px;color:var(--ink-2);line-height:1.4}
+.set-check input{margin-top:3px;accent-color:var(--c-in)}
 .lbl.spot>span{border-color:var(--c-in);color:#e8f9ff;background:#0b0c0fee;font-size:12px}
 @keyframes objflash{0%{filter:drop-shadow(0 0 0 #47c9dd00)}30%{filter:drop-shadow(0 0 6px #47c9ddcc)}100%{filter:drop-shadow(0 0 0 #47c9dd00)}}
 [data-obj].flash{animation:objflash .7s ease-out}
 @media (prefers-reduced-motion:reduce){[data-obj].flash{animation:none;outline:1px solid var(--c-in)}}
 #app:not(.explore):not(.show-theta) .theta{display:none}
-.learnbar .btn{white-space:nowrap}
-.speed label{margin-left:4px}
 .tbl.rep td,.tbl.rep th{font-size:10.5px;padding:1px 4px;vertical-align:top}
 .tbl.rep tr.on td{background:#4fd38312;color:var(--ink)}
+.rail{background:#0b0c0fb8;border:1px solid var(--line);border-radius:8px;padding:7px 9px}
+.plane h4{flex-wrap:wrap;padding-right:18px;row-gap:3px}
+.plane h4 .x{position:absolute;right:6px;top:6px}
+.plane h4 .prov{margin-left:0;font-size:9.5px}
+.plane.min h4{padding-right:0}
+.opchip,.opchip *,.caption,.caption *{pointer-events:none!important}
+.back-tour.on{pointer-events:auto;z-index:5}
 </style>
 </head>
 <body class="iso" data-theme="dark">
@@ -1521,31 +1561,30 @@ function buildShell(app, chapters) {
   const ref = {};
   ref.top = el("header", { class: "top" });
   ref.brand = el("div", { class: "brand", html: "Anatomía de la automejora recursiva<small>del Transformer al sistema que mejora cómo se mejora</small>" });
-  ref.mode = el("div", { class: "mode", role: "group", "aria-label": "Modo" });
-  ref.modeTour = el("button", { "aria-pressed": "true", title: "Aprender paso a paso: cámara guiada y avance con «Ver la operación» y «Continuar»" }, "Aprender");
-  ref.modeFree = el("button", { "aria-pressed": "false", title: "Explorar: cámara libre; la explicación queda en el paso actual (M)" }, "Explorar");
-  ref.mode.append(ref.modeTour, ref.modeFree);
-  ref.chapters = el("nav", { class: "chapters", "aria-label": "Capítulos" });
+  ref.chapterMenu = el("div", { class: "chapter-menu" });
+  ref.chapterBtn = el("button", { class: "chapter-btn", "aria-haspopup": "true", "aria-expanded": "false", title: "Elegir capítulo ([ y ])" });
+  ref.chapterList = el("ol", { class: "chapter-list", hidden: true, role: "menu", "aria-label": "Capítulos" });
   ref.chapterButtons = chapters.map((chapter, index) => {
-    const button = el("button", { title: `${index + 1}. ${chapter.title}`, "aria-label": `Capítulo ${index + 1}: ${chapter.title}` }, String(index + 1));
-    ref.chapters.append(button);
+    const button = el("button", { role: "menuitem", "data-chapter": index }, el("span", { class: "n" }, String(index + 1)), el("span", {}, chapter.title));
+    ref.chapterList.append(el("li", {}, button));
     return button;
   });
-  ref.narratorBtn = el("button", { class: "icon-btn", title: "Mostrar u ocultar el narrador escrito (N)", "aria-pressed": "true" }, "Narrador");
-  ref.soundBtn = el("button", { class: "icon-btn sound-btn", title: "Activar sonidos: cada familia de operaciones tiene una señal propia (X silencia)", "aria-pressed": "false" }, "Activar sonidos");
-  ref.inspectorToggle = el("button", { class: "icon-btn", title: "Panel lateral (I)", "aria-pressed": "true", "aria-controls": "inspector" }, "Panel");
-  ref.help = el("button", { class: "icon-btn", title: "Atajos de teclado (?)" }, "?");
-  ref.top.append(ref.brand, ref.chapters, ref.mode, ref.narratorBtn, ref.soundBtn, ref.inspectorToggle, ref.help);
+  ref.chapterMenu.append(ref.chapterBtn, ref.chapterList);
+  ref.inspectorToggle = el("button", { class: "icon-btn", title: "Mostrar u ocultar el panel con la explicación (N o I)", "aria-pressed": "true", "aria-controls": "inspector" }, "Panel");
+  ref.help = el("button", { class: "icon-btn", title: "Ajustes y atajos de teclado (?)", "aria-label": "Ajustes y atajos" }, "?");
+  ref.top.append(ref.brand, ref.chapterMenu, el("div", { class: "spacer" }), ref.inspectorToggle, ref.help);
 
   ref.stage = el("section", { class: "stage", "aria-label": "Escena del laboratorio", tabindex: "0" });
   ref.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   ref.svg.setAttribute("class", "scene iso-svg");
   ref.svg.setAttribute("role", "img");
   ref.svg.setAttribute("aria-label", "Laboratorio computacional isométrico: modelo, contexto, herramientas, código del agente, datos, entorno, evaluador y archivo de versiones, con los tres bucles de mejora.");
-  ref.labels = el("div", { class: "labels", "aria-hidden": "true" });
-  ref.changed = el("div", { class: "hud changed", role: "status", "aria-label": "¿Qué cambió?" });
-  ref.theta = el("div", { class: "hud theta" });
-  ref.scalemap = el("div", { class: "hud scalemap" });
+  ref.labels = el("div", { class: "labels" });
+  ref.rail = el("div", { class: "hud rail" });
+  ref.changed = el("div", { class: "changed", role: "status", "aria-label": "¿Qué cambió?" });
+  ref.theta = el("div", { class: "theta" });
+  ref.rail.append(ref.changed, ref.theta);
+  ref.scalemap = el("div", { class: "hud scalemap autohide" });
   ref.scales = el("div", { class: "scales", role: "group", "aria-label": "Escala" });
   ref.scaleButtons = {};
   [["lab", "Laboratorio"], ["model", "Modelo"], ["tensor", "Tensores"]].forEach(([key, name], index) => {
@@ -1554,32 +1593,29 @@ function buildShell(app, chapters) {
     ref.scaleButtons[key] = button;
     ref.scales.append(button);
   });
-  ref.backScale = el("button", { class: "icon-btn backscale", title: "Volver a la escala anterior (Esc)" }, "← volver");
+  ref.backScale = el("button", { class: "icon-btn backscale", title: "Volver a la escala anterior (Esc)", "aria-label": "Volver a la escala anterior" }, "←");
   ref.camtools = el("div", { class: "camtools" });
   ref.rotL = el("button", { class: "icon-btn", title: "Girar a la izquierda (Q)", "aria-label": "Girar a la izquierda" }, "⟲");
   ref.rotR = el("button", { class: "icon-btn", title: "Girar a la derecha (E)", "aria-label": "Girar a la derecha" }, "⟳");
   ref.zoomOut = el("button", { class: "icon-btn", title: "Alejar (−)", "aria-label": "Alejar" }, "−");
   ref.zoomIn = el("button", { class: "icon-btn", title: "Acercar (+)", "aria-label": "Acercar" }, "+");
-  ref.camReset = el("button", { class: "icon-btn", title: "Restablecer cámara (R)" }, "⌂ cámara");
+  ref.camReset = el("button", { class: "icon-btn", title: "Volver a la cámara guiada (C)", "aria-label": "Volver a la cámara guiada" }, "⌂");
   ref.camtools.append(ref.rotL, ref.rotR, ref.zoomOut, ref.zoomIn, ref.camReset);
-  ref.scalemap.append(el("div", { style: "display:flex;gap:6px" }, ref.backScale, ref.scales), ref.camtools);
+  ref.scalemap.append(ref.backScale, ref.scales, ref.camtools);
   ref.caption = el("div", { class: "hud caption", "aria-live": "polite" });
-  ref.capStep = el("div", { class: "step" });
   ref.capText = el("div", { class: "txt" });
-  ref.backTour = el("button", { class: "btn back-tour" }, "Volver a la explicación");
-  ref.caption.append(ref.capStep, ref.capText, ref.backTour);
-  ref.desk = el("div", { class: "hud desk", role: "region", "aria-label": "Mesa de control de la escena" });
-  ref.narratorOff = el("div", { class: "hud narrator-off" }, "Narrador oculto · N para mostrarlo");
+  ref.caption.append(ref.capText);
+  ref.backTour = el("button", { class: "hud btn back-tour" }, "Volver a la explicación");
+  ref.desk = el("div", { class: "hud desk min", role: "region", "aria-label": "Mesa de control de la escena" });
   ref.opChip = el("div", { class: "hud opchip", "aria-hidden": "true" });
-  ref.disclaimer = el("div", { class: "hud disclaimer", html: '<span class="long">Representación conceptual: la posición de una matriz en la escena no es su ubicación física en una GPU.</span><span class="short">Representación conceptual (no es la disposición en una GPU)</span>' });
   ref.tip = el("div", { class: "tip", role: "tooltip" });
   ref.planes = el("div", { class: "planes" });
-  ref.stage.append(ref.svg, ref.labels, ref.planes, ref.changed, ref.theta, ref.scalemap, ref.caption, ref.desk, ref.disclaimer, ref.narratorOff, ref.opChip, ref.tip);
+  ref.stage.append(ref.svg, ref.labels, ref.planes, ref.rail, ref.scalemap, ref.caption, ref.backTour, ref.desk, ref.opChip, ref.tip);
 
-  ref.inspector = el("aside", { class: "inspector", id: "inspector", "aria-label": "Inspector" });
+  ref.inspector = el("aside", { class: "inspector", id: "inspector", "aria-label": "Panel lateral" });
   ref.tabs = el("div", { class: "insp-tabs", role: "tablist" });
   ref.tabButtons = {};
-  [["guide", "Guía"], ["obj", "Objeto"], ["notation", "Notación"], ["checks", "Verificación"], ["refs", "Fuentes"]].forEach(([key, name]) => {
+  [["guide", "Guía"], ["obj", "Objeto"], ["refs", "Referencias"], ["settings", "Ajustes"]].forEach(([key, name]) => {
     const button = el("button", { role: "tab", "aria-selected": key === "guide" ? "true" : "false", "data-tab": key }, name);
     ref.tabButtons[key] = button;
     ref.tabs.append(button);
@@ -1588,35 +1624,26 @@ function buildShell(app, chapters) {
   ref.inspector.append(ref.tabs, ref.inspBody);
 
   ref.transport = el("footer", { class: "transport", "aria-label": "Reproducción" });
-  ref.reset = el("button", { class: "icon-btn", title: "Reiniciar el recorrido (0)" }, "⟲ reiniciar");
   ref.prev = el("button", { class: "icon-btn", title: "Volver a la fase anterior, con sus parámetros (←)", "aria-label": "Volver a la fase anterior" }, "◀");
   ref.play = el("button", { class: "icon-btn play", title: "Reproducción automática (espacio)", "aria-label": "Reproducción automática" }, "▶");
-  ref.next = el("button", { class: "icon-btn", title: "Avanzar a la fase siguiente (→)", "aria-label": "Avanzar" }, "▶|");
-  ref.learnPrimary = el("button", { class: "btn primary learn-primary", title: "Acción principal (Intro)" }, "Ver la operación");
-  ref.learnRepeat = el("button", { class: "btn", title: "Repetir esta operación (R)" }, "Repetir");
-  ref.speed = el("div", { class: "grp speed" });
-  ref.speedSel = el("select", { "aria-label": "Velocidad de la animación (no cambia cálculos ni lectura)", title: "Velocidad de la animación: sólo cambia el ritmo gráfico; no cambia el presupuesto de cómputo, la tasa de aprendizaje ni el tiempo de lectura" });
-  for (const value of [0.5, 0.75, 1, 1.5, 2]) ref.speedSel.append(el("option", { value, selected: value === 1 }, `${value}×`));
-  ref.wpmSel = el("select", { "aria-label": "Ritmo de lectura de la reproducción automática", title: "Ritmo de lectura estimado para la reproducción automática (palabras por minuto)" });
-  for (const value of [110, 140, 170]) ref.wpmSel.append(el("option", { value, selected: value === 140 }, `${value} ppm`));
-  ref.speed.append(el("label", {}, "animación"), ref.speedSel, el("label", {}, "lectura"), ref.wpmSel);
+  ref.next = el("button", { class: "icon-btn next", title: "Siguiente (→ o Intro)", "aria-label": "Siguiente" }, "▶|");
   ref.timeline = el("div", { class: "timeline", role: "slider", tabindex: "0", "aria-label": "Línea de tiempo de la lección", "aria-valuemin": "0", "aria-valuemax": "100" });
   ref.clock = el("div", { class: "clock" });
-  ref.transport.append(el("div", { class: "grp" }, ref.reset, ref.prev, ref.play, ref.next), el("div", { class: "grp learnbar" }, ref.learnPrimary, ref.learnRepeat), ref.speed, ref.timeline, ref.clock);
+  ref.transport.append(el("div", { class: "grp" }, ref.prev, ref.play, ref.next), ref.timeline, ref.clock);
 
   ref.live = el("div", { class: "sr", "aria-live": "polite" });
   app.append(ref.top, ref.stage, ref.inspector, ref.transport, ref.live);
   return ref;
 }
 
-function renderChanged(ref, changed, fixedNote) {
+function renderChanged(ref, changed) {
   ref.changed.innerHTML = "";
   ref.changed.append(el("span", { class: "h" }, "¿Qué cambió?"));
   for (const [key, name] of CHANGE_KEYS) {
     const value = changed[key] || "fijo";
     const state = value === "fijo" ? "fijo" : value === "activo" ? "activo" : "cambió";
     const detail = typeof value === "string" && !["fijo", "activo", "cambió"].includes(value) ? value : state;
-    ref.changed.append(el("span", { class: "chip", "data-s": state, title: `${name}: ${detail}` }, el("i"), el("b", {}, name), el("em", {}, detail)));
+    ref.changed.append(el("span", { class: "chip", "data-s": state, title: `${name}: ${detail}` }, el("i"), el("b", {}, name), el("em", {}, state)));
   }
 }
 
@@ -7839,28 +7866,28 @@ function renderInspector(ctx, selection) {
     if (ctx.lesson) ctx.lesson.render();
     return;
   }
-  if (tab === "notation") {
-    body.innerHTML = `<h2>Notación</h2><p>Cada símbolo se define antes de usarse en la escena. Los colores codifican el papel de cada objeto y siempre van con etiqueta.</p>
-    <div class="io" style="grid-template-columns:auto 1fr">${["in", "w", "g", "ok", "bad", "off"].map((r) => `<dt><span class="chip" style="height:18px"><i style="background:var(--c-${r})"></i></span></dt><dd>${roleWord[r]}</dd>`).join("")}</div>
-    <h3>Símbolos</h3><dl class="io">${NOTATION.map(([a, b]) => `<dt class="kv">${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>
-    <h3>Procedencia de cada cifra</h3><p>${prov("local")} se calcula en esta página y se puede comprobar. ${prov("cita")} proviene de un artículo enlazado. ${prov("sim")} o ${prov("ilus")} resulta de reglas declaradas por esta demostración, no de un sistema real.</p>`;
-    return;
-  }
-  if (tab === "checks") {
-    body.innerHTML = `<h2>Verificación en vivo</h2><p>Comprobaciones ejecutadas ahora en tu navegador con el mismo código que mueve la escena.</p><p class="kv">calculando…</p>`;
-    setTimeout(() => {
-      const results = liveChecks(ctx.store);
-      body.innerHTML = `<h2>Verificación en vivo</h2><p>Comprobaciones ejecutadas ahora en tu navegador con el mismo código que mueve la escena. La batería completa está en <span class="kv">verify.mjs</span> y se ejecuta con Node.</p><ul class="checks">${results.map((r) => `<li class="${r.ok ? "" : "x"}">${esc(r.name)}${r.detail ? ` <span class="kv">(${esc(r.detail)})</span>` : ""}</li>`).join("")}</ul><p class="kv">${results.filter((r) => r.ok).length}/${results.length} correctas</p>`;
-    }, 30);
+  if (tab === "settings") {
+    if (ctx.renderSettings) ctx.renderSettings();
     return;
   }
   if (tab === "refs") {
-    body.innerHTML = `<h2>Fuentes primarias</h2><div class="refs">${SOURCES.map((s) => `<p><a href="${s.url}" target="_blank" rel="noopener">${esc(s.title)}</a><br><span class="kind">${esc(s.kind)}</span> · ${esc(s.use)}</p>`).join("")}</div>
-    <h3>Nota sobre verificación</h3><p>Las cifras citadas en la escena 9 se contrastaron con los resúmenes publicados de cada artículo. Si se reutilizan fuera de esta experiencia, conviene comprobarlas contra el PDF.</p>`;
-    return;
-  }
-  if (selection && selection.help) {
-    body.innerHTML = `<h2>Atajos de teclado</h2><dl class="io">${selection.help.map(([a, b]) => `<dt class="kv">${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl><h3>Ratón y táctil</h3><p>Arrastrar: girar. Mayús + arrastrar o botón derecho: desplazar. Rueda o pellizco: zoom. Clic en un objeto o en una celda: inspeccionar.</p>`;
+    body.innerHTML = `<h2>Referencias</h2>
+    <details open><summary>Fuentes primarias</summary><div class="refs">${SOURCES.map((s) => `<p><a href="${s.url}" target="_blank" rel="noopener">${esc(s.title)}</a><br><span class="kind">${esc(s.kind)}</span> · ${esc(s.use)}</p>`).join("")}</div>
+    <p class="kv">Las cifras citadas en el capítulo 9 se contrastaron con los resúmenes publicados de cada artículo.</p></details>
+    <details><summary>Notación y colores</summary><p>Cada símbolo se define antes de usarse en la escena. Los colores codifican el papel de cada objeto y siempre van con etiqueta. La posición de una matriz en la escena es conceptual: no es su ubicación física en una GPU.</p>
+    <div class="io" style="grid-template-columns:auto 1fr">${["in", "w", "g", "ok", "bad", "off"].map((r) => `<dt><span class="chip" style="height:18px"><i style="background:var(--c-${r})"></i></span></dt><dd>${roleWord[r]}</dd>`).join("")}</div>
+    <dl class="io">${NOTATION.map(([a, b]) => `<dt class="kv">${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>
+    <p>${prov("local")} se calcula en esta página y se puede comprobar. ${prov("cita")} proviene de un artículo enlazado. ${prov("sim")} o ${prov("ilus")} resulta de reglas declaradas por esta demostración, no de un sistema real.</p></details>
+    <details class="live-checks"><summary>Verificación en vivo</summary><p>Comprobaciones ejecutadas en tu navegador con el mismo código que mueve la escena. La batería completa está en <span class="kv">verify.mjs</span>.</p><div class="checks-out"><button class="btn" data-run-checks>Ejecutar ahora</button></div></details>`;
+    const run = body.querySelector("[data-run-checks]");
+    run.addEventListener("click", () => {
+      const out = body.querySelector(".checks-out");
+      out.innerHTML = '<p class="kv">calculando…</p>';
+      setTimeout(() => {
+        const results = liveChecks(ctx.store);
+        out.innerHTML = `<ul class="checks">${results.map((r) => `<li class="${r.ok ? "" : "x"}">${esc(r.name)}${r.detail ? ` <span class="kv">(${esc(r.detail)})</span>` : ""}</li>`).join("")}</ul><p class="kv">${results.filter((r) => r.ok).length}/${results.length} correctas</p>`;
+      }, 30);
+    });
     return;
   }
   const beat = ctx.beat;
@@ -7898,10 +7925,94 @@ function renderInspector(ctx, selection) {
     ${beat.chapter.question ? `<p><b style="color:var(--ink)">${beat.chapter.question}</b></p>` : ""}
     ${more || `<p>${beat.title || ""}</p>`}
     ${beat.refs ? `<h3>Fuentes</h3><div class="refs">${beat.refs.map((id) => SOURCES.find((s) => s.id === id)).filter(Boolean).map((s) => `<p><a href="${s.url}" target="_blank" rel="noopener">${esc(s.title)}</a></p>`).join("")}</div>` : ""}
-    <p class="kv" style="margin-top:14px;color:var(--ink-4)">Clic en cualquier objeto o celda para inspeccionarlo.</p>`;
+    <p class="kv" style="margin-top:14px;color:var(--ink-4)">Clic en cualquier objeto o celda de la escena: su nombre aparece encima y el detalle, aquí.</p>`;
 }
 
 return { SOURCES, infoFor, renderInspector };
+})();
+const __m_examples_rsi_lab_view_names_mjs = (() => {
+
+const NAMES = {
+  plate: ["Mesa del laboratorio", "La base de la maqueta. Las posiciones son conceptuales: no representan hardware."],
+  bench: ["Banco de estaciones", "Aquí están las estaciones A, B y C del capítulo 6."],
+  route1: ["Bucle 1 · resolver una tarea", "Cian: el agente lee el contexto, usa herramientas y responde. Nada del sistema cambia."],
+  route2: ["Bucle 2 · modificar el sistema", "Naranja: se propone un cambio en el código del agente, se prueba y se evalúa."],
+  route3: ["Bucle 3 · mejorar cómo se mejora", "Blanco punteado: una versión promovida participa en las propuestas siguientes."],
+  modelo: ["Modelo θ", "El Transformer: convierte un contexto de tokens en probabilidades del siguiente token. Sus 2048 parámetros no cambian al usarlo."],
+  datos: ["Datos", "Tareas separadas en desarrollo, validación, prueba reservada y auditoría."],
+  contexto: ["Contexto", "Lo que el sistema tiene delante ahora: tokens, o líneas de registro elegidas por el gestor."],
+  herramientas: ["Herramientas", "Ejecutan pruebas y leen registros: traen observaciones externas."],
+  entorno: ["Entorno de ejecución", "Donde se ejecutan las versiones candidatas, con un presupuesto fijo."],
+  codigo: ["Código del agente", "El gestor de contexto activo y la estrategia de experimentos: lo que la automejora modifica aquí."],
+  proponente: ["Proponente de reglas", "Lee los diagnósticos visibles y propone un cambio con reglas programadas. No es un modelo de lenguaje."],
+  evaluador: ["Evaluador", "Compara versiones en las mismas tareas y decide con un criterio estadístico explícito."],
+  archivo: ["Archivo de versiones", "Guarda cada variante válida. Guardar no es promover: sólo una versión está activa."],
+  estA: ["Estación A · reflexión", "Generar, probar, anotar el error y reintentar. Cambia la memoria; θ no cambia."],
+  estB: ["Estación B · REINFORCE", "Una política pequeña aprende qué estrategia de lectura da más aciertos."],
+  estC: ["Estación C · búsqueda evolutiva", "Muta programas, los evalúa con presupuesto y guarda los diversos."],
+  "a-gen": ["Generador (guionado)", "Entrega un intento de código para promedio(lista). Los intentos están escritos de antemano."],
+  "a-tests": ["Ejecutor de pruebas", "Ejecuta de verdad las 4 pruebas sobre el intento y marca cuáles fallan."],
+  "a-memory": ["Memoria de notas", "Guarda la nota de reflexión que vuelve al contexto del intento siguiente."],
+  "a-theta": ["θ congelado", "Los parámetros del modelo no cambian en esta estación."],
+  "b-policy": ["Política π", "Probabilidad de elegir cada una de 4 estrategias de lectura de registros."],
+  "b-batch": ["Lote de episodios", "Cada episodio prueba una estrategia en una tarea real: recompensa 1 si acierta."],
+  "b-baseline": ["Baseline b", "Media de recompensas de lotes anteriores. La ventaja es R − b."],
+  "c-archive": ["Archivo de diversidad", "Guarda el mejor programa de cada celda de comportamiento."],
+  "c-bins": ["Máquinas del planificador", "Los programas reparten trabajos en máquinas de capacidad 100: menos máquinas, mejor."],
+  "ctx-lines": ["Líneas del contexto", "Las líneas del registro que el gestor dejó entrar en 64 tokens."],
+  "cart-v0": ["Gestor de contexto v0", "Código que decide qué líneas del registro entran al contexto."],
+  "cart-v1": ["Gestor de contexto v1", "Variante del gestor que conserva las líneas que nombran la causa."],
+  "cart-v2": ["Gestor de contexto v2", "Variante que ahorra espacio quedándose sólo con ERROR y TRACE."],
+  "cart-v3": ["Gestor de contexto v3", "Variante con otro orden de prioridades; sin diferencia clara con v1."],
+  "cart-an": ["Gestor del analista", "El gestor con el que se leen los informes de fallo antes de proponer."],
+  "tray-emb": ["Bandeja de embeddings", "Busca el vector de cada token, le suma el de su posición y produce X₀."],
+  "tray-b0": ["Bloque 1", "Atención y MLP, cada una sumada al flujo residual."],
+  "tray-b1": ["Bloque 2", "La misma operación que el bloque 1, con otros parámetros."],
+  "tray-out": ["Bandeja de salida", "Convierte el último estado en 16 logits y probabilidades."],
+  "mx-E": ["Tabla de embeddings E", "Parámetro: una fila de 8 números por cada uno de los 16 símbolos."],
+  "mx-P": ["Tabla de posiciones P", "Parámetro: un vector por posición, que se suma al del token."],
+  "mx-X0": ["X₀", "Activación: vector del token más vector de su posición, una fila por posición."],
+  "mx-Wu": ["W_U", "Parámetro: proyecta el estado final a 16 logits, uno por símbolo."],
+  "mx-gWu": ["Gradiente de W_U", "Cuánto cambia la pérdida si cambia un poco cada parámetro de W_U."],
+  "bars-out": ["Logits y probabilidades", "Arriba, los logits; abajo, p = softmax(logits). Verde: el token elegido."],
+  "card-next": ["Siguiente token", "El token elegido a partir de las probabilidades."],
+  "t-X": ["X · entrada de la cabeza", "Activación: una fila por posición del flujo residual."],
+  "t-Wq": ["W_Q", "Parámetro: convierte cada fila de X en una consulta."],
+  "t-Wk": ["W_K", "Parámetro: convierte cada fila de X en una clave."],
+  "t-Wv": ["W_V", "Parámetro: convierte cada fila de X en un valor."],
+  "t-Q": ["Q · consultas", "Activación: qué busca cada posición. Q = X·W_Q."],
+  "t-K": ["K · claves", "Activación: cómo se ofrece cada posición para ser encontrada. K = X·W_K."],
+  "t-V": ["V · valores", "Activación: lo que aporta cada posición si se la elige. V = X·W_V."],
+  "t-S": ["Puntuaciones → atención", "QKᵀ/√d_k más la máscara; tras softmax, cada fila suma 1."],
+  "t-Z": ["Z · salida de la cabeza", "Z = A·V: mezcla de valores ponderada por la atención."],
+  "t-cube1": ["Productos X·W", "Cada columna del cubo suma 8 productos: así sale una celda de Q, K o V."],
+  "t-cube2": ["Productos Q·Kᵀ", "Cada columna suma 4 productos: la puntuación entre dos posiciones."],
+  "t-cube3": ["Productos A·V", "Cada columna suma productos de atención por valor: una celda de Z."],
+};
+
+const BY_PREFIX = [
+  [/^card\d+$/, ["Tarjeta de token", "Un token del contexto. En el capítulo 2 se puede cambiar y todo se recalcula."]],
+  [/^head-b(\d)-(\d)$/, (m) => [`Cabeza ${Number(m[2]) + 1} · bloque ${Number(m[1]) + 1}`, "Atención causal: cada posición mezcla información de las anteriores."]],
+  [/^blk-b(\d)$/, (m) => [`Piezas del bloque ${Number(m[1]) + 1}`, "LayerNorm, dos cabezas, W_O, suma residual, MLP y otra suma residual."]],
+  [/^mx-b(\d)-wo$/, (m) => [`W_O · bloque ${Number(m[1]) + 1}`, "Parámetro: mezcla las salidas de las dos cabezas."]],
+  [/^mx-b(\d)-w1$/, (m) => [`W₁ · bloque ${Number(m[1]) + 1}`, "Parámetro: primera proyección de la MLP, de 8 a 32."]],
+  [/^mx-b(\d)-w2$/, (m) => [`W₂ · bloque ${Number(m[1]) + 1}`, "Parámetro: segunda proyección de la MLP, de 32 a 8."]],
+  [/^vec-b(\d)$/, (m) => [`Flujo residual · bloque ${Number(m[1]) + 1}`, "La entrada se conserva y se le suma la salida de cada subcapa."]],
+  [/^out-base$/, () => ["Salida", "LayerNorm final, W_U, logits y softmax."]],
+];
+
+function nameOf(id) {
+  if (NAMES[id]) return NAMES[id];
+  const base = id.replace(/-front$/, "");
+  if (NAMES[base]) return NAMES[base];
+  for (const [re, value] of BY_PREFIX) {
+    const m = base.match(re);
+    if (m) return typeof value === "function" ? value(m) : value;
+  }
+  return null;
+}
+
+return { NAMES, nameOf };
 })();
 const __m_examples_rsi_lab_view_bus_mjs = (() => {
 
@@ -8251,6 +8362,7 @@ const PLAIN = {
   infra: ["Infraestructura", "el presupuesto y el entorno donde se ejecuta"],
 };
 const OP_NAME = Object.fromEntries(SOUND_OPS.map((o) => [o.op, o.name]));
+const CLOSE = '<button class="x" data-act="close-box" aria-label="Cerrar">×</button>';
 
 const plainOf = (html) =>
   String(html || "")
@@ -8302,6 +8414,8 @@ function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }) {
     armCount: 0,
     timer: null,
     waitUntil: 0,
+    waitStart: 0,
+    waitTotal: 0,
     remaining: null,
     entering: false,
     explored: false,
@@ -8384,6 +8498,8 @@ function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }) {
   function enter(i, phase = "orient", { push = true, restore = null } = {}) {
     clearTimer();
     cancelSound();
+    L.remaining = null;
+    L.waitTotal = 0;
     L.frozen = false;
     L.i = Math.max(0, Math.min(steps.length - 1, i));
     const s = step();
@@ -8455,6 +8571,8 @@ function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }) {
     }
     if (director.S.stepTo === null && u >= 1 - 1e-6) {
       L.armed = null;
+      L.waitTotal = 0;
+      L.remaining = null;
       L.phase = s.result ? "result" : "done";
       applyLook();
       pushStack();
@@ -8517,8 +8635,11 @@ function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }) {
       return;
     }
     const html = textOf(L.phase === "result" ? s.result : s.orient);
-    const wait = L.remaining ?? readSeconds(html) * 1000;
+    const full = (L.narrator ? readSeconds(html) : wordsOf(html) ? 2.5 : 0) * 1000;
+    const wait = L.remaining ?? full;
     L.remaining = null;
+    L.waitTotal = Math.max(full, wait);
+    L.waitStart = performance.now() - (L.waitTotal - wait);
     L.waitUntil = performance.now() + wait;
     L.timer = setTimeout(() => {
       L.timer = null;
@@ -8546,8 +8667,16 @@ function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }) {
     notify();
     renderTransport();
   }
+  function waitShare() {
+    if (!L.waitTotal) return 0;
+    const now = L.auto && L.timer ? performance.now() : L.remaining !== null ? L.waitUntil - L.remaining : L.waitStart;
+    return Math.max(0, Math.min(1, (now - L.waitStart) / L.waitTotal));
+  }
   function pause(reason = "") {
-    if (L.auto && L.timer) L.remaining = Math.max(0, L.waitUntil - performance.now());
+    if (L.auto && L.timer) {
+      L.remaining = Math.max(0, L.waitUntil - performance.now());
+      L.waitUntil = performance.now();
+    }
     L.auto = false;
     clearTimer();
     if (L.phase === "act" && director.S.stepTo !== null) {
@@ -8594,37 +8723,35 @@ function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }) {
     if (!L.box) return "";
     if (L.box.kind === "simple") {
       const c = concepts[s.concept];
-      return `<div class="g-box"><div class="g-box-h">Más simple · ${esc(c.title)}</div>${richText(textOf(c.simple))}</div>`;
+      return `<div class="g-box"><div class="g-box-h">Más simple · ${esc(c.title)}${CLOSE}</div>${richText(textOf(c.simple))}</div>`;
     }
     if (L.box.kind === "example") {
       const c = concepts[s.concept];
       const ex = (s.example || c.example)(ctx);
-      return `<div class="g-box"><div class="g-box-h">Ejemplo · ${esc(c.title)} ${ex.prov ? `<span class="prov" data-p="${ex.prov}">${ex.prov === "local" ? "resultado calculado" : ex.prov === "ilus" ? "ejemplo ilustrativo" : ex.prov === "sim" ? "simulación conceptual" : "resultado citado"}</span>` : ""}</div>${richText(ex.html)}</div>`;
+      return `<div class="g-box"><div class="g-box-h">Ejemplo · ${esc(c.title)}${CLOSE} ${ex.prov ? `<span class="prov" data-p="${ex.prov}">${ex.prov === "local" ? "resultado calculado" : ex.prov === "ilus" ? "ejemplo ilustrativo" : ex.prov === "sim" ? "simulación conceptual" : "resultado citado"}</span>` : ""}</div>${richText(ex.html)}</div>`;
     }
     if (L.box.kind === "term") {
       const c = concepts[L.box.key];
       if (!c) return "";
       const ex = c.example ? c.example(ctx) : null;
       const where = c.where ? (typeof c.where === "function" ? c.where(ctx) : c.where) : null;
-      return `<div class="g-box"><div class="g-box-h">Glosario · ${esc(c.title)}</div><p>${richText(textOf(c.def))}</p>${ex ? `<p class="g-ex">${richText(ex.html)}</p>` : ""}${where && where.length ? `<button class="btn" data-act="show" data-ids="${where.join(",")}">Mostrar en la escena</button>` : `<p class="kv">No tiene un objeto propio en esta escena.</p>`}</div>`;
+      return `<div class="g-box"><div class="g-box-h">Glosario · ${esc(c.title)}${CLOSE}</div><p>${richText(textOf(c.def))}</p>${ex ? `<p class="g-ex">${richText(ex.html)}</p>` : ""}${where && where.length ? `<button class="btn" data-act="show" data-ids="${where.join(",")}">Mostrar en la escena</button>` : `<p class="kv">No tiene un objeto propio en esta escena.</p>`}</div>`;
     }
     if (L.box.kind === "more") {
       const more = typeof s.beat.more === "function" ? s.beat.more(ctx) : s.beat.more;
-      return `<div class="g-box"><div class="g-box-h">Ampliación</div>${more || "<p>Sin ampliación para este paso.</p>"}</div>`;
+      return `<div class="g-box"><div class="g-box-h">Ampliación${CLOSE}</div>${more || "<p>Sin ampliación para este paso.</p>"}</div>`;
     }
-    if (L.box.kind === "sounds") return soundsHtml();
     return "";
   }
 
   function soundsHtml() {
     const on = sound.enabled;
-    return `<div class="g-box"><div class="g-box-h">Sonidos</div>
-      <p>Cada familia de operaciones tiene una señal propia. La explicación completa está en el texto: los sonidos sólo ayudan a reconocer la operación.</p>
-      <div class="snd-ctl"><button class="btn" data-act="sound-toggle" aria-pressed="${on}">${on ? "Desactivar sonidos" : "Activar sonidos"}</button>
-      <label>volumen <input type="range" min="0" max="1" step="0.05" value="${sound.prefs.volume}" data-act="volume" aria-label="Volumen general"></label>
-      <button class="btn" data-act="mute" aria-pressed="${sound.prefs.muted}">${sound.prefs.muted ? "Quitar silencio" : "Silencio (X)"}</button></div>
-      <ul class="legend-snd">${SOUND_OPS.map((o) => `<li><button class="btn" data-act="listen" data-op="${o.op}" ${on ? "" : "disabled"}>Escuchar</button><div><b>${esc(o.name)}</b> · <span class="kv">${esc(o.hint)}</span><br><span>${esc(o.when)}</span></div></li>`).join("")}</ul>
-      <p class="kv">${esc(SOUND_NOTE)}</p></div>`;
+    return `<div class="set-row"><button class="btn${on ? " primary" : ""}" data-act="sound-toggle" aria-pressed="${on}">${on ? "Sonidos activos" : "Activar sonidos"}</button>
+      <label class="set-inline">volumen <input type="range" min="0" max="1" step="0.05" value="${sound.prefs.volume}" data-act="volume" aria-label="Volumen general"></label>
+      <label class="set-inline"><input type="checkbox" data-act="mute" ${sound.prefs.muted ? "checked" : ""}> silencio (X)</label></div>
+      <p class="kv">Cada familia de operaciones tiene una señal propia. Todo se entiende sin sonido.</p>
+      <details><summary>Qué suena en cada operación</summary><ul class="legend-snd">${SOUND_OPS.map((o) => `<li><button class="btn" data-act="listen" data-op="${o.op}" ${on ? "" : "disabled"}>▶</button><div><b>${esc(o.name)}</b> · <span class="kv">${esc(o.hint)}</span><br><span>${esc(o.when)}</span></div></li>`).join("")}</ul>
+      <p class="kv">${esc(SOUND_NOTE)}</p></details>`;
   }
 
   function primaryLabel() {
@@ -8661,20 +8788,19 @@ function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }) {
       <h2>${esc(beat.chapter.title)}</h2>
       ${phaseList()}
       ${main}
+      ${L.auto && L.timer ? `<div class="g-wait" role="progressbar" aria-label="Tiempo de lectura antes de seguir"><i style="width:${(waitShare() * 100).toFixed(1)}%"></i></div>` : ""}
       <div class="g-actions">
         <button class="btn primary" data-act="primary">${primaryLabel()}</button>
-        ${hasAct(s) ? '<button class="btn" data-act="repeat" title="Repetir esta operación (R)">Repetir esta operación</button>' : ""}
-        ${L.i > 0 ? '<button class="btn ghost" data-act="back" title="Volver (←)">Atrás</button>' : ""}
+        ${hasAct(s) ? '<button class="btn" data-act="repeat" title="Repetir esta operación (R)">↻ Repetir</button>' : ""}
+        ${L.i > 0 ? '<button class="btn ghost" data-act="back" title="Volver (←)">← Atrás</button>' : ""}
       </div>
       <div class="g-help">
-        ${c ? `<button class="btn ghost" data-act="simple" aria-pressed="${L.box?.kind === "simple"}">Explicámelo más simple</button><button class="btn ghost" data-act="example" aria-pressed="${L.box?.kind === "example"}">Ver un ejemplo</button>` : ""}
-        ${beat.more ? `<button class="btn ghost" data-act="more" aria-pressed="${L.box?.kind === "more"}">Ampliar</button>` : ""}
-        <button class="btn ghost" data-act="sounds" aria-pressed="${L.box?.kind === "sounds"}">Sonidos</button>
+        ${c ? `<button class="link" data-act="simple" aria-pressed="${L.box?.kind === "simple"}">Más simple</button><button class="link" data-act="example" aria-pressed="${L.box?.kind === "example"}">Un ejemplo</button>` : ""}
+        ${beat.more ? `<button class="link" data-act="more" aria-pressed="${L.box?.kind === "more"}">Ampliar</button>` : ""}
       </div>
       ${boxHtml()}
       <details class="g-fixed"><summary>Qué cambia y qué permanece fijo</summary>${changedBox()}</details>
       <details class="g-trail"><summary>Lo leído en este capítulo (${trail.length})</summary>${trail.map((entry) => `<div class="g-old"><span class="kv">${esc(entry.id)}</span> ${richText(entry.html)}</div>`).join("")}</details>
-      ${L.auto ? `<p class="kv auto-note">Reproducción automática: lectura estimada a ${L.wpm} palabras por minuto, más 2,5 s; mínimo 6 s. Es una estimación de diseño, no una medida de tu lectura.</p>` : ""}
       ${s.missing ? '<p class="kv">Este paso todavía no tiene guion propio.</p>' : ""}
     </div>`;
   }
@@ -8682,15 +8808,10 @@ function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }) {
   function render() {
     if (!steps.length) return;
     const s = step();
-    if (ctx.tab === "guide") {
-      ref.inspBody.innerHTML = L.narrator ? guideHtml() : `<div class="guide off"><p>El narrador escrito está oculto. Pulsá <b>N</b> o el botón «Narrador» para mostrarlo.</p></div>`;
-    }
+    if (ctx.tab === "guide") ref.inspBody.innerHTML = guideHtml();
     const act = textOf(s.act);
-    ref.capStep.textContent = `${s.beat.c + 1}.${s.beat.b + 1}${s.parts > 1 ? ` · ${s.part}/${s.parts}` : ""} · ${s.beat.chapter.title}`;
-    let cap = "";
-    if (L.phase === "act") cap = `▸ ${richText(act)}`;
-    else if (s.cap) cap = richText(textOf(s.cap));
-    ref.capText.innerHTML = cap;
+    const cap = !L.narrator && L.phase === "act" ? `▸ ${plainOf(act)}` : "";
+    ref.capText.textContent = cap;
     ref.caption.classList.toggle("empty", !cap);
     renderTransport();
     notify();
@@ -8699,8 +8820,8 @@ function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }) {
   function renderTransport() {
     const s = step();
     if (!s) return;
-    ref.learnPrimary.textContent = primaryLabel();
-    ref.learnRepeat.disabled = !hasAct(s);
+    ref.next.title = `${primaryLabel()} (→ o Intro)`;
+    ref.next.setAttribute("aria-label", primaryLabel());
     ref.play.textContent = L.auto ? "❚❚" : "▶";
     ref.play.setAttribute("aria-label", L.auto ? "Pausar la reproducción automática" : "Reproducción automática");
     ref.play.title = L.auto ? "Pausar (espacio)" : `Reproducción automática: avanza solo, con ${L.wpm} palabras por minuto de lectura (espacio)`;
@@ -8716,7 +8837,8 @@ function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }) {
     if (L.phase === "act") {
       const span = endT(s) - startT(s);
       within = orient + (span > 0 ? Math.max(0, Math.min(1, (director.S.t - startT(s)) / span)) : 1) * anim;
-    } else if (L.phase === "result" || L.phase === "done") within = orient + anim;
+    } else if (L.phase === "result" || L.phase === "done") within = orient + anim + waitShare() * readSeconds(textOf(s.result));
+    else within = waitShare() * orient;
     return starts[L.i] + Math.min(est, within);
   }
   function seekShare(share) {
@@ -8747,7 +8869,10 @@ function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }) {
     if (act === "primary") next();
     else if (act === "repeat") repeat();
     else if (act === "back") prev();
-    else if (["simple", "example", "more", "sounds"].includes(act)) {
+    else if (act === "close-box") {
+      L.box = null;
+      render();
+    } else if (["simple", "example", "more"].includes(act)) {
       interrupt(act);
       L.box = L.box && L.box.kind === act ? null : { kind: act };
       render();
@@ -8755,13 +8880,12 @@ function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }) {
       ctx.spotlight(button.getAttribute("data-ids").split(","), "");
     } else if (act === "sound-toggle") {
       (sound.enabled ? Promise.resolve(sound.disable()) : sound.enable()).then(() => render());
-    } else if (act === "mute") {
-      sound.setMuted(!sound.prefs.muted);
-      render();
     } else if (act === "listen") sound.preview(button.getAttribute("data-op"));
   }
   function handleInput(event) {
-    if (event.target.getAttribute("data-act") === "volume") sound.setVolume(Number(event.target.value));
+    const act = event.target.getAttribute("data-act");
+    if (act === "volume") sound.setVolume(Number(event.target.value));
+    if (act === "mute") sound.setMuted(event.target.checked);
   }
   function handleHover(event) {
     const button = event.target.closest("[data-ref]");
@@ -8818,9 +8942,13 @@ function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }) {
       listeners.add(fn);
     },
     setNarrator(on) {
+      if (L.narrator === on) return;
       L.narrator = on;
+      if (L.auto && L.timer) schedule();
       render();
     },
+    soundsHtml,
+    waitShare,
     setWpm(wpm) {
       L.wpm = wpm;
       recompute();
@@ -11144,13 +11272,15 @@ const { buildStations } = __m_examples_rsi_lab_view_stations_mjs;
 const { makeStore } = __m_examples_rsi_lab_view_store_mjs;
 const { makeDirector } = __m_examples_rsi_lab_view_director_mjs;
 const { CHAPTERS } = __m_examples_rsi_lab_view_chapters_mjs;
-const { renderInspector } = __m_examples_rsi_lab_view_inspector_mjs;
-const { prov } = __m_examples_rsi_lab_view_helpers_mjs;
+const { renderInspector, infoFor } = __m_examples_rsi_lab_view_inspector_mjs;
+const { nameOf } = __m_examples_rsi_lab_view_names_mjs;
+const { prov, esc } = __m_examples_rsi_lab_view_helpers_mjs;
 const { makeBus } = __m_examples_rsi_lab_view_bus_mjs;
 const { makeSound, renderOffline, SOUND_OPS } = __m_examples_rsi_lab_view_sound_mjs;
 const { makeLesson, plainOf, wordsOf } = __m_examples_rsi_lab_view_lesson_mjs;
 const { SCRIPTS } = __m_examples_rsi_lab_view_guide_index_mjs;
 const { CONCEPTS } = __m_examples_rsi_lab_view_guide_concepts_mjs;
+
 
 
 
@@ -11184,14 +11314,8 @@ let changedNow = {};
 let selection = null;
 let wakeLoop = () => {};
 
-function syncDisclaimer() {
-  let offset = 0;
-  for (const node of beatScoped.panels.values()) {
-    const d = node._dock;
-    if (d && d.dock === "right" && d.top < 210) offset = Math.max(offset, d.right + d.width + 14);
-  }
-  ref.disclaimer.style.right = offset ? `${offset}px` : "";
-}
+const windows = { closed: new Set(), auto: !matchMedia("(max-width: 760px)").matches };
+const syncDisclaimer = () => {};
 
 const ctx = {
   engine,
@@ -11244,24 +11368,26 @@ const ctx = {
       node = el("div", { class: "plane on", "data-panel": id });
       ref.planes.append(node);
       beatScoped.panels.set(id, node);
+      node.classList.toggle("min", windows.closed.has(id) || !windows.auto);
     }
-    const head = title || provKind ? `<h4><span>${title}</span>${provKind ? prov(provKind, provText) : ""}</h4>` : "";
-    const content = head + html;
+    const head = `<h4><button class="pl-toggle" data-pl="${id}" title="Mostrar u ocultar esta ventana (V: todas)"><span class="pl-arrow" aria-hidden="true">▾</span><span>${title || "Datos"}</span></button>${provKind ? prov(provKind, provText) : ""}<button class="x" data-pl="${id}" aria-label="Cerrar la ventana «${String(title || "Datos").replace(/<[^>]+>/g, "")}»">×</button></h4>`;
+    const content = head + `<div class="pl-body">${html}</div>`;
     if (node._html !== content) {
       node.innerHTML = content;
       node._html = content;
     }
     const style = node.style;
+    const y = Math.max(12, (top ?? 78) - 64);
     style.width = width ? `${width}px` : "";
-    style.top = `calc(${top ?? 78}px + var(--chips-extra, 0px))`;
-    style.maxHeight = dock === "left" ? `calc(100% - ${top ?? 78}px - var(--chips-extra, 0px) - var(--desk-h, 0px) - 40px)` : `calc(100% - ${top ?? 78}px - var(--chips-extra, 0px) - 104px)`;
-    style.left = dock === "left" ? `${left ?? 12}px` : "";
+    style.top = `${y}px`;
+    style.maxHeight = dock === "left" ? `calc(100% - ${y}px - var(--desk-h, 40px) - 24px)` : `calc(100% - ${y}px - 64px)`;
+    style.left = dock === "left" ? (left !== undefined ? `${left}px` : "calc(var(--rail-w, 140px) + 20px)") : "";
     style.right = dock === "right" ? `${right ?? 12}px` : "";
     if (dock === "center") {
       style.left = "50%";
       style.transform = "translateX(-50%)";
     } else style.transform = "";
-    node._dock = { dock, top: top ?? 78, right: right ?? 12, width: width ?? 420 };
+    node._dock = { dock, top: y, right: right ?? 12, width: width ?? 420 };
     syncDisclaimer();
     return node;
   },
@@ -11272,6 +11398,7 @@ const ctx = {
     syncDisclaimer();
   },
   clearBeat() {
+    if (ctx.unpick) ctx.unpick();
     for (const id of beatScoped.labels) engine.unlabel(id);
     beatScoped.labels.clear();
     for (const node of beatScoped.panels.values()) node.remove();
@@ -11285,7 +11412,7 @@ const ctx = {
     renderChanged(ref, changedNow, fixedNote);
   },
   theta(print, note = "", flash = false) {
-    ref.theta.innerHTML = `<span>θ modelo: 2048 parámetros</span><span class="print${flash ? " flash" : ""}" title="Huella FNV-1a de todos los parámetros: cambia si cambia un solo bit">huella ${print}</span><span>${note}</span>`;
+    ref.theta.innerHTML = `<span class="h">θ · 2048 parámetros</span><span class="print${flash ? " flash" : ""}" title="Huella FNV-1a de todos los parámetros del modelo: cambia si cambia un solo bit. ${note}">${print}</span><span class="note">${note}</span>`;
   },
   pulse(i, spec) {
     const id = `pulse${i}`;
@@ -11307,20 +11434,22 @@ const ctx = {
     }
     ref.desk.classList.add("on");
     ref.stage.classList.add("has-desk");
-    if (engine.size.w < 760 && !ref.desk.dataset.touched) {
-      ref.desk.classList.add("min");
-      ref.stage.classList.add("desk-min");
-    }
-    const toggle = el("button", { "aria-expanded": ref.desk.classList.contains("min") ? "false" : "true", title: "Plegar o desplegar la mesa de control" }, ref.desk.classList.contains("min") ? "desplegar" : "plegar");
-    toggle.addEventListener("click", () => {
-      ref.desk.dataset.touched = "1";
-      const min = ref.desk.classList.toggle("min");
-      ref.stage.classList.toggle("desk-min", min);
-      toggle.textContent = min ? "desplegar" : "plegar";
-      toggle.setAttribute("aria-expanded", min ? "false" : "true");
-    });
-    ref.desk.append(el("h3", {}, el("span", {}, `Mesa de control · ${title}`), toggle));
-    build(ref.desk);
+    ref.desk.classList.toggle("min", ref.desk.dataset.open !== "1");
+    const open = !ref.desk.classList.contains("min");
+    const toggle = el("button", { class: "pl-toggle", "aria-expanded": open ? "true" : "false", title: "Mostrar u ocultar los controles de esta escena" }, el("span", { class: "pl-arrow", "aria-hidden": "true" }, open ? "▾" : "▸"), el("span", {}, `Mesa de control · ${title}`));
+    const close = el("button", { class: "x", "aria-label": "Cerrar la mesa de control" }, "×");
+    const flip = (next) => {
+      ref.desk.dataset.open = next ? "1" : "";
+      ref.desk.classList.toggle("min", !next);
+      toggle.setAttribute("aria-expanded", next ? "true" : "false");
+      toggle.firstChild.textContent = next ? "▾" : "▸";
+    };
+    toggle.addEventListener("click", () => flip(ref.desk.classList.contains("min")));
+    close.addEventListener("click", () => flip(false));
+    ref.desk.append(el("h3", {}, toggle, close));
+    const body = el("div", { class: "desk-body" });
+    ref.desk.append(body);
+    build(body);
   },
   refresh() {
     director.apply();
@@ -11341,6 +11470,7 @@ const ctx = {
   scale(name) {
     for (const [key, button] of Object.entries(ref.scaleButtons)) button.setAttribute("aria-current", key === name ? "true" : "false");
     ctx.currentScale = name;
+    ref.backScale.hidden = name === "lab";
   },
   get beat() {
     return director.beat;
@@ -11369,6 +11499,8 @@ const director = makeDirector({
         button.setAttribute("aria-current", i === c ? "true" : "false");
         button.classList.toggle("done", i < c);
       });
+      ref.chapterBtn.innerHTML = `<span class="n">${c + 1}</span><span class="t">${esc(chapter.title)}</span><span class="caret" aria-hidden="true">▾</span>`;
+      ref.chapterBtn.setAttribute("aria-label", `Capítulo ${c + 1} de ${CHAPTERS.length}: ${chapter.title}. Elegir capítulo`);
       ref.desk.classList.remove("on");
       ref.stage.classList.remove("has-desk");
       app.classList.toggle("show-theta", !!chapter.showTheta);
@@ -11431,18 +11563,7 @@ ctx.spotlight = (ids, label) => {
   }, 2600);
   wakeLoop();
 };
-const refreshSound = () => {
-  ref.soundBtn.setAttribute("aria-pressed", sound.enabled ? "true" : "false");
-  ref.soundBtn.textContent = sound.enabled ? (sound.prefs.muted ? "Sonido en silencio" : "Sonidos activos") : sound.prefs.wanted ? "Activar sonidos (recordado)" : "Activar sonidos";
-};
-sound.onChange(refreshSound);
-refreshSound();
-ref.soundBtn.addEventListener("click", async () => {
-  if (sound.enabled) sound.disable();
-  else await sound.enable();
-  refreshSound();
-  if (ctx.tab === "guide") lesson.render();
-});
+sound.onChange(() => ctx.tab === "settings" && renderSettings());
 
 function buildTimeline() {
   ref.timeline.innerHTML = '<div class="track"></div><div class="fill"></div>';
@@ -11471,7 +11592,12 @@ function updateTimeline() {
   ref.timeline.setAttribute("aria-valuenow", String(Math.round(share * 100)));
   ref.timeline.setAttribute("aria-valuetext", `Capítulo ${step.beat.c + 1}, paso ${step.id}, ${step.index + 1} de ${lesson.steps.length}`);
   ref.backTour.classList.toggle("on", director.S.manualCam);
+  const bar = ref.inspBody.querySelector(".g-wait i");
+  if (bar) bar.style.width = `${(lesson.waitShare() * 100).toFixed(1)}%`;
 }
+setInterval(() => {
+  if (lesson.L.auto && lesson.L.timer && !document.hidden) updateTimeline();
+}, 200);
 function seekShare(share) {
   lesson.seekShare(share);
   wakeLoop();
@@ -11522,11 +11648,9 @@ new ResizeObserver(() => {
   ref.stage.style.setProperty("--desk-h", `${on ? Math.round(ref.desk.getBoundingClientRect().height) : 0}px`);
 }).observe(ref.desk);
 new ResizeObserver(() => {
-  const h = Math.round(ref.changed.getBoundingClientRect().height);
-  if (!h) return;
-  ref.stage.style.setProperty("--chips-h", `${h}px`);
-  ref.stage.style.setProperty("--chips-extra", `${Math.max(0, h - 26)}px`);
-}).observe(ref.changed);
+  const w = Math.round(ref.rail.getBoundingClientRect().width);
+  if (w) ref.stage.style.setProperty("--rail-w", `${w}px`);
+}).observe(ref.rail);
 function insetFor() {
   const narrow = engine.size.w < 760;
   if (!narrow) return { top: 70, bottom: 70, left: 0, right: 0 };
@@ -11549,15 +11673,7 @@ ref.prev.addEventListener("click", () => {
   lesson.prev();
   wakeLoop();
 });
-ref.learnPrimary.addEventListener("click", () => {
-  lesson.next();
-  wakeLoop();
-});
-ref.learnRepeat.addEventListener("click", () => {
-  lesson.repeat();
-  wakeLoop();
-});
-ref.reset.addEventListener("click", () => {
+function resetLesson() {
   lesson.pause();
   store.restore(JSON.parse(JSON.stringify(ctx.defaults)));
   lesson.L.stack = [];
@@ -11568,19 +11684,20 @@ ref.reset.addEventListener("click", () => {
   lesson.enter(0);
   director.flyTo(director.cameraFor(director.beat));
   wakeLoop();
-});
+}
 ctx.defaults = JSON.parse(JSON.stringify(store.user));
-ref.speedSel.addEventListener("change", () => {
-  director.S.speed = Number(ref.speedSel.value);
-  wakeLoop();
-});
-ref.wpmSel.addEventListener("change", () => {
-  lesson.setWpm(Number(ref.wpmSel.value));
-  buildTimeline();
-  wakeLoop();
+const openChapters = (open) => {
+  ref.chapterList.hidden = !open;
+  ref.chapterBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  if (open) (ref.chapterList.querySelector('[aria-current="true"]') || ref.chapterButtons[0]).focus();
+};
+ref.chapterBtn.addEventListener("click", () => openChapters(ref.chapterList.hidden));
+document.addEventListener("pointerdown", (event) => {
+  if (!ref.chapterList.hidden && !ref.chapterMenu.contains(event.target)) openChapters(false);
 });
 ref.chapterButtons.forEach((button, c) =>
   button.addEventListener("click", () => {
+    openChapters(false);
     lesson.goToChapter(c);
     director.flyTo(director.cameraFor(director.beat));
     wakeLoop();
@@ -11588,31 +11705,34 @@ ref.chapterButtons.forEach((button, c) =>
 );
 const setMode = (mode) => {
   director.setMode(mode);
-  ref.modeTour.setAttribute("aria-pressed", mode === "tour" ? "true" : "false");
-  ref.modeFree.setAttribute("aria-pressed", mode === "free" ? "true" : "false");
   app.classList.toggle("explore", mode === "free");
   if (mode === "free") lesson.pause("explorar");
+  if (ctx.tab === "settings") renderSettings();
   wakeLoop();
 };
-const setNarrator = (on) => {
-  lesson.setNarrator(on);
-  app.classList.toggle("no-narrator", !on);
-  ref.narratorBtn.setAttribute("aria-pressed", on ? "true" : "false");
-  if (!on && ctx.tab === "guide" && !ref.inspector.hasAttribute("hidden")) {
-    ref.inspector.dataset.closedByNarrator = "1";
-    toggleInspector(false);
-  } else if (on && ref.inspector.dataset.closedByNarrator) {
-    delete ref.inspector.dataset.closedByNarrator;
-    toggleInspector(true);
+const setWindows = (open) => {
+  windows.auto = open;
+  if (open) windows.closed.clear();
+  for (const [id, node] of beatScoped.panels) {
+    node.classList.toggle("min", !open);
+    if (!open) windows.closed.add(id);
   }
-  wakeLoop();
+  if (ctx.tab === "settings") renderSettings();
 };
-ref.narratorBtn.addEventListener("click", () => setNarrator(!lesson.L.narrator));
-ref.modeTour.addEventListener("click", () => setMode("tour"));
-ref.modeFree.addEventListener("click", () => setMode("free"));
+ref.planes.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-pl]");
+  if (!button) return;
+  const id = button.getAttribute("data-pl");
+  const node = beatScoped.panels.get(id);
+  if (!node) return;
+  const close = button.classList.contains("x") ? true : !node.classList.contains("min");
+  node.classList.toggle("min", close);
+  if (close) windows.closed.add(id);
+  else windows.closed.delete(id);
+});
 ref.backTour.addEventListener("click", () => {
   director.guidedCamera();
-  selectTab("guide");
+  if (director.S.mode === "free") setMode("tour");
   lesson.applyLook();
   wakeLoop();
 });
@@ -11620,6 +11740,8 @@ const toggleInspector = (force) => {
   const open = force ?? ref.inspector.hasAttribute("hidden");
   ref.inspector.toggleAttribute("hidden", !open);
   ref.inspectorToggle.setAttribute("aria-pressed", open ? "true" : "false");
+  app.classList.toggle("no-narrator", !open);
+  lesson.setNarrator(open);
   requestAnimationFrame(() => {
     engine.measure();
     wakeLoop();
@@ -11632,13 +11754,73 @@ function selectTab(key) {
   renderInspector(ctx, selection);
 }
 for (const [key, button] of Object.entries(ref.tabButtons)) button.addEventListener("click", () => selectTab(key));
+const HELP = [
+  ["Espacio", "reproducción automática / pausa"],
+  ["→ o Intro", "siguiente: «Ver la operación» o «Continuar»"],
+  ["←", "volver a la fase anterior, con sus parámetros"],
+  ["R", "repetir esta operación"],
+  ["N o I", "mostrar u ocultar el panel con la explicación"],
+  ["V", "mostrar u ocultar las ventanas de datos"],
+  ["X", "silenciar o reactivar los sonidos"],
+  ["[ / ]", "capítulo anterior / siguiente"],
+  ["+ / −", "acercar / alejar"],
+  ["Q / E, W / S", "girar / inclinar la cámara"],
+  ["C", "volver a la cámara guiada"],
+  ["M", "alternar Aprender / Explorar"],
+  ["Esc", "cerrar el rótulo o volver a la escala anterior"],
+  ["0", "reiniciar"],
+];
+function renderSettings() {
+  const speed = director.S.speed;
+  ref.inspBody.innerHTML = `<div class="settings">
+    <h2>Ajustes</h2>
+    <h3>Sonido</h3>${lesson.soundsHtml()}
+    <h3>Reproducción</h3>
+    <div class="set-row"><label class="set-inline">animación <select data-set="speed" aria-label="Velocidad de la animación">${[0.5, 0.75, 1, 1.5, 2].map((v) => `<option value="${v}" ${v === speed ? "selected" : ""}>${v}×</option>`).join("")}</select></label>
+    <label class="set-inline">lectura <select data-set="wpm" aria-label="Ritmo de lectura de la reproducción automática">${[110, 140, 170].map((v) => `<option value="${v}" ${v === lesson.L.wpm ? "selected" : ""}>${v} palabras/min</option>`).join("")}</select></label></div>
+    <p class="kv">La velocidad sólo cambia el ritmo de los movimientos; no cambia ningún cálculo. Con el panel oculto, la reproducción automática no espera el tiempo de lectura.</p>
+    <h3>Escena</h3>
+    <label class="set-check"><input type="checkbox" data-set="windows" ${windows.auto ? "checked" : ""}> Abrir las ventanas de datos (fórmulas, registros, tablas) al llegar a cada paso</label>
+    <label class="set-check"><input type="checkbox" data-set="explore" ${director.S.mode === "free" ? "checked" : ""}> Explorar libremente: cámara libre, sin seguir la explicación (M)</label>
+    <div class="set-row"><button class="btn" data-set="reset">Reiniciar la lección (0)</button></div>
+    <h3>Ratón y táctil</h3>
+    <p>Arrastrar: mover la vista. Rueda o pellizco: acercar o alejar. Botón derecho o Mayús + arrastrar: girar. Clic en un objeto o una celda: su nombre y qué hace, encima de él.</p>
+    <h3>Teclado</h3><dl class="io">${HELP.map(([a, b]) => `<dt class="kv">${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>
+  </div>`;
+}
+ctx.renderSettings = renderSettings;
+function settingsAction(event) {
+  const target = event.target;
+  const set = target.getAttribute && target.getAttribute("data-set");
+  if (event.type === "click") {
+    const button = target.closest("[data-act],[data-set]");
+    if (!button) return;
+    const act = button.getAttribute("data-act");
+    if (act === "sound-toggle") (sound.enabled ? Promise.resolve(sound.disable()) : sound.enable()).then(renderSettings);
+    else if (act === "listen") sound.preview(button.getAttribute("data-op"));
+    else if (button.getAttribute("data-set") === "reset") resetLesson();
+    return;
+  }
+  if (target.getAttribute("data-act")) return lesson.handleInput(event);
+  if (set === "speed") director.S.speed = Number(target.value);
+  else if (set === "wpm") {
+    lesson.setWpm(Number(target.value));
+    buildTimeline();
+  } else if (set === "windows") setWindows(target.checked);
+  else if (set === "explore") setMode(target.checked ? "free" : "tour");
+  wakeLoop();
+}
 ref.inspBody.addEventListener("click", (event) => {
   if (ctx.tab === "guide") {
     lesson.handleClick(event);
     wakeLoop();
-  }
+  } else if (ctx.tab === "settings") settingsAction(event);
 });
-ref.inspBody.addEventListener("input", (event) => ctx.tab === "guide" && lesson.handleInput(event));
+ref.inspBody.addEventListener("change", (event) => ctx.tab === "settings" && settingsAction(event));
+ref.inspBody.addEventListener("input", (event) => {
+  if (ctx.tab === "guide") lesson.handleInput(event);
+  else if (ctx.tab === "settings" && event.target.getAttribute("data-act") === "volume") lesson.handleInput(event);
+});
 ref.inspBody.addEventListener("pointerover", (event) => ctx.tab === "guide" && lesson.handleHover(event));
 ref.inspBody.addEventListener("pointerout", (event) => ctx.tab === "guide" && lesson.handleLeave(event));
 ref.desk.addEventListener("input", () => lesson.interrupt("parámetro"), true);
@@ -11666,6 +11848,14 @@ function goBack() {
   wakeLoop();
 }
 
+let awakeTimer = null;
+const wakeControls = () => {
+  ref.stage.classList.add("awake");
+  clearTimeout(awakeTimer);
+  awakeTimer = setTimeout(() => ref.stage.classList.remove("awake"), 2500);
+};
+ref.stage.addEventListener("pointermove", wakeControls);
+ref.stage.addEventListener("pointerdown", wakeControls);
 const pointers = new Map();
 let drag = null;
 let pinch = null;
@@ -11684,7 +11874,7 @@ ref.svg.addEventListener("pointerdown", (event) => {
     drag = null;
     return;
   }
-  drag = { x: event.clientX, y: event.clientY, az: engine.cam.azimuth, el: engine.cam.elevation, target: [...engine.cam.target], pan: event.shiftKey || event.button === 2, moved: false };
+  drag = { x: event.clientX, y: event.clientY, az: engine.cam.azimuth, el: engine.cam.elevation, target: [...engine.cam.target], pan: !(event.shiftKey || event.button === 2), moved: false };
 });
 ref.svg.addEventListener("pointermove", (event) => {
   if (pointers.has(event.pointerId)) pointers.set(event.pointerId, [event.clientX, event.clientY]);
@@ -11761,12 +11951,48 @@ function hit(event) {
   const obj = target.closest("[data-obj]");
   return { cell, obj, id: obj && obj.getAttribute("data-obj") };
 }
+const firstSentence = (html) => {
+  const text = String(html || "").replace(/<[^>]+>/g, "").trim();
+  const cut = text.search(/[.:;](\s|$)/);
+  const sentence = cut > 20 ? text.slice(0, cut + 1) : text;
+  return sentence.length > 150 ? `${sentence.slice(0, 147)}…` : sentence;
+};
+function unpick() {
+  engine.unlabel("pick");
+  ref.tip.classList.remove("pinned", "on");
+  for (const node of ref.svg.querySelectorAll("[data-sel]")) node.removeAttribute("data-sel");
+}
+ctx.unpick = unpick;
+function pickCard(title, text, { more = false } = {}) {
+  return `<span class="pick-card"><button class="x" data-pick="close" aria-label="Cerrar">×</button><b>${title}</b>${text ? `<em>${text}</em>` : ""}${more ? '<button class="link" data-pick="more">Detalles en el panel ›</button>' : ""}</span>`;
+}
+ref.labels.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-pick]");
+  if (!button) return;
+  if (button.getAttribute("data-pick") === "more") {
+    if (ref.inspector.hasAttribute("hidden")) toggleInspector(true);
+    selectTab("obj");
+  }
+  unpick();
+  director.apply();
+  wakeLoop();
+});
+ref.tip.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-pick]");
+  if (!button) return;
+  if (button.getAttribute("data-pick") === "more") {
+    if (ref.inspector.hasAttribute("hidden")) toggleInspector(true);
+    selectTab("obj");
+  }
+  unpick();
+  wakeLoop();
+});
 function click(event) {
   const { cell, id } = hit(event);
-  for (const node of ref.svg.querySelectorAll("[data-sel]")) node.removeAttribute("data-sel");
+  unpick();
   if (!id) {
     selection = null;
-    if (ctx.tab !== "guide") renderInspector(ctx, null);
+    if (ctx.tab === "obj") renderInspector(ctx, null);
     director.apply();
     wakeLoop();
     return;
@@ -11777,15 +12003,30 @@ function click(event) {
   ctx.focus([id, `${id}-front`, ...(entry.parent ? [entry.parent] : [])]);
   if (cell && entry.cell) {
     const [i, j] = cell.getAttribute("data-cell").split(",").map(Number);
-    selection = { id: target, cell: entry.cell(i, j), obj: id, i, j };
+    const info = entry.cell(i, j);
+    selection = { id: target, cell: info, obj: id, i, j };
     if (entry.onCell) entry.onCell(i, j, ctx);
-  } else selection = target;
+    if (info) {
+      const row = info.rows.find(([key]) => /\[i,j\]|salida|resultado/i.test(key)) || info.rows.find(([key]) => /operación/.test(key));
+      const owner = nameOf(id);
+      ref.tip.innerHTML = pickCard(`${owner ? `${esc(owner[0])} · ` : ""}${info.title}`, row ? `${row[0]}: ${row[1]}` : "", { more: true });
+      const box = ref.stage.getBoundingClientRect();
+      ref.tip.style.left = `${Math.max(8, Math.min(box.width - 300, event.clientX - box.left - 120))}px`;
+      ref.tip.style.top = `${Math.max(8, event.clientY - box.top - 96)}px`;
+      ref.tip.classList.add("on", "pinned");
+    }
+  } else {
+    selection = target;
+    const info = infoFor(ctx, target);
+    const named = nameOf(id) || (info ? [info.title, firstSentence(info.what)] : [id, ""]);
+    engine.label("pick", { obj: id, dz: 6, cls: "tag pick", html: pickCard(esc(named[0]), esc(named[1]), { more: !!info }) });
+  }
   lesson.interrupt("inspección");
-  if (ref.inspector.hasAttribute("hidden")) toggleInspector(true);
-  selectTab("obj");
+  if (ctx.tab === "obj") renderInspector(ctx, selection);
   wakeLoop();
 }
 function hover(event) {
+  if (ref.tip.classList.contains("pinned")) return;
   const { cell, id } = hit(event);
   const entry = id && engine.objects.get(id);
   if (cell && entry && entry.cell) {
@@ -11803,34 +12044,15 @@ function hover(event) {
   }
   ref.tip.classList.remove("on");
 }
-ref.svg.addEventListener("pointerleave", () => ref.tip.classList.remove("on"));
+ref.svg.addEventListener("pointerleave", () => ref.tip.classList.contains("pinned") || ref.tip.classList.remove("on"));
 ctx.inspectFromList = (id) => {
   selection = id;
   renderInspector(ctx, id);
 };
 
-const HELP = [
-  ["Intro", "acción principal: «Ver la operación» o «Continuar»"],
-  ["→ / ←", "avanzar a la fase siguiente / volver a la anterior, con sus parámetros"],
-  ["R", "repetir esta operación"],
-  ["Espacio", "reproducción automática / pausa"],
-  ["N", "mostrar u ocultar el narrador escrito"],
-  ["X", "silenciar o reactivar los sonidos al instante"],
-  ["[ / ]", "capítulo anterior / siguiente"],
-  ["Q / E", "girar la cámara (acimut entre 0° y 90°)"],
-  ["W / S", "inclinar la cámara (elevación entre 18° y 62°)"],
-  ["+ / −", "acercar / alejar"],
-  ["C", "volver a la cámara guiada"],
-  ["I", "mostrar u ocultar el panel lateral"],
-  ["M", "alternar Aprender / Explorar"],
-  ["Esc", "volver a la escala anterior"],
-  ["0", "reiniciar"],
-  ["Mayús + arrastrar", "desplazar la cámara"],
-];
 ref.help.addEventListener("click", () => {
-  selection = { help: HELP };
-  toggleInspector(true);
-  selectTab("obj");
+  if (ref.inspector.hasAttribute("hidden")) toggleInspector(true);
+  selectTab("settings");
 });
 window.addEventListener("keydown", (event) => {
   if (event.target.closest && event.target.closest("input, select, textarea")) return;
@@ -11848,7 +12070,8 @@ window.addEventListener("keydown", (event) => {
   else if (key === "ArrowRight") act(() => lesson.next());
   else if (key === "ArrowLeft") act(() => lesson.prev());
   else if (key === "r" || key === "R") act(() => lesson.repeat());
-  else if (key === "n" || key === "N") act(() => setNarrator(!lesson.L.narrator));
+  else if (key === "n" || key === "N") act(() => toggleInspector());
+  else if (key === "v" || key === "V") act(() => setWindows(![...beatScoped.panels.values()].some((node) => !node.classList.contains("min"))));
   else if (key === "x" || key === "X") act(() => sound.setMuted(!sound.prefs.muted));
   else if (key === "]") act(() => lesson.goToChapter(Math.min(9, lesson.step.beat.c + 1)));
   else if (key === "[") act(() => lesson.goToChapter(Math.max(0, lesson.step.beat.c - (lesson.step.index > lesson.steps.findIndex((s) => s.beat.c === lesson.step.beat.c) ? 0 : 1))));
@@ -11861,8 +12084,8 @@ window.addEventListener("keydown", (event) => {
   else if (key === "c" || key === "C") act(() => (director.guidedCamera(), lesson.applyLook()));
   else if (key === "i" || key === "I") act(() => toggleInspector());
   else if (key === "m" || key === "M") act(() => setMode(director.S.mode === "tour" ? "free" : "tour"));
-  else if (key === "Escape") act(() => goBack());
-  else if (key === "0") act(() => ref.reset.click());
+  else if (key === "Escape") act(() => (engine.labels.has("pick") || ref.tip.classList.contains("pinned") || !ref.chapterList.hidden ? (unpick(), openChapters(false), director.apply()) : goBack()));
+  else if (key === "0") act(() => resetLesson());
   else if (key === "?" || key === "h" || key === "H") act(() => ref.help.click());
 });
 

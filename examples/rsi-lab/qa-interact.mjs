@@ -43,15 +43,32 @@ const settle = () => page.waitForFunction(() => window.__sceneQA.director.S.step
 
 const s0 = await state();
 check("abre en la pestaña Guía, paso 1.1, orientación", s0.tab === "guide" && s0.step === "1.1" && s0.phase === "orient", `${s0.tab} · ${s0.step} · ${s0.phase}`);
+const chrome = await page.evaluate(() => ({
+  top: document.querySelectorAll(".top button:not(.chapter-list button)").length,
+  transport: document.querySelectorAll(".transport button").length,
+  stageButtonsVisible: [...document.querySelectorAll(".stage button")].filter((b) => { const r = b.getBoundingClientRect(); const cs = getComputedStyle(b.closest(".autohide") || b); return r.width && cs.opacity !== "0" && getComputedStyle(b).visibility !== "hidden"; }).length,
+  legacy: !!document.querySelector(".disclaimer, .narrator-off, .sound-btn, .mode"),
+}));
+check("interfaz mínima: 3 botones arriba, 3 abajo y sin leyendas fijas sobre la escena", chrome.top === 3 && chrome.transport === 3 && !chrome.legacy, `arriba ${chrome.top} · abajo ${chrome.transport} · visibles en la escena ${chrome.stageButtonsVisible}`);
+check("«¿Qué cambió?» es una columna a la izquierda", await page.evaluate(() => { const r = document.querySelector(".rail").getBoundingClientRect(); const st = document.querySelector(".stage").getBoundingClientRect(); return r.left - st.left < 20 && r.height > r.width; }));
+
+await page.evaluate(() => window.__sceneQA.lesson.setWpm(140));
+await page.click(".play");
+await page.waitForTimeout(2600);
+const clockA = await page.evaluate(() => document.querySelector(".clock").textContent);
+await page.waitForTimeout(2000);
+const playing = await page.evaluate(() => ({ clock: document.querySelector(".clock").textContent, bar: parseFloat((document.querySelector(".g-wait i") || { style: {} }).style.width || "0") }));
+check("▶ avanza enseguida: el reloj corre y la barra de lectura se llena", clockA !== playing.clock && playing.bar > 0, `${clockA} → ${playing.clock} · barra ${playing.bar.toFixed(0)} %`);
+await page.click(".play");
 
 await go("3.2a");
 let s = await state();
 check("la orientación detiene la escena antes de la operación", s.phase === "orient" && !s.playing);
-await page.click(".learn-primary");
+await page.click(".transport .next");
 await page.waitForTimeout(150);
 const afterPerform = (await state()).phase;
 if (args.includes("--reduced")) check("movimiento reducido: «Ver la operación» salta sin animar a la operación o su resultado", afterPerform === "act" || afterPerform === "result", afterPerform);
-else check("«Ver la operación» pasa a la fase de operación", afterPerform === "act");
+else check("▶| «Ver la operación» pasa a la fase de operación", afterPerform === "act");
 await settle();
 await page.waitForTimeout(300);
 s = await state();
@@ -79,10 +96,13 @@ check("R repite la operación y vuelve a emitir sus eventos una vez", fired.leng
 
 await page.click('[data-act="simple"]');
 await page.waitForTimeout(150);
-check("«Explicámelo más simple» abre una explicación propia del concepto", /Más simple · Q, K y V/.test(await guide()));
+check("«Más simple» abre una explicación propia del concepto", /Más simple · Q, K y V/.test(await guide()));
+await page.click('.g-box [data-act="close-box"]');
+await page.waitForTimeout(150);
+check("la explicación desplegada se cierra con su botón ×", !(await page.$(".g-box")));
 await page.click('[data-act="example"]');
 await page.waitForTimeout(150);
-check("«Ver un ejemplo» muestra números pequeños con su procedencia", /Ejemplo/.test(await guide()) && /ejemplo ilustrativo|resultado calculado/.test(await guide()));
+check("«Un ejemplo» muestra números pequeños con su procedencia", /Ejemplo/.test(await guide()) && /ejemplo ilustrativo|resultado calculado/.test(await guide()));
 const term = await page.$(".guide .g-text:not(.dim) .term, .guide .g-text .term");
 if (term) {
   await term.click();
@@ -98,7 +118,26 @@ if (ref) {
   check("una referencia del texto señala el objeto en la escena", lbl);
 }
 
-await page.click(".mode button:nth-child(1)");
+const plane = await page.$('.plane[data-panel="attn"]');
+if (plane) {
+  await page.click('.plane[data-panel="attn"] h4 .x');
+  await page.waitForTimeout(150);
+  const closed = await page.evaluate(() => document.querySelector('.plane[data-panel="attn"]').classList.contains("min"));
+  await go("3.6b");
+  const still = await page.evaluate(() => document.querySelector('.plane[data-panel="attn"]')?.classList.contains("min"));
+  check("× cierra la ventana de datos y queda cerrada en el paso siguiente", closed && still);
+  await page.click('.plane[data-panel="attn"] .pl-toggle');
+  await page.waitForTimeout(150);
+  check("su título la vuelve a abrir", !(await page.evaluate(() => document.querySelector('.plane[data-panel="attn"]').classList.contains("min"))));
+  await page.keyboard.press("v");
+  await page.waitForTimeout(150);
+  const allMin = await page.evaluate(() => [...document.querySelectorAll(".plane")].every((p) => p.classList.contains("min")));
+  await page.keyboard.press("v");
+  check("V oculta y vuelve a mostrar todas las ventanas", allMin && !(await page.evaluate(() => document.querySelector('.plane[data-panel="attn"]').classList.contains("min"))));
+} else check("ventana de la cabeza presente en 3.6", false);
+check("la mesa de control empieza plegada", await page.evaluate(() => document.querySelector(".desk").classList.contains("min")));
+
+await go("3.6a");
 await page.evaluate(() => window.__sceneQA.lesson.setWpm(3000));
 await page.click(".play");
 await page.waitForTimeout(400);
@@ -111,8 +150,8 @@ await page.click(".play");
 await page.waitForTimeout(200);
 const paused = await state();
 await page.waitForTimeout(1500);
-const still = await state();
-check("pausar congela el punto actual", !still.playing && still.step === paused.step && Math.abs(still.t - paused.t) < 1e-9);
+const frozenState = await state();
+check("pausar congela el punto actual", !frozenState.playing && frozenState.step === paused.step && Math.abs(frozenState.t - paused.t) < 1e-9);
 
 await go("3.1");
 await page.click(".play");
@@ -129,17 +168,22 @@ if (cellBox) {
   await page.mouse.move(cellBox.x, cellBox.y);
   await page.waitForTimeout(250);
   const tip = await page.evaluate(() => (document.querySelector(".tip.on") || {}).textContent || "");
-  check("tooltip de celda muestra operandos y resultado", /Q_i·K_j/.test(tip) && /A\[i,j\]/.test(tip), tip.slice(0, 60));
+  check("pasar por una celda muestra operandos y resultado", /Q_i·K_j/.test(tip) && /A\[i,j\]/.test(tip), tip.slice(0, 60));
   await page.mouse.click(cellBox.x, cellBox.y);
   await page.waitForTimeout(300);
-  check("inspeccionar una celda pausa y abre la ficha", !(await state()).playing && /celda 3,1/.test(await page.evaluate(() => document.querySelector(".insp-body").textContent)));
+  const card = await page.evaluate(() => (document.querySelector(".tip.pinned .pick-card") || {}).textContent || "");
+  const tab = (await state()).tab;
+  check("clic en una celda: rótulo breve encima, sin cambiar el panel, y la lección se pausa", card.length > 0 && tab === "guide" && !(await state()).playing, card.slice(0, 50));
+  await page.click(".tip.pinned [data-pick=more]");
+  await page.waitForTimeout(200);
+  check("«Detalles en el panel» abre la ficha de la celda", /celda 3,1/.test(await guide()));
 } else check("celda S[3,1] presente", false);
+await page.click("[data-tab=guide]");
 
 if (!args.includes("--reduced")) {
-  await page.click("[data-tab=guide]");
   await go("3.2a");
   await page.evaluate(() => (window.__sceneQA.director.S.speed = 0.25));
-  await page.click(".learn-primary");
+  await page.click(".transport .next");
   await page.waitForTimeout(250);
   const midT = await page.evaluate(() => window.__sceneQA.director.S.t);
   await page.click(".insp-body .g-text .term");
@@ -147,7 +191,7 @@ if (!args.includes("--reduced")) {
   const frozen = await page.evaluate(() => ({ phase: window.__sceneQA.lesson.L.phase, frozen: window.__sceneQA.lesson.L.frozen, t: window.__sceneQA.director.S.t, moving: window.__sceneQA.director.S.stepTo !== null }));
   check("sin reproducción automática, abrir el glosario a mitad de la operación la congela en su punto", frozen.phase === "act" && frozen.frozen && !frozen.moving && frozen.t >= midT, `t = ${frozen.t.toFixed(3)}`);
   await page.evaluate(() => (window.__sceneQA.director.S.speed = 1));
-  await page.click(".learn-primary");
+  await page.click(".transport .next");
   await settle();
   await page.waitForTimeout(300);
   check("«Seguir la operación» la completa desde ese punto", (await state()).phase === "result");
@@ -162,19 +206,30 @@ const evalBox = await page.evaluate(() => {
 });
 await page.mouse.click(evalBox.x, evalBox.y);
 await page.waitForTimeout(300);
-const insp = await page.evaluate(() => document.querySelector(".insp-body").textContent);
-check("clic en un módulo abre su ficha con entradas y salidas", /Evaluador/.test(insp) && /Entradas/.test(insp));
+const pickText = await page.evaluate(() => (document.querySelector(".lbl.pick") || {}).textContent || "");
+check("clic en un módulo: su nombre y qué hace, encima de él", /Evaluador/.test(pickText) && /criterio/.test(pickText) && (await state()).tab === "guide", pickText.slice(0, 60));
+await page.click(".lbl.pick [data-pick=more]");
+await page.waitForTimeout(200);
+const insp = await guide();
+check("«Detalles en el panel» abre la ficha con entradas y salidas", /Evaluador/.test(insp) && /Entradas/.test(insp));
 const goBtn = await page.$(".insp-body [data-go]");
 if (goBtn) {
   await goBtn.click();
   await page.waitForTimeout(200);
   check("recorrer entradas/salidas desde la ficha", !/^Evaluador$/.test(await page.evaluate(() => document.querySelector(".insp-body h2").textContent)));
 }
-await page.click('[data-tab="checks"]');
+await page.mouse.click(evalBox.x, evalBox.y);
+await page.waitForTimeout(200);
+await page.keyboard.press("Escape");
+await page.waitForTimeout(200);
+check("Esc cierra el rótulo", !(await page.$(".lbl.pick")));
+await page.click('[data-tab="refs"]');
+await page.click(".live-checks summary");
+await page.click("[data-run-checks]");
 await page.waitForTimeout(2500);
-const checks = await page.evaluate(() => document.querySelector(".insp-body").textContent);
+const checks = await guide();
 const m = checks.match(/(\d+)\/(\d+) correctas/);
-check("verificación en vivo: todas correctas", m && m[1] === m[2], m ? m[0] : checks.slice(0, 60));
+check("verificación en vivo (Referencias): todas correctas", m && m[1] === m[2], m ? m[0] : checks.slice(0, 60));
 await page.click('[data-tab="guide"]');
 
 const cam0 = (await state()).camera;
@@ -184,14 +239,29 @@ const box = await page.evaluate(() => {
 });
 await page.mouse.move(box.x, box.y + 150);
 await page.mouse.down();
-for (let i = 1; i <= 10; i++) await page.mouse.move(box.x + i * 12, box.y + 150 + i * 3);
+for (let i = 1; i <= 10; i++) await page.mouse.move(box.x - i * 30, box.y + 150 + i * 3);
 await page.mouse.up();
 await page.waitForTimeout(300);
 const cam1 = (await state()).camera;
-check("arrastrar gira la cámara", Math.abs(cam1.azimuth - cam0.azimuth) > 5, `acimut ${cam0.azimuth.toFixed(1)} → ${cam1.azimuth.toFixed(1)}`);
+check("arrastrar desplaza la vista sin girarla", Math.hypot(cam1.target[0] - cam0.target[0], cam1.target[1] - cam0.target[1]) > 5 && Math.abs(cam1.azimuth - cam0.azimuth) < 1e-9);
+await page.mouse.move(box.x, box.y + 150);
+await page.mouse.down({ button: "right" });
+for (let i = 1; i <= 10; i++) await page.mouse.move(box.x + i * 12, box.y + 150);
+await page.mouse.up({ button: "right" });
+await page.waitForTimeout(300);
+const cam2 = (await state()).camera;
+check("botón derecho + arrastrar gira", Math.abs(cam2.azimuth - cam1.azimuth) > 5, `acimut ${cam1.azimuth.toFixed(1)} → ${cam2.azimuth.toFixed(1)}`);
 await page.mouse.wheel(0, -400);
 await page.waitForTimeout(300);
-check("rueda acerca", (await state()).camera.scale > cam1.scale * 1.2);
+const cam3 = (await state()).camera;
+check("rueda acerca", cam3.scale > cam2.scale * 1.2);
+await page.mouse.move(box.x, box.y);
+await page.mouse.down();
+for (let i = 1; i <= 20; i++) await page.mouse.move(box.x + i * 60, box.y);
+await page.mouse.up();
+await page.waitForTimeout(200);
+const cam4 = (await state()).camera;
+check("con zoom y panel abierto se puede seguir desplazando sin tope", Math.hypot(cam4.target[0] - cam3.target[0], cam4.target[1] - cam3.target[1]) > 20);
 check("aparece «Volver a la explicación»", !!(await page.$(".back-tour.on")));
 await page.click(".back-tour.on");
 await page.waitForFunction(() => !window.__sceneQA.director.S.camAnim, null, { timeout: 8000 }).catch(() => {});
@@ -199,22 +269,40 @@ check("«Volver a la explicación» restablece la cámara guiada", Math.abs((awa
 
 await page.keyboard.press("n");
 await page.waitForTimeout(250);
-const hidden = await page.evaluate(() => ({ app: document.getElementById("app").classList.contains("no-narrator"), badge: getComputedStyle(document.querySelector(".narrator-off")).display !== "none", caption: getComputedStyle(document.querySelector(".caption")).display === "none" }));
-check("N oculta el narrador escrito y deja un aviso para mostrarlo", hidden.app && hidden.badge && hidden.caption);
-await shot("i-narrador-oculto");
+check("N oculta el panel (y con él el narrador)", await page.evaluate(() => document.querySelector(".inspector").hasAttribute("hidden") && document.getElementById("app").classList.contains("no-narrator")));
+await shot("i-panel-oculto");
+await go("3.2a");
+await page.click(".play");
+await page.waitForTimeout(4200);
+s = await state();
+check("con el panel oculto, ▶ no espera el tiempo de lectura", s.phase !== "orient" || s.step !== "3.2a", `${s.step} · ${s.phase}`);
+await page.click(".play");
 await page.keyboard.press("n");
 await page.waitForTimeout(250);
 check("N vuelve a mostrarlo", !(await page.evaluate(() => document.getElementById("app").classList.contains("no-narrator"))) && /Capítulo/.test(await guide()));
 
+await page.click(".chapter-btn");
+await page.waitForTimeout(150);
+const listOpen = await page.evaluate(() => !document.querySelector(".chapter-list").hidden);
+await page.click('.chapter-list [data-chapter="4"]');
+await page.waitForTimeout(400);
+s = await state();
+check("el menú de capítulos lista los 10 y lleva al elegido", listOpen && s.chapter === 5 && (await page.evaluate(() => document.querySelector(".chapter-list").hidden)), `capítulo ${s.chapter}`);
+
 await go("3.1");
+await page.click(".desk .pl-toggle");
+await page.waitForTimeout(150);
 const text1 = await guide();
 await page.click('.desk .seg button:nth-child(2)');
 await page.waitForTimeout(300);
 const text2 = await guide();
 check("cambiar la cabeza recalcula el texto del narrador", /cabeza 1/.test(text1) && /cabeza 2/.test(text2) && text1 !== text2);
 await page.click('.desk .seg button:nth-child(1)');
+await page.click(".desk h3 .x");
+check("la mesa de control se cierra con ×", await page.evaluate(() => document.querySelector(".desk").classList.contains("min")));
 
 await go("2.4a");
+await page.click(".desk .pl-toggle");
 const x0Before = await page.evaluate(() => window.__sceneQA.store.trace().X0[3].join(","));
 const sel = await page.$('.desk select[aria-label="Token en la posición 3"]');
 if (sel) {
@@ -236,10 +324,15 @@ if (eta) {
   check("η desde la mesa de control actualiza el narrador", /η = 0.2/.test(await guide()), `η = ${(await state()).user.eta}`);
 }
 
-await page.click(".transport .icon-btn");
+await page.click(".top .icon-btn[aria-label='Ajustes y atajos']");
+await page.waitForTimeout(200);
+const settings = await guide();
+check("«?» abre Ajustes: sonido, ritmo, ventanas, reinicio y atajos", /Activar sonidos/.test(settings) && /lectura/.test(settings) && /ventanas de datos/.test(settings) && /Teclado/.test(settings));
+await page.click('[data-set="reset"]');
 await page.waitForTimeout(400);
 s = await state();
-check("reiniciar vuelve al paso 1.1 y a los valores iniciales", s.step === "1.1" && s.user.text === "def f(x):" && s.user.eta === 0.5);
+check("reiniciar (en Ajustes) vuelve al paso 1.1 y a los valores iniciales", s.step === "1.1" && s.user.text === "def f(x):" && s.user.eta === 0.5);
+await page.click('[data-tab="guide"]');
 
 await page.keyboard.press("i");
 await page.waitForTimeout(200);
