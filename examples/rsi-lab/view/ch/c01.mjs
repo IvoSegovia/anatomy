@@ -4,7 +4,7 @@ import { esc, prov } from "../helpers.mjs";
 import { el } from "../ui.mjs";
 
 const MODULES = [
-  ["modelo", "Modelo θ", "calcula una distribución sobre el siguiente token; sus parámetros no cambian en inferencia"],
+  ["modelo", "Modelo θ", "calcula una distribución sobre el siguiente token; en esta demostración no resuelve las tareas ni propone cambios"],
   ["contexto", "Contexto", "entradas, tokens y activaciones: lo que el modelo ve en cada paso"],
   ["herramientas", "Herramientas", "ejecutan pruebas y leen registros: producen observaciones externas"],
   ["codigo", "Código del agente", "gestor de contexto y estrategia de experimentos: lo que aquí se modificará"],
@@ -31,7 +31,7 @@ export function logPanelHtml(task, run, { upto = Infinity } = {}) {
     const mark = state === "incluida" || state === "recortada" ? (ev ? '<span class="ok-t">●</span>' : '<span class="in-t">●</span>') : ev ? '<span class="bad-t">✗</span>' : '<span class="off-t">·</span>';
     const why = state === "incluida" ? "" : state === "recortada" ? " (recortada)" : state === "duplicada" ? " (duplicada)" : state === "tipo" ? " (tipo descartado)" : " (sin presupuesto)";
     const style = ev ? "color:var(--ink)" : "";
-    return `<div style="${style}">${mark} ${esc(line.text)}<span style="color:var(--ink-4)">${why}</span></div>`;
+    return `<div style="${style}"><span style="color:var(--ink-4)">L${line.index}</span> ${mark} ${esc(line.text)}<span style="color:var(--ink-4)">${why}</span></div>`;
   });
   return `<div style="font:10.5px/1.45 var(--mono);max-height:230px;overflow:auto;color:var(--ink-3)">${rows.join("")}</div>`;
 }
@@ -155,7 +155,9 @@ export const chapter1 = {
         for (const k of [1, 2, 3]) ctx.state(`route${k}`, { off: k !== r || !ctx.user.loops[k] });
         const stops = ctx.ROUTES[r].stops;
         ctx.focus([`route${r}`, ...stops, ...(stops.includes("modelo") ? ["modelo-front"] : [])]);
-        if (ctx.still.matches) return;
+        if (r === 1) ctx.tag("lb-concept", "modelo", "conexión conceptual · aquí diagnostica un solucionador de reglas", { dz: M.modelo.h + 10, role: "off" });
+        if (r === 2) ctx.tag("lb-rules", "proponente", "proponente de reglas programadas", { dz: M.proponente.h + 8, role: "g" });
+        if (ctx.still.matches || t <= 0.001) return;
         for (let i = 0; i < 3; i++) ctx.pulse(i, { route: r, s: (t * 1.4 + i / 3) % 1, role: ctx.ROUTES[r].role === "hi" ? "hi" : ctx.ROUTES[r].role });
       },
     })),
@@ -197,7 +199,7 @@ export const chapter1 = {
       scale: "model",
       camera: () => rackCamera(1),
       camSeconds: 2.4,
-      caption: "La cámara entra en el modelo. ¿De dónde salen sus propuestas? Las bandejas del bastidor suben fuera del gabinete: <b>vista explosionada</b>.",
+      caption: "La cámara entra en el modelo: las bandejas del bastidor suben fuera del gabinete (<b>vista explosionada</b>). En esta demostración el modelo no produce las propuestas del agente.",
       changed: { contexto: "activo" },
       more: `<p>A partir de aquí el mismo laboratorio se ve a escala <b>modelo</b>: cada bandeja del bastidor es una etapa del Transformer didáctico y conserva su identidad al subir.</p>`,
       pose(ctx, t) {

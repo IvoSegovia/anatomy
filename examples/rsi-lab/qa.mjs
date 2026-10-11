@@ -29,27 +29,26 @@ page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
 await page.goto(pathToFileURL(join(HERE, "rsi-lab.html")).href);
 await page.waitForTimeout(800);
 
-const beats = await page.evaluate(() => window.__sceneQA.beats());
+const steps = await page.evaluate(() => window.__sceneQA.steps());
 const total = await page.evaluate(() => window.__sceneQA.total());
-console.log(`${beats.length} pasos · duración guiada ${(total / 60).toFixed(1)} min a 1×`);
+const missing = await page.evaluate(() => window.__sceneQA.missing());
+console.log(`${steps.length} pasos de lectura · ${missing.length} sin guion propio · lección estimada ${(total / 60).toFixed(1)} min a 140 ppm`);
 const shots = [];
-for (let i = 0; i < beats.length; i++) {
-  const id = beats[i];
-  const chapter = Number(id.split(".")[0]);
+for (let i = 0; i < steps.length; i++) {
+  const step = steps[i];
+  const chapter = Number(step.beat.split(".")[0]);
   if (only && chapter !== only) continue;
-  await page.evaluate((index) => {
-    const d = window.__sceneQA.director;
-    d.seek(index, 1, { forceEnter: true });
-    d.flyTo(d.cameraFor(d.beat), 0);
-    window.__sceneQA.ctx.wake();
-  }, i);
-  await page.waitForTimeout(chapter === 8 ? 900 : 260);
-  const file = join(out, `beat-${id.replace(/\./g, "_")}.png`);
-  await page.screenshot({ path: file });
-  shots.push({ id, file });
+  const phases = step.words.result ? ["orient", "result"] : ["orient"];
+  for (const phase of phases) {
+    await page.evaluate(([index, ph]) => window.__sceneQA.go(index, ph), [i, phase]);
+    await page.waitForTimeout(chapter === 8 ? 900 : 300);
+    const file = join(out, `step-${step.id.replace(/\./g, "_")}-${phase === "orient" ? "o" : "r"}.png`);
+    await page.screenshot({ path: file });
+    shots.push({ id: `${step.id} ${phase === "orient" ? "orientación" : "resultado"}`, chapter, file });
+  }
 }
 const byChapter = {};
-for (const s of shots) (byChapter[s.id.split(".")[0]] ||= []).push(s);
+for (const s of shots) (byChapter[s.chapter] ||= []).push(s);
 for (const [c, list] of Object.entries(byChapter)) {
   const html = `<html><body style="margin:0;background:#000;display:grid;grid-template-columns:repeat(3,1fr);gap:4px">${list.map((s) => `<div style="position:relative"><img src="${pathToFileURL(s.file).href}" style="width:100%;display:block"><span style="position:absolute;left:6px;top:4px;color:#fff;font:14px monospace;background:#000a;padding:1px 4px">${s.id}</span></div>`).join("")}</body></html>`;
   const sheet = join(out, `sheet-${c}.html`);

@@ -78,29 +78,33 @@ const roleWord = { in: "entrada / activación", w: "peso / parámetro", g: "grad
 
 export function renderInspector(ctx, selection) {
   const body = ctx.ref.inspBody;
-  const tab = ctx.tab || "obj";
-  if (tab === "notation") {
-    body.innerHTML = `<h2>Notación</h2><p>Cada símbolo se define antes de usarse en la escena. Los colores codifican el papel de cada objeto y siempre van con etiqueta.</p>
-    <div class="io" style="grid-template-columns:auto 1fr">${["in", "w", "g", "ok", "bad", "off"].map((r) => `<dt><span class="chip" style="height:18px"><i style="background:var(--c-${r})"></i></span></dt><dd>${roleWord[r]}</dd>`).join("")}</div>
-    <h3>Símbolos</h3><dl class="io">${NOTATION.map(([a, b]) => `<dt class="kv">${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>
-    <h3>Procedencia de cada cifra</h3><p>${prov("local")} se calcula en esta página y se puede comprobar. ${prov("cita")} proviene de un artículo enlazado. ${prov("sim")} o ${prov("ilus")} resulta de reglas declaradas por esta demostración, no de un sistema real.</p>`;
+  const tab = ctx.tab || "guide";
+  if (tab === "guide") {
+    if (ctx.lesson) ctx.lesson.render();
     return;
   }
-  if (tab === "checks") {
-    body.innerHTML = `<h2>Verificación en vivo</h2><p>Comprobaciones ejecutadas ahora en tu navegador con el mismo código que mueve la escena.</p><p class="kv">calculando…</p>`;
-    setTimeout(() => {
-      const results = liveChecks(ctx.store);
-      body.innerHTML = `<h2>Verificación en vivo</h2><p>Comprobaciones ejecutadas ahora en tu navegador con el mismo código que mueve la escena. La batería completa (44 pruebas) está en <span class="kv">verify.mjs</span>.</p><ul class="checks">${results.map((r) => `<li class="${r.ok ? "" : "x"}">${esc(r.name)}${r.detail ? ` <span class="kv">(${esc(r.detail)})</span>` : ""}</li>`).join("")}</ul><p class="kv">${results.filter((r) => r.ok).length}/${results.length} correctas</p>`;
-    }, 30);
+  if (tab === "settings") {
+    if (ctx.renderSettings) ctx.renderSettings();
     return;
   }
   if (tab === "refs") {
-    body.innerHTML = `<h2>Fuentes primarias</h2><div class="refs">${SOURCES.map((s) => `<p><a href="${s.url}" target="_blank" rel="noopener">${esc(s.title)}</a><br><span class="kind">${esc(s.kind)}</span> · ${esc(s.use)}</p>`).join("")}</div>
-    <h3>Nota sobre verificación</h3><p>Las cifras citadas en la escena 9 se contrastaron con los resúmenes publicados de cada artículo. Si se reutilizan fuera de esta experiencia, conviene comprobarlas contra el PDF.</p>`;
-    return;
-  }
-  if (selection && selection.help) {
-    body.innerHTML = `<h2>Atajos de teclado</h2><dl class="io">${selection.help.map(([a, b]) => `<dt class="kv">${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl><h3>Ratón y táctil</h3><p>Arrastrar: girar. Mayús + arrastrar o botón derecho: desplazar. Rueda o pellizco: zoom. Clic en un objeto o en una celda: inspeccionar.</p>`;
+    body.innerHTML = `<h2>Referencias</h2>
+    <details open><summary>Fuentes primarias</summary><div class="refs">${SOURCES.map((s) => `<p><a href="${s.url}" target="_blank" rel="noopener">${esc(s.title)}</a><br><span class="kind">${esc(s.kind)}</span> · ${esc(s.use)}</p>`).join("")}</div>
+    <p class="kv">Las cifras citadas en el capítulo 9 se contrastaron con los resúmenes publicados de cada artículo.</p></details>
+    <details><summary>Notación y colores</summary><p>Cada símbolo se define antes de usarse en la escena. Los colores codifican el papel de cada objeto y siempre van con etiqueta. La posición de una matriz en la escena es conceptual: no es su ubicación física en una GPU.</p>
+    <div class="io" style="grid-template-columns:auto 1fr">${["in", "w", "g", "ok", "bad", "off"].map((r) => `<dt><span class="chip" style="height:18px"><i style="background:var(--c-${r})"></i></span></dt><dd>${roleWord[r]}</dd>`).join("")}</div>
+    <dl class="io">${NOTATION.map(([a, b]) => `<dt class="kv">${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>
+    <p>${prov("local")} se calcula en esta página y se puede comprobar. ${prov("cita")} proviene de un artículo enlazado. ${prov("sim")} o ${prov("ilus")} resulta de reglas declaradas por esta demostración, no de un sistema real.</p></details>
+    <details class="live-checks"><summary>Verificación en vivo</summary><p>Comprobaciones ejecutadas en tu navegador con el mismo código que mueve la escena. La batería completa está en <span class="kv">verify.mjs</span>.</p><div class="checks-out"><button class="btn" data-run-checks>Ejecutar ahora</button></div></details>`;
+    const run = body.querySelector("[data-run-checks]");
+    run.addEventListener("click", () => {
+      const out = body.querySelector(".checks-out");
+      out.innerHTML = '<p class="kv">calculando…</p>';
+      setTimeout(() => {
+        const results = liveChecks(ctx.store);
+        out.innerHTML = `<ul class="checks">${results.map((r) => `<li class="${r.ok ? "" : "x"}">${esc(r.name)}${r.detail ? ` <span class="kv">(${esc(r.detail)})</span>` : ""}</li>`).join("")}</ul><p class="kv">${results.filter((r) => r.ok).length}/${results.length} correctas</p>`;
+      }, 30);
+    });
     return;
   }
   const beat = ctx.beat;
@@ -138,5 +142,5 @@ export function renderInspector(ctx, selection) {
     ${beat.chapter.question ? `<p><b style="color:var(--ink)">${beat.chapter.question}</b></p>` : ""}
     ${more || `<p>${beat.title || ""}</p>`}
     ${beat.refs ? `<h3>Fuentes</h3><div class="refs">${beat.refs.map((id) => SOURCES.find((s) => s.id === id)).filter(Boolean).map((s) => `<p><a href="${s.url}" target="_blank" rel="noopener">${esc(s.title)}</a></p>`).join("")}</div>` : ""}
-    <p class="kv" style="margin-top:14px;color:var(--ink-4)">Clic en cualquier objeto o celda para inspeccionarlo.</p>`;
+    <p class="kv" style="margin-top:14px;color:var(--ink-4)">Clic en cualquier objeto o celda de la escena: su nombre aparece encima y el detalle, aquí.</p>`;
 }

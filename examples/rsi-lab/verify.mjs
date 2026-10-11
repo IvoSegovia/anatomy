@@ -5,10 +5,19 @@ import { runReflection } from "./model/reflection.mjs";
 import { softmax } from "./model/linalg.mjs";
 import { gradLogPi, runReinforce, ppoObjective, ppoGrad, sampleBatch, rewardTable } from "./model/rl.mjs";
 import { runEvolution, TRAIN_SEQS, HOLDOUT_SEQS } from "./model/evo.mjs";
-import { SPLITS, makeSplit, VERSIONS, evaluate, pairedBootstrap, verdictOf, makeAccessLog, makeTask } from "./model/agent.mjs";
-import { runLoop } from "./model/loop.mjs";
+import { SPLITS, makeSplit, VERSIONS, evaluate, pairedBootstrap, verdictOf, makeTask, observeRuns } from "./model/agent.mjs";
+import { runLoop, makeGate, makeLedger, analyse, propose, reportOf, SEARCH_BUDGET } from "./model/loop.mjs";
+import { makeRng } from "./model/rng.mjs";
+import { runTask } from "./model/agent.mjs";
+import { optionsOf } from "./model/limits.mjs";
 import { runScenario, SCENARIOS } from "./model/limits.mjs";
 import { fingerprint } from "./model/rng.mjs";
+import { makeStore, DEFAULTS } from "./view/store.mjs";
+import { CHAPTERS } from "./view/chapters.mjs";
+import { SCRIPTS } from "./view/guide/index.mjs";
+import { CONCEPTS } from "./view/guide/concepts.mjs";
+import { wordsOf } from "./view/lesson.mjs";
+import { SOUND_OPS } from "./view/sound.mjs";
 
 const results = [];
 const check = (name, ok, detail = "") => results.push({ name, ok: !!ok, detail });
@@ -158,12 +167,6 @@ const seedsOf = (list) => new Set(list.map((t) => t.seed));
 const allSeeds = Object.values(sets).map(seedsOf);
 check("desarrollo, validación, prueba y auditoría disjuntos", allSeeds.every((a, i) => allSeeds.every((b, j) => i === j || [...a].every((s) => !b.has(s)))));
 check("tareas reproducibles (misma semilla, mismo registro)", JSON.stringify(makeTask(123)) === JSON.stringify(makeTask(123)));
-const log = makeAccessLog();
-log.read("proponente", "dev", "registros completos");
-log.read("proponente", "valid", "agregados");
-let blocked = false;
-try { log.read("proponente", "test", "soluciones"); } catch { blocked = true; }
-check("el proponente no puede leer la prueba reservada", blocked);
 const ev = Object.fromEntries(["v0", "v1", "v2", "v3"].map((v) => [v, evaluate(VERSIONS[v], sets.valid)]));
 const v01 = verdictOf(pairedBootstrap(ev.v0, ev.v1));
 const v12 = verdictOf(pairedBootstrap(ev.v1, ev.v2));
@@ -173,16 +176,171 @@ check("versiones comparadas con las mismas tareas y presupuesto", ["v1", "v2", "
 check("bootstrap reproducible", JSON.stringify(pairedBootstrap(ev.v1, ev.v3)) === JSON.stringify(pairedBootstrap(ev.v1, ev.v3)));
 
 const loopPrint = paramPrint(params);
+const splitOfSeed = (seed) => ({ 1: "desarrollo", 2: "validación", 3: "prueba", 4: "auditoría", 7: "prueba" })[Math.floor(seed / 100)];
+function observed(options) {
+  const count = { desarrollo: 0, validación: 0, auditoría: 0, prueba: 0 };
+  const order = [];
+  const proposals = [];
+  const stop = observeRuns((task) => {
+    count[splitOfSeed(task.seed)] += 1;
+    order.push(splitOfSeed(task.seed));
+  });
+  const run = runLoop({ ...options, probe: { propose: (input) => (proposals.push(input), order.push("propuesta")), freeze: () => order.push("fijada") } });
+  stop();
+  return { run, count, order, proposals };
+}
+const sameBook = (o) => ["desarrollo", "validación", "auditoría", "prueba"].every((k) => o.count[k] === o.run.ledger[k]);
+const grid = [];
+for (let seed = 1; seed <= 12; seed++) for (const mode of ["A", "B"]) grid.push(observed({ mode, seed }));
+check("contabilidad = ejecuciones observadas en runTask (12 semillas × A y B)", grid.every(sameBook), `${grid.length} corridas, desglose por conjunto`);
+check(`búsqueda (desarrollo + validación) ≤ ${SEARCH_BUDGET} en todas las corridas`, grid.every((o) => o.count.desarrollo + o.count.validación <= SEARCH_BUDGET), `máx ${Math.max(...grid.map((o) => o.count.desarrollo + o.count.validación))}`);
+const s12 = ["A", "B"].map((mode) => observed({ mode, seed: 12, budget: 900 }));
+check("semilla 12 con límite 900: lo ejecutado ya no supera el límite", s12.every((o) => sameBook(o) && o.count.desarrollo + o.count.validación <= 900), s12.map((o) => `${o.run.mode} ${o.count.desarrollo}+${o.count.validación}`).join(" · "));
+const small = [0, 50, 95, 96, 150, 200, 333].flatMap((budget) => ["A", "B"].map((mode) => ({ budget, o: observed({ mode, seed: 6, budget }) })));
+check("límites pequeños: nunca se excede y no hay lotes parciales", small.every(({ budget, o }) => sameBook(o) && o.run.ledger.search <= budget && o.run.cycles.every((c) => c.after.desarrollo - c.before.desarrollo === 16 && c.after.validación - c.before.validación === (c.built ? 2 * c.strategy.nVal : 0))), small.map(({ budget, o }) => `${budget}:${o.run.cycles.length}`).join(" "));
+const perCycle = grid.flatMap((o) => o.run.cycles);
+const resized = perCycle.filter((c) => c.strategy.nVal !== 40);
+check("validación de tamaño cambiante (B): se cobra 2 × nVal efectivo", resized.length > 0 && perCycle.every((c) => c.after.validación - c.before.validación === (c.built ? 2 * c.strategy.nVal : 0)), `${resized.length} ciclos con nVal ≠ 40`);
+const invalid = perCycle.filter((c) => !c.built);
+check("candidata inválida: se cobra el desarrollo y se libera la validación", invalid.length > 0 && invalid.every((c) => c.after.validación === c.before.validación && c.after.desarrollo - c.before.desarrollo === 16), `${invalid.length} candidatas inválidas`);
+check("cada ciclo empieza sólo si cabe completo", perCycle.every((c) => c.before.limit - c.before.search >= c.reserved));
+const testAfterFreeze = (o) => {
+  const at = o.order.indexOf("fijada");
+  return at >= 0 && !o.order.slice(0, at).includes("prueba") && o.order.slice(at).includes("prueba") && !o.order.slice(at).includes("propuesta");
+};
+check("prueba reservada: sólo después de fijar la versión final (orden observado)", grid.every(testAfterFreeze));
+check("el proponente sólo recibe informes de tareas de desarrollo", grid.every((o) => o.proposals.every((p) => p.reportSeeds.every((seed) => splitOfSeed(seed) === "desarrollo"))), `${grid.reduce((t, o) => t + o.proposals.length, 0)} propuestas observadas`);
+const allowed = { ejecutor: ["desarrollo"], proponente: ["desarrollo"], selector: ["validación"], auditor: ["auditoría"], "evaluador final": ["prueba"], protocolo: [null] };
+check("registro de accesos de la ruta real: cada consumidor sólo toca lo suyo", grid.every((o) => o.run.access.every((a) => allowed[a.consumer] && allowed[a.consumer].includes(a.split) && (a.split !== "prueba" || a.phase === "final"))));
+let refused = false;
+try {
+  makeGate({ ledger: makeLedger(100) }).run("evaluador final", "prueba", VERSIONS.v0);
+} catch {
+  refused = true;
+}
+let refused2 = false;
+try {
+  makeGate({ ledger: makeLedger(100) }).run("selector", "prueba", VERSIONS.v0);
+} catch {
+  refused2 = true;
+}
+check("la misma puerta que usa runLoop rechaza la prueba durante la búsqueda", refused && refused2);
+const counterfactual = ["A", "B"].map((mode) => [runLoop({ mode, seed: 5 }), runLoop({ mode, seed: 5, testBase: 700 })]);
+const trajectory = (r) => JSON.stringify(r.cycles.map((c) => [c.parent, c.proposal, c.promoted, c.active, c.spent]));
+check("cambiar sólo la prueba reservada no cambia propuestas, promociones ni versión elegida", counterfactual.every(([a, b]) => trajectory(a) === trajectory(b) && a.active.id === b.active.id), counterfactual.map(([a, b]) => `${a.mode}: prueba ${a.finalTest.toFixed(2)} → ${b.finalTest.toFixed(2)} con otra prueba`).join(" · "));
 const A = runLoop({ mode: "A", seed: 3 });
 const B = runLoop({ mode: "B", seed: 3 });
-check("A y B con el mismo presupuesto total", A.spent <= 900 && B.spent <= 900, `${A.spent} / ${B.spent}`);
 check("semillas compatibles: el primer ciclo propone lo mismo", A.cycles[0].proposal === B.cycles[0].proposal && A.cycles[0].parent === B.cycles[0].parent);
 check("el bucle no toca θ del modelo base", paramPrint(params) === loopPrint);
-const sc = runScenario("dominio").result;
-check("caso límite: puntuación visible sube y auditoría baja", sc.cycles.some((c) => c.promoted && c.visible > c.visibleActive && c.auditAfter < c.auditBefore));
-check("volver a la última versión válida recupera la auditoría", sc.lastValid.audit > sc.finalAudit);
+
+const devTasks = makeSplit(SPLITS.dev.base, SPLITS.dev.count);
+const failingReports = devTasks.map((task) => ({ task, run: runTask(task, VERSIONS.v0) })).filter((x) => !x.run.success).map(({ task, run }) => reportOf(task, run, "v0"));
+const seenBy = (genome) => analyse(failingReports, genome);
+const blind = seenBy(VERSIONS.v0);
+const sighted = seenBy(VERSIONS.v1);
+check("analista v0 no ve ningún diagnóstico; v1 sí (mismos informes)", blind.visible === 0 && sighted.visible > 0, `${blind.visible} frente a ${sighted.visible} de ${sighted.total} líneas de diagnóstico`);
+const parent = { id: "v0", genome: { ...VERSIONS.v0, weights: { ...VERSIONS.v0.weights } } };
+const pBlind = propose(parent, blind, makeRng(9), new Set());
+const pSighted = propose(parent, sighted, makeRng(9), new Set());
+check("la propuesta sale de lo visible: sin diagnóstico es aleatoria, con diagnóstico es dirigida", pBlind.rule === "aleatoria" && pSighted.rule !== "aleatoria" && pSighted.note !== pBlind.note, `${pBlind.note} · ${pSighted.note}`);
+const stripped = failingReports.map((lines) => Object.assign(lines.map((e) => (e.tags.diag ? { ...e, text: "DEBUG diag" } : e)), { source: lines.source }));
+const pStripped = propose(parent, analyse(stripped, VERSIONS.v1), makeRng(9), new Set());
+check("contrafactual: borrar el texto del diagnóstico vuelve aleatoria la propuesta", pStripped.rule === "aleatoria");
+const bDirected = grid.filter((o) => o.run.mode === "B").flatMap((o) => o.run.cycles).filter((c) => c.rule && c.rule !== "aleatoria").length;
+const aDirected = grid.filter((o) => o.run.mode === "A").flatMap((o) => o.run.cycles).filter((c) => c.rule && c.rule !== "aleatoria").length;
+check("en A (analista v0 fijo) ninguna propuesta es dirigida; en B, tras promover, sí", aDirected === 0 && bDirected > 0, `A ${aDirected} · B ${bDirected} propuestas dirigidas`);
+
+for (const [name, sc] of Object.entries(SCENARIOS)) {
+  const r = runScenario(name).result;
+  const other = name === "diversidad" ? runScenario(name, { explore: 0.5 }).result : null;
+  check(`escenario «${sc.label}»: lo que narra se cumple en la corrida`, sc.holds(r, other), sc.lesson(r).slice(0, 90));
+}
 const repA = runLoop({ mode: "A", seed: 3 });
 check("bucle reproducible", fingerprint(repA.cycles.map((c) => c.val ? c.val.candidate : -1)) === fingerprint(A.cycles.map((c) => c.val ? c.val.candidate : -1)));
+
+const guideStore = makeStore();
+guideStore.loopCompare();
+const scene = new Proxy({ store: guideStore, user: guideStore.user }, { get: (o, k) => (k in o ? o[k] : () => {}) });
+const beatsAll = CHAPTERS.flatMap((ch) => ch.beats.map((beat) => ({ events: 1, ...beat, chapter: ch })));
+const uncovered = [];
+for (const beat of beatsAll) {
+  const defs = SCRIPTS[beat.id] || [];
+  let k = 1;
+  for (const def of defs) {
+    const to = def.last ? beat.events : Math.min(beat.events, k + (def.span ?? 1) - 1);
+    if (to < k) uncovered.push(`${beat.id} (paso vacío)`);
+    k = to + 1;
+  }
+  if (!defs.length || k <= beat.events) uncovered.push(beat.id);
+}
+const extraKeys = Object.keys(SCRIPTS).filter((id) => !beatsAll.some((b) => b.id === id));
+const stepCount = Object.values(SCRIPTS).reduce((t, list) => t + list.length, 0);
+check("guion: cada evento de cada escena tiene un paso narrado (sin huecos ni guiones huérfanos)", !uncovered.length && !extraKeys.length, uncovered.length || extraKeys.length ? `${uncovered.join(", ")} ${extraKeys.join(", ")}` : `${beatsAll.length} escenas, ${stepCount} pasos`);
+const valueOf = (x) => (typeof x === "function" ? x(scene) : x) || "";
+const variants = [{}, { head: 1, row: 1, eta: 1.2, task: 3, loopSeed: 5, loopMode: "A", lambda: 0.3, temperature: 1.5, sampleSeed: 4 }];
+const BROKEN = /undefined|\[object|Calculando|(?<!obtuvo )NaN/;
+const bad = [];
+const blocks = [];
+for (const variant of variants) {
+  guideStore.restore({ ...JSON.parse(JSON.stringify(DEFAULTS)), ...variant });
+  let activeChapter = null;
+  for (const beat of beatsAll) {
+    if (beat.chapter !== activeChapter) {
+      activeChapter = beat.chapter;
+      try {
+        beat.chapter.setup && beat.chapter.setup(scene);
+      } catch {}
+    }
+    try {
+      beat.enter && beat.enter(scene);
+    } catch {}
+    for (const [i, def] of (SCRIPTS[beat.id] || []).entries()) {
+      const id = `${beat.id}${i ? String.fromCharCode(97 + i) : ""}`;
+      for (const part of ["orient", "act", "result"]) {
+        let text;
+        try {
+          text = valueOf(def[part]);
+        } catch (err) {
+          bad.push(`${id}.${part}: ${err.message}`);
+          continue;
+        }
+        if (BROKEN.test(text)) bad.push(`${id}.${part}: ${text.slice(0, 60)}`);
+        if (part !== "act" && text) blocks.push({ id, part, words: wordsOf(text) });
+      }
+      if (!valueOf(def.orient)) bad.push(`${id}: sin orientación`);
+    }
+  }
+}
+guideStore.restore(JSON.parse(JSON.stringify(DEFAULTS)));
+check("guion: todos los textos se generan desde los parámetros actuales (sin «undefined», «NaN» ni marcadores pendientes)", !bad.length, bad.length ? bad.slice(0, 4).join(" · ") : `${variants.length} configuraciones de parámetros`);
+const longest = blocks.reduce((a, b) => (b.words > a.words ? b : a));
+check("guion: ningún bloque de lectura supera 75 palabras (los largos se dividieron en pasos)", longest.words <= 75, `más largo: ${longest.id} ${longest.part}, ${longest.words} palabras; mediana ${blocks.map((b) => b.words).sort((a, b) => a - b)[blocks.length >> 1]}`);
+const termKeys = new Set();
+for (const list of Object.values(SCRIPTS))
+  for (const def of list) {
+    if (def.concept) termKeys.add(def.concept);
+    for (const part of ["orient", "act", "result"]) {
+      const source = typeof def[part] === "function" ? def[part].toString() : def[part] || "";
+      for (const m of source.matchAll(/\[\[([^|\]]+)\|/g)) termKeys.add(m[1]);
+    }
+  }
+const missingTerms = [...termKeys].filter((key) => !CONCEPTS[key]);
+check("glosario: cada término enlazado y cada concepto de paso tiene entrada", !missingTerms.length, missingTerms.length ? missingTerms.join(", ") : `${termKeys.size} términos usados, ${Object.keys(CONCEPTS).length} entradas`);
+const PROV = new Set(["local", "ilus", "sim", "cita"]);
+const badConcepts = Object.entries(CONCEPTS).filter(([, c]) => {
+  if (!c.title || !c.def || !c.simple || !Array.isArray(c.where)) return true;
+  try {
+    const ex = c.example(scene);
+    return !ex || !ex.html || BROKEN.test(ex.html) || !PROV.has(ex.prov);
+  } catch {
+    return true;
+  }
+});
+check("glosario: definición, versión simple y ejemplo que corre y declara su procedencia (calculado, ilustrativo, simulación o cita)", !badConcepts.length, badConcepts.length ? badConcepts.map(([k]) => k).join(", ") : `${Object.keys(CONCEPTS).length} entradas`);
+const opsKnown = new Set(SOUND_OPS.map((o) => o.op));
+const cueOps = [];
+for (const list of Object.values(SCRIPTS)) for (const def of list) for (const cue of (typeof def.cues === "function" ? def.cues(scene) : def.cues) || []) cueOps.push(cue.op);
+check("señales: cada operación narrada usa una familia de sonido definida", cueOps.length > 0 && cueOps.every((op) => opsKnown.has(op)), `${cueOps.length} señales, ${new Set(cueOps).size} familias usadas de ${opsKnown.size}`);
 
 const failed = results.filter((r) => !r.ok);
 for (const r of results) console.log(`${r.ok ? "✓" : "✗"} ${r.name}${r.detail ? `  (${r.detail})` : ""}`);

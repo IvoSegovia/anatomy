@@ -242,7 +242,14 @@ export function solve(context) {
   return { answer: null, steps };
 }
 
+const runObservers = new Set();
+export function observeRuns(fn) {
+  runObservers.add(fn);
+  return () => runObservers.delete(fn);
+}
+
 export function runTask(task, genome, budget = BUDGET) {
+  for (const fn of runObservers) fn(task, genome);
   const managed = manageContext(task.lines, genome, budget);
   const kept = new Set(managed.context.map((entry) => entry.index));
   const coverage = task.required.filter((index) => kept.has(index)).length / task.required.length;
@@ -313,17 +320,6 @@ export function promotionDecision(active, candidate, ci, budget = BUDGET) {
     reason: gate || (promote ? "promover: IC95 de Δéxito > 0" : "archivar sin promover: evidencia insuficiente"),
     compositeActive: compositeOf(active, budget),
     compositeCandidate: compositeOf(candidate, budget),
-  };
-}
-
-export function makeAccessLog() {
-  const entries = [];
-  return {
-    entries,
-    read(who, split, what) {
-      if (who === "proponente" && split === "test") throw new Error("el proponente no puede leer la prueba reservada");
-      entries.push({ who, split, what });
-    },
   };
 }
 

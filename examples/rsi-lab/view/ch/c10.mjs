@@ -1,4 +1,4 @@
-import { baseVisibility, explode, mainCamera, moduleCamera, labCamera, rackCamera, M } from "../common.mjs";
+import { baseVisibility, explode, mainCamera, moduleCamera, labCamera, rackCamera, M, segment } from "../common.mjs";
 import { f2, esc, table, pct, lineChart, prov } from "../helpers.mjs";
 import { el } from "../ui.mjs";
 import { SCENARIOS, CONTROLS, CRITERIA } from "../../model/limits.mjs";
@@ -11,8 +11,13 @@ function loadScenario(ctx, name) {
   if (ctx.syncLimitsDesk) ctx.syncLimitsDesk();
 }
 
-function limitsPanel(ctx, { title, lesson, extra } = {}) {
+function limitsPanel(ctx, { title, lesson, extra, pending = false } = {}) {
   const run = ctx.store.limits();
+  if (pending) {
+    const v = ctx.user.limits;
+    ctx.panel("limits", { title: title || "Mesa de límites", provKind: "sim", html: `${table(["configuración", ""], [["presupuesto de búsqueda", `${v.budget} ejecuciones`], ["ruido del evaluador", String(v.noise)], ["familias de tareas en desarrollo y validación", String(v.diversity)], ["tareas de validación por candidata", String(v.nVal)], ["probabilidad de explorar el archivo", String(v.explore)], ["criterio", esc(CRITERIA[v.criterion || "estricto"])]])}<div class="subst">el bucle todavía no corrió con esta configuración</div>`, width: 450, dock: "right", top: 136 });
+    return { run, alarm: false };
+  }
   const vis = [];
   const aud = [run.startAudit];
   const visStart = run.cycles.length ? run.cycles[0].visibleActive : NaN;
@@ -29,11 +34,11 @@ function limitsPanel(ctx, { title, lesson, extra } = {}) {
   const rolled = ctx.user.rolledBack;
   const criterion = ctx.user.limits.criterion || "estricto";
   const html = `${lineChart([{ values: vis, cls: "va" }, { values: aud, cls: "tr" }], { w: 420, h: 150, xLabel: "ciclo", yLabel: "puntuación", yMax: 1, marks, xTicks: [0, Math.floor((n - 1) / 2), n - 1] })}
-    <div class="legend"><span style="color:#e7e8ea"><i style="background:none;border-top:2px dashed #e7e8ea;height:0"></i>visible (${esc(CRITERIA[criterion])})</span><span style="color:var(--c-in)"><i></i>auditoría independiente</span></div>
-    ${table(["", "inicio", "final"], [["puntuación visible", f2(vis[0] ?? NaN), f2(vis[n - 1] ?? NaN)], ["auditoría (no la ve el bucle)", pct(run.startAudit), pct(run.finalAudit)], ["ciclos · promociones", "", `${run.cycles.length} · ${run.promotions}`], ["presupuesto gastado", "", `${run.spent} / ${ctx.user.limits.budget}`], ["consultas a la misma validación", "", run.maxValQueries], ["versiones en el archivo", "", run.archive.length]])}
+    <div class="legend"><span style="color:#e7e8ea"><i style="background:none;border-top:2px dashed #e7e8ea;height:0"></i>visible (${esc(CRITERIA[criterion])})</span><span style="color:var(--c-in)"><i></i>auditoría (fuera de la búsqueda)</span></div>
+    ${table(["", "inicio", "final"], [["puntuación visible", f2(vis[0] ?? NaN), f2(vis[n - 1] ?? NaN)], ["auditoría (no la usa para proponer ni promover)", pct(run.startAudit), pct(run.finalAudit)], ["prueba final (uso único, al terminar)", pct(run.startTest), pct(run.finalTest)], ["ciclos · promociones", "", `${run.cycles.length} · ${run.promotions}`], ["búsqueda gastada (desarrollo + validación)", "", `${run.spent} / ${ctx.user.limits.budget}`], ["consultas a la misma validación", "", run.maxValQueries], ["versiones en el archivo", "", run.archive.length]])}
     ${alarm ? `<div class="subst"><b class="bad-t">La puntuación visible mejora y la auditoría empeora.</b></div>` : ""}
     ${rolled ? `<div class="subst">Vuelta a la última versión válida <b>${esc(run.lastValid.id)}</b>: auditoría ${pct(run.lastValid.audit)} · prueba final (uso único) ${pct(run.lastValidTest)} frente a ${pct(run.finalTest)} de la versión descartada.</div>` : ""}
-    ${lesson ? `<div class="subst">${esc(lesson)}</div>` : ""}
+    ${lesson ? `<div class="subst">${esc(typeof lesson === "function" ? lesson(run) : lesson)}</div>` : ""}
     ${extra ? extra(run) : ""}`;
   ctx.panel("limits", { title: title || "Mesa de límites", provKind: "sim", html, width: 450, dock: "right", top: 136 });
   ctx.state("evaluador", { value: Math.max(0, Math.min(1, vis[n - 1] ?? 0)), ok: !alarm && audDelta >= 0, fail: alarm });
@@ -52,9 +57,10 @@ const scenarioBeat = (id, name, caption, extra = {}) => ({
   enter(ctx) {
     loadScenario(ctx, name);
   },
-  pose(ctx) {
+  pose(ctx, t) {
     if (ctx.user.scenario !== name) loadScenario(ctx, name);
     ctx.focus(["evaluador", "datos", "entorno", "archivo"]);
+    const pending = t < 0.5;
     let extra;
     if (name === "diversidad") {
       const keep = ctx.user.limits.explore;
@@ -63,19 +69,19 @@ const scenarioBeat = (id, name, caption, extra = {}) => ({
       ctx.user.limits = { ...ctx.user.limits, explore: keep };
       extra = (run) => `<h4 class="sub"><span>Misma semilla, explorando el archivo (0.5)</span>${prov("sim")}</h4><div class="subst">auditoría final: exploración ${keep} → ${pct(run.finalAudit)} · exploración 0.5 → ${pct(other.finalAudit)}</div>`;
     }
-    limitsPanel(ctx, { title: SCENARIOS[name].label, lesson: SCENARIOS[name].lesson, extra });
+    limitsPanel(ctx, { title: SCENARIOS[name].label, lesson: SCENARIOS[name].lesson, extra, pending });
   },
   ...extra,
 });
 
 const FINAL = [
-  ["datos", "<b>Dato</b>: una tarea entra desde el cajón de desarrollo."],
-  ["modelo", "<b>Activaciones</b>: el contexto se convierte en vectores y atención dentro del modelo (θ fijo)."],
-  ["proponente", "<b>Propuesta</b>: el proponente analiza los registros y propone una variante del código."],
-  ["entorno", "<b>Experimento</b>: la variante se ejecuta con un presupuesto definido."],
-  ["evaluador", "<b>Evidencia</b>: el evaluador compara versiones sobre las mismas tareas, con un criterio explícito."],
-  ["codigo", "<b>Cambio del sistema</b>: sólo si cumple el criterio, la variante pasa a estar activa."],
-  ["proponente", "<b>Siguiente propuesta</b>: la versión activa participa en el próximo análisis. ¿Lo hace mejor? Hay que medirlo otra vez."],
+  ["datos", "registro", "in"],
+  ["contexto", "selección", "in"],
+  ["proponente", "diagnóstico visible", "in"],
+  ["codigo", "propuesta", "g"],
+  ["entorno", "prueba", "g"],
+  ["evaluador", "versión", "ok"],
+  ["contexto", "siguiente registro", "hi"],
 ];
 
 export const chapter10 = {
@@ -86,6 +92,7 @@ export const chapter10 = {
     explode(ctx, 0);
     ctx.show("ctx-lines", false);
     ctx.state("cart-v1", { slot: "active", role: "in" });
+    ctx.store.loopCompareAsync(() => ctx.refresh());
   },
   exit(ctx) {
     ctx.state("datos", {});
@@ -166,11 +173,12 @@ export const chapter10 = {
     scenarioBeat("10.2", "sobreajuste", "<b>Sobreajuste al benchmark</b>: diez tareas ruidosas, consultadas una y otra vez y promoviendo con la estimación puntual. Lo visible sube por azar; la auditoría, no."),
     scenarioBeat("10.3", "metrica", "<b>Métrica imperfecta</b>: optimizar la densidad de líneas ERROR/TRACE premia descartar DEBUG… y con él la causa que el solucionador necesita."),
     scenarioBeat("10.4", "diversidad", "<b>Pérdida de diversidad</b>: sin explorar padres del archivo, la búsqueda se queda en un linaje."),
-    scenarioBeat("10.5", "dominio", "<b>Regresión fuera del dominio</b>: validación con una sola familia de tareas. La puntuación visible <b>mejora</b> y la auditoría independiente <b>empeora</b>. Usa «volver a la última versión válida».", { events: 2, dur: 11, pose(ctx, t, e) {
+    scenarioBeat("10.5", "dominio", "<b>Regresión fuera del dominio</b>: validación con una sola familia de tareas. La puntuación visible <b>mejora</b> y la prueba final <b>empeora</b>.", { events: 2, dur: 11, pose(ctx, t) {
       if (ctx.user.scenario !== "dominio") loadScenario(ctx, "dominio");
-      ctx.user.rolledBack = e >= 2;
+      const { k, u } = segment(t, 2);
+      ctx.user.rolledBack = k === 2 && u >= 0.5;
       ctx.focus(["evaluador", "datos", "entorno", "archivo", "codigo"]);
-      limitsPanel(ctx, { title: SCENARIOS.dominio.label, lesson: SCENARIOS.dominio.lesson });
+      limitsPanel(ctx, { title: SCENARIOS.dominio.label, lesson: SCENARIOS.dominio.lesson, pending: k === 1 && u < 0.5 });
     } }),
     scenarioBeat("10.6", "presupuesto", "<b>Agotamiento del presupuesto</b>: cada ciclo cuesta análisis + validación; con poco presupuesto, no alcanza para probar una mejora."),
     {
@@ -201,7 +209,7 @@ export const chapter10 = {
       scale: "lab",
       camera: () => mainCamera(),
       caption: (ctx) => FINAL[Math.max(0, ctx.event - 1)][1],
-      changed: (ctx) => [{}, { datos: "tarea" }, { contexto: "activaciones" }, { codigo: "propuesta" }, { infra: "ejecución" }, { evaluador: "evidencia" }, { codigo: "cambió" }, { codigo: "participa", contexto: "memoria" }][Math.max(0, ctx.event)] || {},
+      changed: (ctx) => [{}, { datos: "registro" }, { contexto: "selección" }, { contexto: "diagnóstico visible" }, { codigo: "propuesta" }, { infra: "ejecución" }, { codigo: "cambió", evaluador: "evidencia" }, { codigo: "participa", contexto: "siguiente registro" }][Math.max(0, ctx.event)] || {},
       pose(ctx, t, e) {
         const i = Math.max(0, e - 1);
         const [id] = FINAL[i];
@@ -212,8 +220,9 @@ export const chapter10 = {
         const a = [M[id].plan.x + M[id].plan.w / 2, M[id].plan.y + M[id].plan.d / 2, M[id].h + 6];
         const b = [M[next].plan.x + M[next].plan.w / 2, M[next].plan.y + M[next].plan.d / 2, M[next].h + 6];
         const u = (t * 7) % 1;
-        if (!ctx.still.matches) ctx.pulse(0, { path: [a, [a[0], a[1], a[2] + 30], [b[0], b[1], b[2] + 30], b], s: u, role: ["in", "in", "g", "g", "ok", "g", "hi"][i], lift: 0 });
-        ctx.tag("fin-lbl", id, ["dato", "activaciones", "propuesta", "experimento", "evidencia", "cambio del sistema", "siguiente propuesta"][i], { dz: M[id].h + 14, cls: "name", role: ["in", "in", "g", "g", "ok", "g", ""][i] });
+        if (!ctx.still.matches && t > 0.001 && t < 0.999) ctx.pulse(0, { path: [a, [a[0], a[1], a[2] + 30], [b[0], b[1], b[2] + 30], b], s: u, role: FINAL[i][2], lift: 0 });
+        ctx.tag("fin-lbl", id, FINAL[i][1], { dz: M[id].h + 14, cls: "name", role: FINAL[i][2] === "hi" ? "" : FINAL[i][2] });
+        ctx.tag("fin-model", "modelo", "fuera de esta cadena en la demostración", { dz: M.modelo.h + 10, role: "off" });
         if (ctx.followKey !== `${ctx.beat.id}-${i}`) {
           ctx.followKey = `${ctx.beat.id}-${i}`;
           ctx.follow(moduleCamera([id, next], 30, { area: { left: 0 } }));
