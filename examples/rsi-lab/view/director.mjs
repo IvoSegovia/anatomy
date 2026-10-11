@@ -79,9 +79,11 @@ export function makeDirector({ chapters, engine, ref, ctx, hooks = {} }) {
   function apply() {
     const beat = beatAt();
     enter(S.beat);
-    const e = eventOf(beat, S.t);
-    if (beat.pose) beat.pose(ctx, S.t, e);
-    hooks.applied && hooks.applied(beat, S.t, e);
+    // Con movimiento reducido no hay interpolaciones: se muestra el estado del evento en curso.
+    const t = still.matches ? Math.max(1, Math.ceil(S.t * beat.events - 1e-9)) / beat.events : S.t;
+    const e = eventOf(beat, t);
+    if (beat.pose) beat.pose(ctx, t, e);
+    hooks.applied && hooks.applied(beat, t, e);
   }
 
   function seek(index, t = 0, opts = {}) {
@@ -124,7 +126,6 @@ export function makeDirector({ chapters, engine, ref, ctx, hooks = {} }) {
       const beat = beatAt();
       const before = eventOf(beat, S.t);
       S.t += (dt * S.speed) / beat.dur;
-      if (still.matches) S.t = Math.min(1, Math.ceil(S.t * beat.events + 1e-9) / beat.events);
       if (S.t >= 1) {
         S.t = 1;
         apply();

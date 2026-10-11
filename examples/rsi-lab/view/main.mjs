@@ -53,9 +53,19 @@ const ctx = {
     engine.pose(id, { state });
   },
   focus(ids) {
-    const set = ids ? new Set([].concat(ids)) : null;
+    const set = ids ? new Set([].concat(ids).filter(Boolean)) : null;
+    // la bandeja (padre) de un objeto enfocado sigue visible como contexto
+    if (set) for (const id of [...set]) {
+      let parent = engine.objects.get(id)?.parent;
+      while (parent) {
+        set.add(parent);
+        set.add(`${parent}-front`);
+        parent = engine.objects.get(parent)?.parent;
+      }
+    }
     ref.svg.toggleAttribute("data-focus", !!set);
-    for (const [id, entry] of engine.objects) entry.el.toggleAttribute("data-on", !!set && (set.has(id) || (entry.parent && set.has(entry.parent)) || (entry.focusGroup && set.has(entry.focusGroup))));
+    // lo que descansa sobre un objeto enfocado (su grupo, nivel > 0) y sus hijos también se iluminan
+    for (const [id, entry] of engine.objects) entry.el.toggleAttribute("data-on", !!set && (set.has(id) || (entry.parent && set.has(entry.parent)) || (entry.group && entry.level > 0 && set.has(entry.group))));
   },
   label(id, spec) {
     beatScoped.labels.add(id);
@@ -130,8 +140,13 @@ const ctx = {
     }
     ref.desk.classList.add("on");
     ref.stage.classList.add("has-desk");
+    if (engine.size.w < 760 && !ref.desk.dataset.touched) {
+      ref.desk.classList.add("min");
+      ref.stage.classList.add("desk-min");
+    }
     const toggle = el("button", { "aria-expanded": ref.desk.classList.contains("min") ? "false" : "true", title: "Plegar o desplegar la mesa de control" }, ref.desk.classList.contains("min") ? "desplegar" : "plegar");
     toggle.addEventListener("click", () => {
+      ref.desk.dataset.touched = "1";
       const min = ref.desk.classList.toggle("min");
       ref.stage.classList.toggle("desk-min", min);
       toggle.textContent = min ? "desplegar" : "plegar";
@@ -292,7 +307,10 @@ new ResizeObserver(() => {
 }).observe(ref.stage);
 function insetFor() {
   const narrow = engine.size.w < 760;
-  return narrow ? { top: 120, bottom: 70, left: 0, right: 0 } : { top: 70, bottom: 70, left: 0, right: 0 };
+  if (!narrow) return { top: 70, bottom: 70, left: 0, right: 0 };
+  const cap = ref.caption.getBoundingClientRect().height || 70;
+  ref.stage.style.setProperty("--cap-h", `${Math.round(cap + 16)}px`);
+  return { top: 92, bottom: Math.round(cap + 16 + engine.size.h * 0.3), left: 0, right: 0 };
 }
 engine.setInset(insetFor());
 
@@ -424,6 +442,7 @@ ref.svg.addEventListener("pointermove", (event) => {
   drag.moved = true;
   ref.svg.classList.add("grabbing");
   manual();
+  if (!drag.pan) engine.setFast(true);
   if (drag.pan) {
     const box = ref.stage.getBoundingClientRect();
     const a = engine.screenToWorld([drag.x - box.left, drag.y - box.top], drag.target[2]);
@@ -434,6 +453,8 @@ ref.svg.addEventListener("pointermove", (event) => {
 });
 const endPointer = (event) => {
   pointers.delete(event.pointerId);
+  engine.setFast(false);
+  wakeLoop();
   if (pointers.size < 2) pinch = null;
   ref.svg.classList.remove("grabbing");
   if (drag && !drag.moved && event.type === "pointerup") click(event);
@@ -472,7 +493,9 @@ ref.camReset.addEventListener("click", () => {
 
 // Selección e inspección: clic en un objeto o en una celda.
 function hit(event) {
-  const target = event.target.closest ? event.target : null;
+  // con captura de puntero, event.target es el SVG: se busca el elemento real bajo el puntero
+  const under = document.elementFromPoint(event.clientX, event.clientY);
+  const target = under && under.closest ? under : event.target.closest ? event.target : null;
   if (!target) return {};
   const cell = target.closest("[data-cell]");
   const obj = target.closest("[data-obj]");
@@ -484,11 +507,15 @@ function click(event) {
   if (!id) {
     selection = null;
     renderInspector(ctx, null);
+    director.apply(); // restaura el foco del paso
+    wakeLoop();
     return;
   }
   const entry = engine.objects.get(id);
   const target = entry.info || id;
   engine.objects.get(id).el.setAttribute("data-sel", "");
+  // resaltar lo elegido y atenuar el resto (incluye su parte frontal o sus hijos)
+  ctx.focus([id, `${id}-front`, ...(entry.parent ? [entry.parent] : [])]);
   if (cell && entry.cell) {
     const [i, j] = cell.getAttribute("data-cell").split(",").map(Number);
     selection = { id: target, cell: entry.cell(i, j), obj: id, i, j };

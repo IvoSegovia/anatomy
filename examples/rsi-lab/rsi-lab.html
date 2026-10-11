@@ -172,7 +172,7 @@ button{cursor:pointer}
 
 /* objetos seleccionables y foco */
 [data-obj]{transition:opacity .35s}
-.scene[data-focus] [data-obj]:not([data-on]){opacity:.22}
+.scene[data-focus] [data-obj]:not([data-on]){opacity:.3}
 .scene[data-focus] [data-obj][data-on] .iso-edge{stroke:var(--anatomy-lit)}
 [data-obj].pick{cursor:pointer}
 [data-obj][data-sel] .iso-edge,[data-obj][data-sel] .mx-frame{stroke:var(--c-in)!important;stroke-width:1.1}
@@ -229,6 +229,11 @@ button{cursor:pointer}
 .route[data-loop="3"]{stroke:#e7e8ea;stroke-dasharray:1.2 3.2;stroke-width:1.8}
 .route-bed{fill:none;stroke:#0b0c0f;stroke-width:4.2;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
 .route.off{stroke:var(--c-off);opacity:.35}
+.route-port{fill:var(--anatomy-paper);stroke-width:1}
+.route-ends[data-loop="1"] .route-port{stroke:var(--c-in)}
+.route-ends[data-loop="2"] .route-port{stroke:var(--c-g)}
+.route-ends[data-loop="3"] .route-port{stroke:#e7e8ea}
+.route-ends[data-off] .route-port{stroke:var(--c-off);opacity:.5}
 .pulse{filter:drop-shadow(0 0 3px currentColor)}
 .pulse circle{fill:currentColor}
 .pulse[data-r="in"]{color:var(--c-in)}.pulse[data-r="g"]{color:var(--c-g)}.pulse[data-r="w"]{color:var(--c-w)}
@@ -244,7 +249,7 @@ button{cursor:pointer}
 /* ===== Superposiciones en el escenario ===== */
 .hud{position:absolute;pointer-events:none;z-index:3}
 .hud *{pointer-events:auto}
-.changed{left:12px;top:10px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;max-width:calc(100% - 210px)}
+.changed{left:12px;top:10px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;max-width:calc(100% - 320px)}
 .changed .h{font:10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-right:4px}
 .chip{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px;border-radius:11px;border:1px solid var(--line-2);background:#0e0f12d9;font:11px var(--sans);color:var(--ink-3)}
 .chip i{width:7px;height:7px;border-radius:50%;background:var(--c-off);font-style:normal}
@@ -253,7 +258,7 @@ button{cursor:pointer}
 .chip[data-s="activo"]{color:#bfeef5;border-color:#47c9dd66}
 .chip[data-s="activo"] i{background:var(--c-in)}
 .chip b{font-weight:500;color:inherit}
-.chip em{font-style:normal;color:var(--ink-4);font-size:10px}
+.chip em{font-style:normal;color:var(--ink-4);font-size:10px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .theta{left:12px;top:40px;font:11px var(--mono);color:var(--ink-3);display:flex;gap:8px;align-items:center}
 .theta .print{color:var(--ink-2);border:1px solid var(--line-2);padding:1px 6px;border-radius:3px}
 .theta .print.flash{border-color:var(--c-g);color:#ffd6ad}
@@ -382,24 +387,38 @@ details summary{cursor:pointer;color:var(--ink-2);font-size:12px}
 @media (max-width:1100px){.inspector{position:absolute;right:0;top:44px;bottom:52px;z-index:8;box-shadow:-20px 0 40px #000a}}
 @media (max-width:760px){
   #app{grid-template-rows:auto 1fr auto}
-  .top{flex-wrap:wrap;height:auto;padding:6px 10px;gap:6px}
+  .top{flex-wrap:wrap;height:auto;padding:6px 8px;gap:6px}
   .brand{flex:1 1 100%;font-size:12px}
+  .brand small{display:none}
   .chapters{margin-left:0;overflow:auto;max-width:100%}
   .chapters button{width:24px}
-  .changed{max-width:calc(100% - 24px)}
-  .chip{height:20px;padding:0 6px;font-size:10px}
-  .scalemap{top:auto;bottom:118px}
-  .caption,.stage.has-desk .caption{width:calc(100% - 24px);bottom:auto;top:74px;left:12px;right:auto;transform:none}
-  .caption .txt{font-size:12.5px}
-  .desk{width:auto;right:12px;max-height:38%;bottom:8px}
-  .disclaimer{display:none}
-  .desk.min{bottom:8px}
-  .theta{top:62px}
+  .changed{left:8px;right:8px;top:6px;max-width:none;gap:3px}
+  .changed .h{display:none}
+  .chip{height:19px;padding:0 6px;font-size:10px}
+  .chip em{display:none}
+  .theta{left:8px;top:54px;font-size:10px;gap:5px}
+  .theta>span:last-child,.theta>span:first-child{display:none}
+  .disclaimer{display:block;left:8px;right:auto;top:72px;text-align:left;max-width:60%;font-size:9.5px}
+  .disclaimer .long{display:none}
+  .disclaimer .short{display:inline}
+  .scalemap{top:54px;right:8px;bottom:auto;gap:4px}
+  .scalemap .camtools .icon-btn:not(:last-child){display:none}
+  .scales button{padding:3px 6px;font-size:10.5px}
+  .backscale{display:none}
+  .caption,.stage.has-desk .caption,.stage.has-desk.desk-min .caption{left:8px;right:8px;bottom:8px;top:auto;width:auto;transform:none;text-align:left;background:#0b0c0fe6;border:1px solid var(--line-2);border-radius:8px;padding:6px 9px}
+  .caption .txt{font-size:12.5px;text-shadow:none}
+  .planes{position:absolute;left:8px;right:8px;bottom:var(--cap-h,86px);max-height:30%;overflow:auto;display:flex;flex-direction:column;gap:6px;z-index:2}
+  .plane{position:relative!important;left:auto!important;right:auto!important;top:auto!important;transform:none!important;width:auto!important;max-width:none;box-shadow:none;font-size:11.5px}
+  .formula{font-size:13px;white-space:normal}
+  .desk{left:auto;right:8px;top:98px;bottom:auto;width:min(320px,calc(100% - 16px));max-height:48%}
+  .desk.min{width:auto}
   .transport{flex-wrap:wrap;gap:6px;padding:6px 8px}
   .timeline{order:-1;flex:1 1 100%}
   .clock{min-width:0}
-  .plane{max-width:calc(100% - 24px)}
+  .speed label{display:none}
   .inspector{width:100%;top:auto;bottom:0;height:62%;border-left:0;border-top:1px solid var(--line)}
+}
+.disclaimer .short{display:none}
 }
 .glass{fill:#9fdbe60c;stroke:#9fdbe633;stroke-width:.6}
 </style>
@@ -1124,6 +1143,8 @@ function makeEngine({ stage, svg, labelLayer }) {
   let inset = { top: 0, right: 0, bottom: 0, left: 0 };
   let orderKey = ["", "", "", "", ""];
   let lod = 1;
+  let fast = false; // detalle reducido mientras se arrastra la cámara
+  let lastMs = 0;
 
   const measure = () => {
     const box = stage.getBoundingClientRect();
@@ -1249,6 +1270,7 @@ function makeEngine({ stage, svg, labelLayer }) {
   }
 
   function render() {
+    const started = performance.now();
     if (rotated) {
       P = { origin: [0, 0], scale: BASE, azimuth: cam.azimuth, elevation: cam.elevation };
       for (const entry of objects.values()) entry.dirty = true;
@@ -1262,7 +1284,7 @@ function makeEngine({ stage, svg, labelLayer }) {
     const buckets = [[], [], [], [], []];
     for (const entry of objects.values()) {
       const { pose: p } = entry;
-      const shown = p.visible !== false && p.opacity > 0.005 && (!entry.minPx || ppu >= entry.minPx) && (!entry.maxPx || ppu <= entry.maxPx);
+      const shown = p.visible !== false && p.opacity > 0.005 && (!entry.minPx || ppu >= entry.minPx) && (!entry.maxPx || ppu <= entry.maxPx) && !(fast && entry.heavy);
       if (!shown) {
         if (entry.shown !== false) {
           entry.el.style.display = "none";
@@ -1331,6 +1353,7 @@ function makeEngine({ stage, svg, labelLayer }) {
       }
     });
     placeLabels();
+    lastMs = performance.now() - started;
   }
 
   function offsetOf(entry) {
@@ -1409,6 +1432,15 @@ function makeEngine({ stage, svg, labelLayer }) {
     set lod(value) {
       lod = value;
     },
+    // Activa el modo rápido sólo si el último fotograma fue costoso.
+    setFast(on) {
+      const next = on && lastMs > 24;
+      if (next === fast) return;
+      fast = next;
+    },
+    get lastMs() {
+      return lastMs;
+    },
     get lod() {
       return lod;
     },
@@ -1477,7 +1509,7 @@ function buildShell(app, chapters) {
     ref.scaleButtons[key] = button;
     ref.scales.append(button);
   });
-  ref.backScale = el("button", { class: "icon-btn", title: "Volver a la escala anterior (Esc)" }, "← volver");
+  ref.backScale = el("button", { class: "icon-btn backscale", title: "Volver a la escala anterior (Esc)" }, "← volver");
   ref.camtools = el("div", { class: "camtools" });
   ref.rotL = el("button", { class: "icon-btn", title: "Girar a la izquierda (Q)", "aria-label": "Girar a la izquierda" }, "⟲");
   ref.rotR = el("button", { class: "icon-btn", title: "Girar a la derecha (E)", "aria-label": "Girar a la derecha" }, "⟳");
@@ -1492,7 +1524,7 @@ function buildShell(app, chapters) {
   ref.backTour = el("button", { class: "btn back-tour" }, "Volver a la cámara guiada");
   ref.caption.append(ref.capStep, ref.capText, ref.backTour);
   ref.desk = el("div", { class: "hud desk", role: "region", "aria-label": "Mesa de control de la escena" });
-  ref.disclaimer = el("div", { class: "hud disclaimer" }, "Representación conceptual: la posición de una matriz en la escena no es su ubicación física en una GPU.");
+  ref.disclaimer = el("div", { class: "hud disclaimer", html: '<span class="long">Representación conceptual: la posición de una matriz en la escena no es su ubicación física en una GPU.</span><span class="short">Representación conceptual (no es la disposición en una GPU)</span>' });
   ref.tip = el("div", { class: "tip", role: "tooltip" });
   ref.planes = el("div", { class: "planes" });
   ref.stage.append(ref.svg, ref.labels, ref.planes, ref.changed, ref.theta, ref.scalemap, ref.caption, ref.desk, ref.disclaimer, ref.tip);
@@ -1573,15 +1605,46 @@ function basePlate(plan, P, { thick = 12, foot = 6, ruler = true } = {}) {
 }
 
 // Caja de instrumento: cuerpo con bisel, costura, tapa, tornillos en la tapa y placa de rótulo frontal.
-function cabinet(plan, z, h, P, { tone = "mid", lid = 3, lit = false, screws = true, seam = true, className = "" } = {}) {
+// Rejilla de ventilación: ranuras cerradas en una cara vertical visible (+x o +y).
+function vents(plan, z0, z1, P, count = 5) {
+  const [vx, vy] = k.towardViewer(P);
+  const out = [];
+  const slot = (pts) => k.pathOf(pts.map((p) => k.iso(p, P)), true);
+  const n = count;
+  if (vx > 0.2) {
+    const x = plan.x + plan.w;
+    const y1 = plan.y + plan.d - 8;
+    for (let i = 0; i < n; i++) {
+      const y = y1 - i * 4.2;
+      out.push(slot([[x, y, z0], [x, y - 2, z0], [x, y - 2, z1], [x, y, z1]]));
+    }
+  }
+  if (vy > 0.2) {
+    const y = plan.y + plan.d;
+    const x1 = plan.x + plan.w - 8;
+    for (let i = 0; i < n; i++) {
+      const x = x1 - i * 4.2;
+      out.push(slot([[x, y, z0], [x - 2, y, z0], [x - 2, y, z1], [x, y, z1]]));
+    }
+  }
+  return out.join("");
+}
+
+function cabinet(plan, z, h, P, { tone = "mid", lid = 3, lit = false, screws = true, seam = true, className = "", vent = true } = {}) {
   const out = [];
   out.push(`<path class="iso-halo" d="${k.haloOf(k.insetPlan(plan, -2), z, 0.1, P)}" style="filter:blur(6px)"/>`);
-  const body = k.slabOf(plan, z, h - lid, P, 6, 0.8);
-  out.push(S(body, { tone, lit, className, inner: seam ? L(k.sideSeam(plan, z + (h - lid) * 0.35, P, 6), { tone: "faint" }) : "" }));
+  // zócalo inferior (tono bajo) sobre el que apoya el cuerpo
+  const plinth = 2.4;
+  out.push(S(k.slabOf(k.insetPlan(plan, 1.6), z, plinth, P, 5), { tone: "lo", crease: "none" }));
+  const body = k.slabOf(plan, z + plinth, h - lid - plinth, P, 6, 0.8);
+  const bodyH = h - lid - plinth;
+  const inner = (seam ? L(k.sideSeam(plan, z + plinth + bodyH * 0.35, P, 6), { tone: "faint" }) : "") + (vent && bodyH > 14 ? L(vents(plan, z + plinth + bodyH * 0.55, z + plinth + bodyH * 0.85, P), { tone: "lo" }) : "");
+  out.push(S(body, { tone, lit, className, inner }));
   const top = k.insetPlan(plan, -0.8);
   out.push(S(k.slabOf(top, z + h - lid, lid, P, 6, 0.8), { tone, lit, className }));
   if (screws) {
     const pts = k.corners(top, 4.2);
+    out.push(L(pts.map(([x, y]) => k.ring(x, y, 1.6, z + h, P, 14)).join(""), { tone: "lo" }));
     out.push(D(pts.map(([x, y]) => at([x, y, z + h], P)), { size: 0.5 }));
   }
   return out.join("");
@@ -1933,7 +1996,13 @@ function buildRoute(id) {
     const route = ROUTES[id];
     const d = k.onTop(route.points.map(([x, y]) => [x, y]), 0.4, P);
     const cls = state.off ? "route off" : "route";
-    return `<path class="route-bed" d="${d}"/><path class="${cls}" data-loop="${id}" d="${d}"/>`;
+    // terminales: cada ruta empieza y termina en un puerto (anillo + punto), nunca en el aire
+    const ends = [route.points[0], route.points[route.points.length - 1]].map(([x, y]) => {
+      const [sx, sy] = k.iso([x, y, 0.4], P);
+      const r = 2.2 * k.cameraOf(P).k;
+      return `<ellipse class="route-port" cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" rx="${r.toFixed(1)}" ry="${(r * Math.sin((P.elevation * Math.PI) / 180)).toFixed(1)}"/>`;
+    });
+    return `<path class="route-bed" d="${d}"/><path class="${cls}" data-loop="${id}" d="${d}"/><g class="route-ends" data-loop="${id}"${state.off ? ' data-off=""' : ""}>${ends.join("")}</g>`;
   };
 }
 
@@ -2225,9 +2294,9 @@ function buildRack(engine, store) {
   const E = { x: 6, y: 6, c: 4 }; // tabla E: 16 filas (vocabulario) a lo largo de +x, 8 columnas a lo largo de +y
   const Pp = { x: 6, y: 24, c: 4 }; // tabla P: 10 filas (se dibuja en y = Pp.y + 18)
   const X0 = { x: 104, y: 6, c: 4 };
-  add({ id: "mx-E", layer: 2, anchor: planeCentre(flatFrame("emb", E.x, E.y, 0.4, E.c), 16, 8), parent: "tray-emb", role: "w", pose: { visible: false, state: {} }, info: "mx-E",
+  add({ id: "mx-E", layer: 2, heavy: true, anchor: planeCentre(flatFrame("emb", E.x, E.y, 0.4, E.c), 16, 8), parent: "tray-emb", role: "w", pose: { visible: false, state: {} }, info: "mx-E",
     build: (P, s = {}) => matrixSvg(P, { rows: 16, cols: 8, frame: flatFrame("emb", E.x, E.y, 0.4, E.c), role: "w", values: store.params0.E, highlight: s.highlight, rowHi: s.rowHi, normal: [0, 0, -0.5] }) });
-  add({ id: "mx-P", layer: 2, anchor: planeCentre(flatFrame("emb", Pp.x, Pp.y + 18, 0.4, Pp.c), 10, 8), parent: "tray-emb", role: "w", pose: { visible: false, state: {} }, info: "mx-P",
+  add({ id: "mx-P", layer: 2, heavy: true, anchor: planeCentre(flatFrame("emb", Pp.x, Pp.y + 18, 0.4, Pp.c), 10, 8), parent: "tray-emb", role: "w", pose: { visible: false, state: {} }, info: "mx-P",
     build: (P, s = {}) => matrixSvg(P, { rows: 10, cols: 8, frame: flatFrame("emb", Pp.x, Pp.y + 18, 0.4, Pp.c), role: "w", values: store.params0.P, rowHi: s.rowHi, normal: [0, 0, -0.5] }) });
   add({ id: "mx-X0", layer: 2, anchor: planeCentre(flatFrame("emb", X0.x, X0.y, 0.4, X0.c), 6, 8), parent: "tray-emb", role: "in", pose: { visible: false, state: {} }, info: "mx-X0",
     build: (P, s = {}) => {
@@ -2254,11 +2323,11 @@ function buildRack(engine, store) {
     }
     const blockOf = () => store.trace().blocks[b];
     const p = store.params0.blocks[b];
-    add({ id: `mx-${id}-wo`, layer: 2, anchor: planeCentre(flatFrame(id, BLOCK.wo.x, BLOCK.wo.y, 3, BLOCK.wo.c), 8, 8), parent: `tray-${id}`, role: "w", pose: { visible: false, state: {} }, info: "mx-wo",
+    add({ id: `mx-${id}-wo`, layer: 2, heavy: true, anchor: planeCentre(flatFrame(id, BLOCK.wo.x, BLOCK.wo.y, 3, BLOCK.wo.c), 8, 8), parent: `tray-${id}`, role: "w", pose: { visible: false, state: {} }, info: "mx-wo",
       build: (P) => matrixSvg(P, { rows: 8, cols: 8, frame: flatFrame(id, BLOCK.wo.x, BLOCK.wo.y, 3, BLOCK.wo.c), role: "w", values: p.Wo, normal: [0, 0, -0.5] }) });
-    add({ id: `mx-${id}-w1`, layer: 2, anchor: planeCentre(flatFrame(id, BLOCK.w1.x, BLOCK.w1.y, 3, BLOCK.w1.c), 8, 32), parent: `tray-${id}`, role: "w", pose: { visible: false, state: {} }, info: "mx-w1",
+    add({ id: `mx-${id}-w1`, layer: 2, heavy: true, anchor: planeCentre(flatFrame(id, BLOCK.w1.x, BLOCK.w1.y, 3, BLOCK.w1.c), 8, 32), parent: `tray-${id}`, role: "w", pose: { visible: false, state: {} }, info: "mx-w1",
       build: (P) => matrixSvg(P, { rows: 8, cols: 32, frame: flatFrame(id, BLOCK.w1.x, BLOCK.w1.y, 3, BLOCK.w1.c), role: "w", values: p.W1, normal: [0, 0, -0.5], gap: 0.06 }) });
-    add({ id: `mx-${id}-w2`, layer: 2, anchor: planeCentre(flatFrame(id, BLOCK.w2.x, BLOCK.w2.y, 3, BLOCK.w2.c, { rowsAlong: "y" }), 32, 8), parent: `tray-${id}`, role: "w", pose: { visible: false, state: {} }, info: "mx-w2",
+    add({ id: `mx-${id}-w2`, layer: 2, heavy: true, anchor: planeCentre(flatFrame(id, BLOCK.w2.x, BLOCK.w2.y, 3, BLOCK.w2.c, { rowsAlong: "y" }), 32, 8), parent: `tray-${id}`, role: "w", pose: { visible: false, state: {} }, info: "mx-w2",
       build: (P) => matrixSvg(P, { rows: 32, cols: 8, frame: flatFrame(id, BLOCK.w2.x, BLOCK.w2.y, 3, BLOCK.w2.c, { rowsAlong: "y" }), role: "w", values: p.W2, normal: [0, 0, -0.5], gap: 0.06 }) });
     // estado del flujo residual en la última posición (vector de 8) sobre el bus: X → H → Y
     add({ id: `vec-${id}`, layer: 2, anchor: W(id, 150, 70, 3), parent: `tray-${id}`, role: "in", pose: { visible: false, state: {} }, info: "resid",
@@ -2280,10 +2349,10 @@ function buildRack(engine, store) {
       parts.push(S(k.slabOf({ x: T.x + 70, y: T.y + 46, w: 96, d: 8, r: 1 }, z, 1.2, P, 3), { tone: "lo" })); // regla de probabilidades
       return parts.join("");
     } });
-  add({ id: "mx-Wu", layer: 2, anchor: planeCentre(flatFrame("out", 30, 18, 3, 1.6), 8, 16), parent: "tray-out", role: "w", pose: { visible: false, state: {} }, info: "mx-Wu",
+  add({ id: "mx-Wu", layer: 2, heavy: true, anchor: planeCentre(flatFrame("out", 30, 18, 3, 1.6), 8, 16), parent: "tray-out", role: "w", pose: { visible: false, state: {} }, info: "mx-Wu",
     build: (P, s = {}) => matrixSvg(P, { rows: 8, cols: 16, frame: flatFrame("out", 32, 18, 3, 1.6), role: s.role || "w", values: s.values || store.params0.Wu, highlight: s.highlight, colHi: s.colHi, normal: [0, 0, -0.5] }) });
   // gradiente de W_U flotando sobre la superficie de pesos (naranja)
-  add({ id: "mx-gWu", layer: 2, level: LEVEL.out + 2, anchor: planeCentre(flatFrame("out", 32, 18, 12, 1.6), 8, 16), parent: "tray-out", role: "g", pose: { visible: false, state: {} }, info: "mx-gWu",
+  add({ id: "mx-gWu", layer: 2, heavy: true, level: LEVEL.out + 2, anchor: planeCentre(flatFrame("out", 32, 18, 12, 1.6), 8, 16), parent: "tray-out", role: "g", pose: { visible: false, state: {} }, info: "mx-gWu",
     build: (P, s = {}) => (s.values ? matrixSvg(P, { rows: 8, cols: 16, frame: flatFrame("out", 32, 18, 12, 1.6), role: "g", values: s.values, normal: [0, 0, -0.4] }) : "") });
   // barras de logits y probabilidades (16 símbolos) + tarjeta del token elegido
   add({ id: "bars-out", layer: 2, anchor: [T.x + 118, T.y + 30, TRAY_Z.out + 4], parent: "tray-out", pose: { visible: false, state: {} }, info: "bars-out",
@@ -2538,19 +2607,13 @@ function makeRng(seed) {
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
-  let spare = null;
+  // Normal aproximada por suma de 12 uniformes (Irwin–Hall): media 0, varianza 1, colas en ±6.
+  // Sólo usa sumas exactas en IEEE-754, así los mismos números salen en Node y en cualquier navegador
+  // (Box–Muller usa log/sin/cos, cuyos últimos bits pueden variar entre motores de JavaScript).
   const normal = () => {
-    if (spare !== null) {
-      const value = spare;
-      spare = null;
-      return value;
-    }
-    let u = 0;
-    while (u === 0) u = next();
-    const v = next();
-    const radius = Math.sqrt(-2 * Math.log(u));
-    spare = radius * Math.sin(2 * Math.PI * v);
-    return radius * Math.cos(2 * Math.PI * v);
+    let total = 0;
+    for (let i = 0; i < 12; i++) total += next();
+    return total - 6;
   };
   const int = (low, high) => low + Math.floor(next() * (high - low + 1));
   const pick = (list) => list[Math.floor(next() * list.length)];
@@ -4608,9 +4671,11 @@ function makeDirector({ chapters, engine, ref, ctx, hooks = {} }) {
   function apply() {
     const beat = beatAt();
     enter(S.beat);
-    const e = eventOf(beat, S.t);
-    if (beat.pose) beat.pose(ctx, S.t, e);
-    hooks.applied && hooks.applied(beat, S.t, e);
+    // Con movimiento reducido no hay interpolaciones: se muestra el estado del evento en curso.
+    const t = still.matches ? Math.max(1, Math.ceil(S.t * beat.events - 1e-9)) / beat.events : S.t;
+    const e = eventOf(beat, t);
+    if (beat.pose) beat.pose(ctx, t, e);
+    hooks.applied && hooks.applied(beat, t, e);
   }
 
   function seek(index, t = 0, opts = {}) {
@@ -4653,7 +4718,6 @@ function makeDirector({ chapters, engine, ref, ctx, hooks = {} }) {
       const beat = beatAt();
       const before = eventOf(beat, S.t);
       S.t += (dt * S.speed) / beat.dur;
-      if (still.matches) S.t = Math.min(1, Math.ceil(S.t * beat.events + 1e-9) / beat.events);
       if (S.t >= 1) {
         S.t = 1;
         apply();
@@ -4819,16 +4883,21 @@ function trayRegion(id, [x0, y0, x1, y1], opts = {}) {
   return { points: out, pad: opts.pad ?? 30, area: opts.area ?? { left: 360 }, azimuth: opts.azimuth ?? 45, elevation: opts.elevation ?? 34 };
 }
 // Retira (corte) las bandejas por encima de `keep` y su contenido.
-function cutAbove(ctx, keep) {
+// share ∈ [0,1] funde progresivamente (1 = retiradas del todo); reveal funde la entrada de las de abajo.
+function cutAbove(ctx, keep, share = 1, reveal = 1) {
   const order = ["emb", "b0", "b1", "out"];
   const hide = new Set(order.slice(order.indexOf(keep) + 1));
   const rack = new Set([...RACK_IDS, ...TRAY_IDS]);
   for (const [id, entry] of ctx.engine.objects) {
     const tray = id.startsWith("tray-") ? id.replace("tray-", "").replace("-front", "") : entry.parent ? entry.parent.replace("tray-", "") : null;
     if (!tray) continue;
-    if (hide.has(tray)) ctx.show(id, false);
-    else if (rack.has(id) && !id.startsWith("card")) ctx.show(id, true);
+    if (hide.has(tray)) ctx.pose(id, { visible: share < 0.999, opacity: Math.max(0, 1 - share) });
+    else if (rack.has(id) && !id.startsWith("card")) ctx.pose(id, { visible: true, opacity: tray === keep ? reveal : 1 });
   }
+}
+// Funde un conjunto de objetos (corte progresivo dentro de una bandeja).
+function fade(ctx, ids, value) {
+  for (const id of ids) ctx.pose(id, { visible: value > 0.001, opacity: Math.max(0, Math.min(1, value)) });
 }
 
 // Cámara para un cubo de la cabeza (escala tensores), con el bastidor explosionado.
@@ -4846,7 +4915,7 @@ function cubeCamera(ctx, which, opts = {}) {
 }
 
 
-return { RACK_IDS, TENSOR_IDS, STATION_IDS, AGENT_IDS, TRAY_IDS, baseVisibility, explode, labCamera, mainCamera, moduleCamera, trayBox, rackCamera, trayCamera, trayRegion, cutAbove, cubeCamera, M, centreOf, framesFor, cubeLayout, TRAY, TRAY_Z, LIFT };
+return { RACK_IDS, TENSOR_IDS, STATION_IDS, AGENT_IDS, TRAY_IDS, baseVisibility, explode, labCamera, mainCamera, moduleCamera, trayBox, rackCamera, trayCamera, trayRegion, cutAbove, fade, cubeCamera, M, centreOf, framesFor, cubeLayout, TRAY, TRAY_Z, LIFT };
 })();
 const __m_examples_rsi_lab_view_ch_c01_mjs = (() => {
 const { baseVisibility, explode, labCamera, mainCamera, moduleCamera, rackCamera, M, RACK_IDS } = __m_examples_rsi_lab_view_common_mjs;
@@ -5085,7 +5154,7 @@ function ctx_more(r) {
 return { DEV_TASK, contextState, logPanelHtml, chapter1 };
 })();
 const __m_examples_rsi_lab_view_ch_c02_mjs = (() => {
-const { baseVisibility, explode, trayCamera, rackCamera, trayRegion, cutAbove } = __m_examples_rsi_lab_view_common_mjs;
+const { baseVisibility, explode, trayCamera, rackCamera, trayRegion, cutAbove, fade } = __m_examples_rsi_lab_view_common_mjs;
 const { VOCAB, tokenize } = __m_examples_rsi_lab_model_tokenizer_mjs;
 const { f2, f3, esc, T } = __m_examples_rsi_lab_view_helpers_mjs;
 const { el } = __m_examples_rsi_lab_view_ui_mjs;
@@ -5178,7 +5247,8 @@ const chapter2 = {
       caption: (ctx) => `Entrada breve: <b>«${esc(ctx.user.text)}»</b>. Se usará un vocabulario <b>de juguete</b> de 16 símbolos, no la tokenización de un modelo comercial.`,
       changed: { contexto: "cambió" },
       more: (ctx) => `<p>El vocabulario completo, con su identificador:</p>${vocabTable(ctx.store.ids())}<p>La segmentación es codiciosa: en cada posición se toma el símbolo más largo del vocabulario que coincide, ignorando espacios.</p>`,
-      pose(ctx) {
+      pose(ctx, t) {
+        cutAbove(ctx, "emb", ctx.still.matches ? 1 : Math.min(1, t * 2.2));
         ctx.show(cards(10), false);
         ctx.state("mx-X0", { upto: 0 });
         ctx.focus(["tray-emb", "tray-emb-front"]);
@@ -5287,7 +5357,8 @@ const chapter2 = {
       caption: "X₀ (n×8) entra al flujo residual del bloque 1. <b>Prueba</b>: cambia un token en la mesa de control y observa qué se recalcula. Con pesos aleatorios no hay comprensión lingüística.",
       changed: { contexto: "cambió" },
       more: `<p><b>Dimensiones</b>: n tokens × d_model = 8. La anchura 8 se mantiene a lo largo de todo el flujo residual.</p><p>Los pesos de este Transformer son aleatorios (semilla 7). Sus predicciones no implican comprensión: sirven para mostrar mecanismos con números reales.</p>`,
-      pose(ctx) {
+      pose(ctx, t) {
+        cutAbove(ctx, "emb", ctx.still.matches ? 0 : 1 - Math.min(1, t * 2));
         const n = ctx.store.ids().length;
         cards(10).forEach((id, j) => ctx.pose(id, { visible: j < n, state: { showId: false } }));
         ctx.state("mx-X0", {});
@@ -5303,7 +5374,7 @@ const chapter2 = {
 return { rackSetup, tokenDesk, recompute, chapter2 };
 })();
 const __m_examples_rsi_lab_view_ch_c03_mjs = (() => {
-const { baseVisibility, explode, cubeCamera, trayCamera, framesFor, TENSOR_IDS, cutAbove } = __m_examples_rsi_lab_view_common_mjs;
+const { baseVisibility, explode, cubeCamera, trayCamera, framesFor, TENSOR_IDS, cutAbove, fade } = __m_examples_rsi_lab_view_common_mjs;
 const { lerpFrame } = __m_examples_rsi_lab_view_tensors_mjs;
 const { cellCentre } = __m_examples_rsi_lab_view_matrix_mjs;
 const { ease } = __m_examples_rsi_lab_view_engine_mjs;
@@ -5313,6 +5384,7 @@ const { rackSetup } = __m_examples_rsi_lab_view_ch_c02_mjs;
 const { VOCAB } = __m_examples_rsi_lab_model_tokenizer_mjs;
 // Capítulo 3 — Atención causal por dentro (escala «tensores»).
 
+const BLOCK_PARTS = ["blk-b0", "mx-b0-wo", "mx-b0-w1", "mx-b0-w2", "vec-b0", "head-b0-0", "head-b0-1"];
 
 
 
@@ -5347,6 +5419,7 @@ function numbers(ctx, planeId, frameKey, row, values, { prefix = "", cols, n } =
 }
 
 function planesBase(ctx, { at = {}, pending = {}, values = {}, masked = {}, opacity = {}, highlight = {}, rowHi = {} } = {}) {
+  if (ctx.beat.id !== "3.1") fade(ctx, BLOCK_PARTS, 0);
   for (const id of ["t-X", "t-Wq", "t-Wk", "t-Wv", "t-Q", "t-K", "t-V", "t-S", "t-Z"]) {
     ctx.pose(id, {
       visible: (opacity[id] ?? 1) > 0,
@@ -5366,7 +5439,7 @@ const chapter3 = {
     // las bandejas superiores se retiran para no tapar la cabeza abierta (corte)
     cutAbove(ctx, "b0");
     // dentro de la bandeja del bloque 1 sólo queda la cabeza abierta (corte)
-    for (const id of ["blk-b0", "mx-b0-wo", "mx-b0-w1", "mx-b0-w2", "vec-b0", "head-b0-0", "head-b0-1"]) ctx.show(id, false);
+    fade(ctx, BLOCK_PARTS, 0);
     ctx.state(`head-b0-${ctx.user.head}`, { open: 1 });
     for (const id of ["t-cube1", "t-cube2", "t-cube3"]) ctx.state(id, {});
   },
@@ -5410,7 +5483,11 @@ const chapter3 = {
       more: `<p><b>X</b> es la entrada de la subcapa de atención <i>después</i> de la normalización elegida (pre-LN): X = LN₁(X₀). Tiene una fila por posición y 8 columnas.</p><p>Las matrices se dibujan como superficies inspeccionables: celda llena = valor positivo; celda con borde = negativo; intensidad = |valor|. La posición de cada superficie en el espacio es conceptual.</p>`,
       pose(ctx, t) {
         const n = ctx.store.ids().length;
-        const u = ease(t * 1.5);
+        const u = ctx.still.matches ? 1 : ease(t * 1.5);
+        // corte progresivo: el resto del bloque y las bandejas superiores se retiran mientras la cabeza se abre
+        cutAbove(ctx, "b0", u);
+        fade(ctx, BLOCK_PARTS.filter((id) => id !== `head-b0-${ctx.user.head}`), 1 - u);
+        ctx.pose(`head-b0-${ctx.user.head}`, { visible: u < 0.99, opacity: 1 - u, state: { open: u } });
         planesBase(ctx, { pending: { "t-Q": () => true, "t-K": () => true, "t-V": () => true, "t-S": () => true, "t-Z": () => true }, opacity: { "t-X": u, "t-Wq": u, "t-Wk": u, "t-Wv": u, "t-Q": u * 0.8, "t-K": u * 0.8, "t-V": u * 0.8, "t-S": 0, "t-Z": 0 } });
         ctx.state("t-cube1", {});
         ctx.pose("t-cube2", { opacity: 0, visible: false });
@@ -5637,7 +5714,7 @@ const chapter3 = {
 return { chapter3 };
 })();
 const __m_examples_rsi_lab_view_ch_c04_mjs = (() => {
-const { baseVisibility, explode, trayRegion, rackCamera, cutAbove } = __m_examples_rsi_lab_view_common_mjs;
+const { baseVisibility, explode, trayRegion, rackCamera, cutAbove, fade } = __m_examples_rsi_lab_view_common_mjs;
 const { f2, f3, T, esc, lineChart } = __m_examples_rsi_lab_view_helpers_mjs;
 const { el } = __m_examples_rsi_lab_view_ui_mjs;
 const { rackSetup } = __m_examples_rsi_lab_view_ch_c02_mjs;
@@ -5732,6 +5809,7 @@ const chapter4 = {
       more: `<p>Cada cabeza aprende a mezclar información de forma distinta. La concatenación vuelve a la anchura 8 y W_O las combina.</p>`,
       pose(ctx, t) {
         cutAbove(ctx, "b0");
+        fade(ctx, ["blk-b0", "mx-b0-wo", "mx-b0-w1", "mx-b0-w2", "vec-b0", "head-b0-0", "head-b0-1"], ctx.still.matches ? 1 : Math.min(1, t * 2.5));
         const tr = ctx.store.trace().blocks[0];
         ctx.focus(["head-b0-0", "head-b0-1", "mx-b0-wo", "blk-b0"]);
         ctx.tag("lb-h0", "head-b0-0", "cabeza 1 → Z₁", { dz: 8, role: "in" });
@@ -5791,8 +5869,8 @@ const chapter4 = {
       camera: () => trayRegion("b1", [0, 0, 186, 96], { area: { left: 400 } }),
       caption: "El <b>bloque 2</b> repite la misma operación con otros pesos: Y₂ = H₂ + MLP(LN(H₂)), H₂ = Y₁ + MHA(LN(Y₁)).",
       changed: { contexto: "activo" },
-      pose(ctx) {
-        cutAbove(ctx, "b1");
+      pose(ctx, t) {
+        cutAbove(ctx, "b1", 1, ctx.still.matches ? 1 : Math.min(1, t * 2.5));
         const tr = ctx.store.trace().blocks[1];
         ctx.state("vec-b1", { which: "Y", x: 136 });
         ctx.focus(["blk-b1", "vec-b1", "head-b1-0", "head-b1-1", "mx-b1-wo", "mx-b1-w1", "mx-b1-w2"]);
@@ -5809,7 +5887,7 @@ const chapter4 = {
       caption: (ctx) => ["Sólo la <b>última posición</b> predice el siguiente token: h_n pasa por la LayerNorm final.", "<b>W_U</b> (8×16) da 16 logits, uno por símbolo del vocabulario (gris: negativos).", "<b>softmax</b>: 16 probabilidades que suman 1. Con estos pesos aleatorios, el resultado no expresa comprensión."][Math.max(0, ctx.event - 1)],
       changed: { contexto: "activo" },
       pose(ctx, t, e) {
-        cutAbove(ctx, "out");
+        cutAbove(ctx, "out", 1, ctx.still.matches || e > 1 ? 1 : Math.min(1, t * 6));
         const tr = ctx.store.trace();
         ctx.state("bars-out", { showLogits: e >= 2, showProbs: e >= 3, chosen: e >= 3 ? argmax(tr.probs) : undefined });
         ctx.state("card-next", {});
@@ -6158,19 +6236,21 @@ const chapter5 = {
       scale: "model",
       camera: () => trayRegion("out", [0, 0, 186, 96], { area: { left: 420 } }),
       caption: (ctx) => {
-        const r2 = ctx.store.training("sgd", 2);
-        const up = r2.history.findIndex((h, i) => i > 0 && h.train > r2.history[i - 1].train);
-        return ctx.event <= 1 ? `Con <b>η = 2</b>, el paso ${up} <b>empeora</b> la pérdida de entrenamiento (${f3(r2.history[up - 1].train)} → ${f3(r2.history[up].train)}): el paso es demasiado largo.` : "Con <b>η = 3</b> la pérdida diverge. La tasa de aprendizaje es un hiperparámetro, no una velocidad de animación.";
+        const r = ctx.store.training("sgd", 1.2);
+        const h = r.history.map((x) => x.train);
+        const up = h.findIndex((v, i) => i > 0 && v > h[i - 1]);
+        return ctx.event <= 1 ? `Con <b>η = 1.2</b>, el paso ${up} <b>empeora</b> la pérdida de entrenamiento (${f3(h[up - 1])} → ${f3(h[up])}): el paso se pasa del mínimo. Después vuelve a bajar.` : "Con <b>η = 3</b> la pérdida diverge. La tasa de aprendizaje es un hiperparámetro del optimizador, no una velocidad de animación.";
       },
       changed: { pesos: "cambió" },
       pose(ctx, t, e) {
-        const eta = e <= 1 ? 2 : 3;
+        const eta = e <= 1 ? 1.2 : 3;
         const r = ctx.store.training("sgd", eta);
-        const k = e <= 1 ? r.history.findIndex((h, i) => i > 0 && h.train > r.history[i - 1].train) : 8;
+        const h = r.history.map((x) => x.train);
+        const k = e <= 1 ? h.findIndex((v, i) => i > 0 && v > h[i - 1]) : 6;
         curves(ctx, k, { opt: "sgd", eta, title: `Pérdida por paso · SGD · η = ${eta}` });
         showHead(ctx, r.history[Math.max(0, k)].head, exOf(ctx));
         ctx.theta(r.history[Math.max(0, k)].print, `η = ${eta}, paso ${k}`, true);
-        trainPanel(ctx, ["upd"], `η = ${eta}: L_entr por paso = ${r.history.slice(0, 9).map((h) => (h.train > 999 ? h.train.toExponential(1) : f2(h.train))).join(" → ")}`);
+        trainPanel(ctx, ["upd"], `η = ${eta}: L_entr por paso = ${h.slice(0, 11).map((v) => (v > 999 ? v.toExponential(1) : f2(v))).join(" → ")}`);
         ctx.focus(["mx-Wu", "bars-out"]);
       },
     },
@@ -7555,7 +7635,7 @@ function infoFor(ctx, id) {
   return ctx.INFO[id] || TOPICS[id] || (ctx.extraInfo && ctx.extraInfo[id]) || null;
 }
 
-const roleWord = { in: "entrada / activación", w: "peso / parámetro", g: "gradiente / actualización", ok: "cumple el criterio", bad: "falla / regresión", off: "congelado / inactivo" };
+const roleWord = { in: "entrada / activación", w: "peso / parámetro", g: "gradiente / actualización", ok: "cumple el criterio", bad: "falla / regresión", off: "congelado / fijo / inactivo" };
 
 function renderInspector(ctx, selection) {
   const body = ctx.ref.inspBody;
@@ -7692,9 +7772,19 @@ const ctx = {
     engine.pose(id, { state });
   },
   focus(ids) {
-    const set = ids ? new Set([].concat(ids)) : null;
+    const set = ids ? new Set([].concat(ids).filter(Boolean)) : null;
+    // la bandeja (padre) de un objeto enfocado sigue visible como contexto
+    if (set) for (const id of [...set]) {
+      let parent = engine.objects.get(id)?.parent;
+      while (parent) {
+        set.add(parent);
+        set.add(`${parent}-front`);
+        parent = engine.objects.get(parent)?.parent;
+      }
+    }
     ref.svg.toggleAttribute("data-focus", !!set);
-    for (const [id, entry] of engine.objects) entry.el.toggleAttribute("data-on", !!set && (set.has(id) || (entry.parent && set.has(entry.parent)) || (entry.focusGroup && set.has(entry.focusGroup))));
+    // lo que descansa sobre un objeto enfocado (su grupo, nivel > 0) y sus hijos también se iluminan
+    for (const [id, entry] of engine.objects) entry.el.toggleAttribute("data-on", !!set && (set.has(id) || (entry.parent && set.has(entry.parent)) || (entry.group && entry.level > 0 && set.has(entry.group))));
   },
   label(id, spec) {
     beatScoped.labels.add(id);
@@ -7769,8 +7859,13 @@ const ctx = {
     }
     ref.desk.classList.add("on");
     ref.stage.classList.add("has-desk");
+    if (engine.size.w < 760 && !ref.desk.dataset.touched) {
+      ref.desk.classList.add("min");
+      ref.stage.classList.add("desk-min");
+    }
     const toggle = el("button", { "aria-expanded": ref.desk.classList.contains("min") ? "false" : "true", title: "Plegar o desplegar la mesa de control" }, ref.desk.classList.contains("min") ? "desplegar" : "plegar");
     toggle.addEventListener("click", () => {
+      ref.desk.dataset.touched = "1";
       const min = ref.desk.classList.toggle("min");
       ref.stage.classList.toggle("desk-min", min);
       toggle.textContent = min ? "desplegar" : "plegar";
@@ -7931,7 +8026,10 @@ new ResizeObserver(() => {
 }).observe(ref.stage);
 function insetFor() {
   const narrow = engine.size.w < 760;
-  return narrow ? { top: 120, bottom: 70, left: 0, right: 0 } : { top: 70, bottom: 70, left: 0, right: 0 };
+  if (!narrow) return { top: 70, bottom: 70, left: 0, right: 0 };
+  const cap = ref.caption.getBoundingClientRect().height || 70;
+  ref.stage.style.setProperty("--cap-h", `${Math.round(cap + 16)}px`);
+  return { top: 92, bottom: Math.round(cap + 16 + engine.size.h * 0.3), left: 0, right: 0 };
 }
 engine.setInset(insetFor());
 
@@ -8063,6 +8161,7 @@ ref.svg.addEventListener("pointermove", (event) => {
   drag.moved = true;
   ref.svg.classList.add("grabbing");
   manual();
+  if (!drag.pan) engine.setFast(true);
   if (drag.pan) {
     const box = ref.stage.getBoundingClientRect();
     const a = engine.screenToWorld([drag.x - box.left, drag.y - box.top], drag.target[2]);
@@ -8073,6 +8172,8 @@ ref.svg.addEventListener("pointermove", (event) => {
 });
 const endPointer = (event) => {
   pointers.delete(event.pointerId);
+  engine.setFast(false);
+  wakeLoop();
   if (pointers.size < 2) pinch = null;
   ref.svg.classList.remove("grabbing");
   if (drag && !drag.moved && event.type === "pointerup") click(event);
@@ -8111,7 +8212,9 @@ ref.camReset.addEventListener("click", () => {
 
 // Selección e inspección: clic en un objeto o en una celda.
 function hit(event) {
-  const target = event.target.closest ? event.target : null;
+  // con captura de puntero, event.target es el SVG: se busca el elemento real bajo el puntero
+  const under = document.elementFromPoint(event.clientX, event.clientY);
+  const target = under && under.closest ? under : event.target.closest ? event.target : null;
   if (!target) return {};
   const cell = target.closest("[data-cell]");
   const obj = target.closest("[data-obj]");
@@ -8123,11 +8226,15 @@ function click(event) {
   if (!id) {
     selection = null;
     renderInspector(ctx, null);
+    director.apply(); // restaura el foco del paso
+    wakeLoop();
     return;
   }
   const entry = engine.objects.get(id);
   const target = entry.info || id;
   engine.objects.get(id).el.setAttribute("data-sel", "");
+  // resaltar lo elegido y atenuar el resto (incluye su parte frontal o sus hijos)
+  ctx.focus([id, `${id}-front`, ...(entry.parent ? [entry.parent] : [])]);
   if (cell && entry.cell) {
     const [i, j] = cell.getAttribute("data-cell").split(",").map(Number);
     selection = { id: target, cell: entry.cell(i, j), obj: id, i, j };

@@ -56,7 +56,7 @@ export function buildShell(app, chapters) {
     ref.scaleButtons[key] = button;
     ref.scales.append(button);
   });
-  ref.backScale = el("button", { class: "icon-btn", title: "Volver a la escala anterior (Esc)" }, "← volver");
+  ref.backScale = el("button", { class: "icon-btn backscale", title: "Volver a la escala anterior (Esc)" }, "← volver");
   ref.camtools = el("div", { class: "camtools" });
   ref.rotL = el("button", { class: "icon-btn", title: "Girar a la izquierda (Q)", "aria-label": "Girar a la izquierda" }, "⟲");
   ref.rotR = el("button", { class: "icon-btn", title: "Girar a la derecha (E)", "aria-label": "Girar a la derecha" }, "⟳");
@@ -71,7 +71,7 @@ export function buildShell(app, chapters) {
   ref.backTour = el("button", { class: "btn back-tour" }, "Volver a la cámara guiada");
   ref.caption.append(ref.capStep, ref.capText, ref.backTour);
   ref.desk = el("div", { class: "hud desk", role: "region", "aria-label": "Mesa de control de la escena" });
-  ref.disclaimer = el("div", { class: "hud disclaimer" }, "Representación conceptual: la posición de una matriz en la escena no es su ubicación física en una GPU.");
+  ref.disclaimer = el("div", { class: "hud disclaimer", html: '<span class="long">Representación conceptual: la posición de una matriz en la escena no es su ubicación física en una GPU.</span><span class="short">Representación conceptual (no es la disposición en una GPU)</span>' });
   ref.tip = el("div", { class: "tip", role: "tooltip" });
   ref.planes = el("div", { class: "planes" });
   ref.stage.append(ref.svg, ref.labels, ref.planes, ref.changed, ref.theta, ref.scalemap, ref.caption, ref.desk, ref.disclaimer, ref.tip);

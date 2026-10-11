@@ -94,9 +94,9 @@ export function buildRack(engine, store) {
   const E = { x: 6, y: 6, c: 4 }; // tabla E: 16 filas (vocabulario) a lo largo de +x, 8 columnas a lo largo de +y
   const Pp = { x: 6, y: 24, c: 4 }; // tabla P: 10 filas (se dibuja en y = Pp.y + 18)
   const X0 = { x: 104, y: 6, c: 4 };
-  add({ id: "mx-E", layer: 2, anchor: planeCentre(flatFrame("emb", E.x, E.y, 0.4, E.c), 16, 8), parent: "tray-emb", role: "w", pose: { visible: false, state: {} }, info: "mx-E",
+  add({ id: "mx-E", layer: 2, heavy: true, anchor: planeCentre(flatFrame("emb", E.x, E.y, 0.4, E.c), 16, 8), parent: "tray-emb", role: "w", pose: { visible: false, state: {} }, info: "mx-E",
     build: (P, s = {}) => matrixSvg(P, { rows: 16, cols: 8, frame: flatFrame("emb", E.x, E.y, 0.4, E.c), role: "w", values: store.params0.E, highlight: s.highlight, rowHi: s.rowHi, normal: [0, 0, -0.5] }) });
-  add({ id: "mx-P", layer: 2, anchor: planeCentre(flatFrame("emb", Pp.x, Pp.y + 18, 0.4, Pp.c), 10, 8), parent: "tray-emb", role: "w", pose: { visible: false, state: {} }, info: "mx-P",
+  add({ id: "mx-P", layer: 2, heavy: true, anchor: planeCentre(flatFrame("emb", Pp.x, Pp.y + 18, 0.4, Pp.c), 10, 8), parent: "tray-emb", role: "w", pose: { visible: false, state: {} }, info: "mx-P",
     build: (P, s = {}) => matrixSvg(P, { rows: 10, cols: 8, frame: flatFrame("emb", Pp.x, Pp.y + 18, 0.4, Pp.c), role: "w", values: store.params0.P, rowHi: s.rowHi, normal: [0, 0, -0.5] }) });
   add({ id: "mx-X0", layer: 2, anchor: planeCentre(flatFrame("emb", X0.x, X0.y, 0.4, X0.c), 6, 8), parent: "tray-emb", role: "in", pose: { visible: false, state: {} }, info: "mx-X0",
     build: (P, s = {}) => {
@@ -123,11 +123,11 @@ export function buildRack(engine, store) {
     }
     const blockOf = () => store.trace().blocks[b];
     const p = store.params0.blocks[b];
-    add({ id: `mx-${id}-wo`, layer: 2, anchor: planeCentre(flatFrame(id, BLOCK.wo.x, BLOCK.wo.y, 3, BLOCK.wo.c), 8, 8), parent: `tray-${id}`, role: "w", pose: { visible: false, state: {} }, info: "mx-wo",
+    add({ id: `mx-${id}-wo`, layer: 2, heavy: true, anchor: planeCentre(flatFrame(id, BLOCK.wo.x, BLOCK.wo.y, 3, BLOCK.wo.c), 8, 8), parent: `tray-${id}`, role: "w", pose: { visible: false, state: {} }, info: "mx-wo",
       build: (P) => matrixSvg(P, { rows: 8, cols: 8, frame: flatFrame(id, BLOCK.wo.x, BLOCK.wo.y, 3, BLOCK.wo.c), role: "w", values: p.Wo, normal: [0, 0, -0.5] }) });
-    add({ id: `mx-${id}-w1`, layer: 2, anchor: planeCentre(flatFrame(id, BLOCK.w1.x, BLOCK.w1.y, 3, BLOCK.w1.c), 8, 32), parent: `tray-${id}`, role: "w", pose: { visible: false, state: {} }, info: "mx-w1",
+    add({ id: `mx-${id}-w1`, layer: 2, heavy: true, anchor: planeCentre(flatFrame(id, BLOCK.w1.x, BLOCK.w1.y, 3, BLOCK.w1.c), 8, 32), parent: `tray-${id}`, role: "w", pose: { visible: false, state: {} }, info: "mx-w1",
       build: (P) => matrixSvg(P, { rows: 8, cols: 32, frame: flatFrame(id, BLOCK.w1.x, BLOCK.w1.y, 3, BLOCK.w1.c), role: "w", values: p.W1, normal: [0, 0, -0.5], gap: 0.06 }) });
-    add({ id: `mx-${id}-w2`, layer: 2, anchor: planeCentre(flatFrame(id, BLOCK.w2.x, BLOCK.w2.y, 3, BLOCK.w2.c, { rowsAlong: "y" }), 32, 8), parent: `tray-${id}`, role: "w", pose: { visible: false, state: {} }, info: "mx-w2",
+    add({ id: `mx-${id}-w2`, layer: 2, heavy: true, anchor: planeCentre(flatFrame(id, BLOCK.w2.x, BLOCK.w2.y, 3, BLOCK.w2.c, { rowsAlong: "y" }), 32, 8), parent: `tray-${id}`, role: "w", pose: { visible: false, state: {} }, info: "mx-w2",
       build: (P) => matrixSvg(P, { rows: 32, cols: 8, frame: flatFrame(id, BLOCK.w2.x, BLOCK.w2.y, 3, BLOCK.w2.c, { rowsAlong: "y" }), role: "w", values: p.W2, normal: [0, 0, -0.5], gap: 0.06 }) });
     // estado del flujo residual en la última posición (vector de 8) sobre el bus: X → H → Y
     add({ id: `vec-${id}`, layer: 2, anchor: W(id, 150, 70, 3), parent: `tray-${id}`, role: "in", pose: { visible: false, state: {} }, info: "resid",
@@ -149,10 +149,10 @@ export function buildRack(engine, store) {
       parts.push(S(k.slabOf({ x: T.x + 70, y: T.y + 46, w: 96, d: 8, r: 1 }, z, 1.2, P, 3), { tone: "lo" })); // regla de probabilidades
       return parts.join("");
     } });
-  add({ id: "mx-Wu", layer: 2, anchor: planeCentre(flatFrame("out", 30, 18, 3, 1.6), 8, 16), parent: "tray-out", role: "w", pose: { visible: false, state: {} }, info: "mx-Wu",
+  add({ id: "mx-Wu", layer: 2, heavy: true, anchor: planeCentre(flatFrame("out", 30, 18, 3, 1.6), 8, 16), parent: "tray-out", role: "w", pose: { visible: false, state: {} }, info: "mx-Wu",
     build: (P, s = {}) => matrixSvg(P, { rows: 8, cols: 16, frame: flatFrame("out", 32, 18, 3, 1.6), role: s.role || "w", values: s.values || store.params0.Wu, highlight: s.highlight, colHi: s.colHi, normal: [0, 0, -0.5] }) });
   // gradiente de W_U flotando sobre la superficie de pesos (naranja)
-  add({ id: "mx-gWu", layer: 2, level: LEVEL.out + 2, anchor: planeCentre(flatFrame("out", 32, 18, 12, 1.6), 8, 16), parent: "tray-out", role: "g", pose: { visible: false, state: {} }, info: "mx-gWu",
+  add({ id: "mx-gWu", layer: 2, heavy: true, level: LEVEL.out + 2, anchor: planeCentre(flatFrame("out", 32, 18, 12, 1.6), 8, 16), parent: "tray-out", role: "g", pose: { visible: false, state: {} }, info: "mx-gWu",
     build: (P, s = {}) => (s.values ? matrixSvg(P, { rows: 8, cols: 16, frame: flatFrame("out", 32, 18, 12, 1.6), role: "g", values: s.values, normal: [0, 0, -0.4] }) : "") });
   // barras de logits y probabilidades (16 símbolos) + tarjeta del token elegido
   add({ id: "bars-out", layer: 2, anchor: [T.x + 118, T.y + 30, TRAY_Z.out + 4], parent: "tray-out", pose: { visible: false, state: {} }, info: "bars-out",

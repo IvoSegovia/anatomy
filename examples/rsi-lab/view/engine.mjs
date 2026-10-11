@@ -34,6 +34,8 @@ export function makeEngine({ stage, svg, labelLayer }) {
   let inset = { top: 0, right: 0, bottom: 0, left: 0 };
   let orderKey = ["", "", "", "", ""];
   let lod = 1;
+  let fast = false; // detalle reducido mientras se arrastra la cámara
+  let lastMs = 0;
 
   const measure = () => {
     const box = stage.getBoundingClientRect();
@@ -159,6 +161,7 @@ export function makeEngine({ stage, svg, labelLayer }) {
   }
 
   function render() {
+    const started = performance.now();
     if (rotated) {
       P = { origin: [0, 0], scale: BASE, azimuth: cam.azimuth, elevation: cam.elevation };
       for (const entry of objects.values()) entry.dirty = true;
@@ -172,7 +175,7 @@ export function makeEngine({ stage, svg, labelLayer }) {
     const buckets = [[], [], [], [], []];
     for (const entry of objects.values()) {
       const { pose: p } = entry;
-      const shown = p.visible !== false && p.opacity > 0.005 && (!entry.minPx || ppu >= entry.minPx) && (!entry.maxPx || ppu <= entry.maxPx);
+      const shown = p.visible !== false && p.opacity > 0.005 && (!entry.minPx || ppu >= entry.minPx) && (!entry.maxPx || ppu <= entry.maxPx) && !(fast && entry.heavy);
       if (!shown) {
         if (entry.shown !== false) {
           entry.el.style.display = "none";
@@ -241,6 +244,7 @@ export function makeEngine({ stage, svg, labelLayer }) {
       }
     });
     placeLabels();
+    lastMs = performance.now() - started;
   }
 
   function offsetOf(entry) {
@@ -318,6 +322,15 @@ export function makeEngine({ stage, svg, labelLayer }) {
     },
     set lod(value) {
       lod = value;
+    },
+    // Activa el modo rápido sólo si el último fotograma fue costoso.
+    setFast(on) {
+      const next = on && lastMs > 24;
+      if (next === fast) return;
+      fast = next;
+    },
+    get lastMs() {
+      return lastMs;
     },
     get lod() {
       return lod;

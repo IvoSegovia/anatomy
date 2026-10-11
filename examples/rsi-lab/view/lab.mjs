@@ -250,7 +250,13 @@ function buildRoute(id) {
     const route = ROUTES[id];
     const d = k.onTop(route.points.map(([x, y]) => [x, y]), 0.4, P);
     const cls = state.off ? "route off" : "route";
-    return `<path class="route-bed" d="${d}"/><path class="${cls}" data-loop="${id}" d="${d}"/>`;
+    // terminales: cada ruta empieza y termina en un puerto (anillo + punto), nunca en el aire
+    const ends = [route.points[0], route.points[route.points.length - 1]].map(([x, y]) => {
+      const [sx, sy] = k.iso([x, y, 0.4], P);
+      const r = 2.2 * k.cameraOf(P).k;
+      return `<ellipse class="route-port" cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" rx="${r.toFixed(1)}" ry="${(r * Math.sin((P.elevation * Math.PI) / 180)).toFixed(1)}"/>`;
+    });
+    return `<path class="route-bed" d="${d}"/><path class="${cls}" data-loop="${id}" d="${d}"/><g class="route-ends" data-loop="${id}"${state.off ? ' data-off=""' : ""}>${ends.join("")}</g>`;
   };
 }
 

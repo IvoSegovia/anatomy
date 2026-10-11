@@ -1,5 +1,7 @@
 // Capítulo 3 — Atención causal por dentro (escala «tensores»).
-import { baseVisibility, explode, cubeCamera, trayCamera, framesFor, TENSOR_IDS, cutAbove } from "../common.mjs";
+import { baseVisibility, explode, cubeCamera, trayCamera, framesFor, TENSOR_IDS, cutAbove, fade } from "../common.mjs";
+
+const BLOCK_PARTS = ["blk-b0", "mx-b0-wo", "mx-b0-w1", "mx-b0-w2", "vec-b0", "head-b0-0", "head-b0-1"];
 import { lerpFrame } from "../tensors.mjs";
 import { cellCentre } from "../matrix.mjs";
 import { ease } from "../engine.mjs";
@@ -35,6 +37,7 @@ function numbers(ctx, planeId, frameKey, row, values, { prefix = "", cols, n } =
 }
 
 function planesBase(ctx, { at = {}, pending = {}, values = {}, masked = {}, opacity = {}, highlight = {}, rowHi = {} } = {}) {
+  if (ctx.beat.id !== "3.1") fade(ctx, BLOCK_PARTS, 0);
   for (const id of ["t-X", "t-Wq", "t-Wk", "t-Wv", "t-Q", "t-K", "t-V", "t-S", "t-Z"]) {
     ctx.pose(id, {
       visible: (opacity[id] ?? 1) > 0,
@@ -54,7 +57,7 @@ export const chapter3 = {
     // las bandejas superiores se retiran para no tapar la cabeza abierta (corte)
     cutAbove(ctx, "b0");
     // dentro de la bandeja del bloque 1 sólo queda la cabeza abierta (corte)
-    for (const id of ["blk-b0", "mx-b0-wo", "mx-b0-w1", "mx-b0-w2", "vec-b0", "head-b0-0", "head-b0-1"]) ctx.show(id, false);
+    fade(ctx, BLOCK_PARTS, 0);
     ctx.state(`head-b0-${ctx.user.head}`, { open: 1 });
     for (const id of ["t-cube1", "t-cube2", "t-cube3"]) ctx.state(id, {});
   },
@@ -98,7 +101,11 @@ export const chapter3 = {
       more: `<p><b>X</b> es la entrada de la subcapa de atención <i>después</i> de la normalización elegida (pre-LN): X = LN₁(X₀). Tiene una fila por posición y 8 columnas.</p><p>Las matrices se dibujan como superficies inspeccionables: celda llena = valor positivo; celda con borde = negativo; intensidad = |valor|. La posición de cada superficie en el espacio es conceptual.</p>`,
       pose(ctx, t) {
         const n = ctx.store.ids().length;
-        const u = ease(t * 1.5);
+        const u = ctx.still.matches ? 1 : ease(t * 1.5);
+        // corte progresivo: el resto del bloque y las bandejas superiores se retiran mientras la cabeza se abre
+        cutAbove(ctx, "b0", u);
+        fade(ctx, BLOCK_PARTS.filter((id) => id !== `head-b0-${ctx.user.head}`), 1 - u);
+        ctx.pose(`head-b0-${ctx.user.head}`, { visible: u < 0.99, opacity: 1 - u, state: { open: u } });
         planesBase(ctx, { pending: { "t-Q": () => true, "t-K": () => true, "t-V": () => true, "t-S": () => true, "t-Z": () => true }, opacity: { "t-X": u, "t-Wq": u, "t-Wk": u, "t-Wv": u, "t-Q": u * 0.8, "t-K": u * 0.8, "t-V": u * 0.8, "t-S": 0, "t-Z": 0 } });
         ctx.state("t-cube1", {});
         ctx.pose("t-cube2", { opacity: 0, visible: false });

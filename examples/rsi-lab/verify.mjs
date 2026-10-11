@@ -100,8 +100,10 @@ const va = run05.history.map((h) => h.valid);
 const vmin = va.indexOf(Math.min(...va));
 check("η=0.5: pérdida de entrenamiento siempre baja", tr.every((v, i) => i === 0 || v < tr[i - 1]));
 check("η=0.5: validación baja y luego sube (sobreajuste)", vmin > 0 && vmin < va.length - 1 && va[va.length - 1] > va[vmin] + 0.3, `mínimo en el paso ${vmin}`);
-const run2 = runTraining(params, { eta: 2, steps: 8 });
-check("η=2: algún paso EMPEORA la pérdida de entrenamiento", run2.history.some((h, i) => i > 0 && h.train > run2.history[i - 1].train));
+const run12 = runTraining(params, { eta: 1.2, steps: 40 });
+check("η=1.2: algún paso EMPEORA la pérdida de entrenamiento y luego converge", run12.history.some((h, i) => i > 0 && h.train > run12.history[i - 1].train) && run12.history[40].train < run12.history[0].train * 0.05);
+const run3 = runTraining(params, { eta: 3, steps: 8 });
+check("η=3: la pérdida diverge", run3.history[8].train > 100 * run3.history[0].train);
 check("el entrenamiento no modifica el cuerpo congelado", paramPrint(params) === print0);
 // Si se cambian los objetivos de VALIDACIÓN, la trayectoria de θ debe ser idéntica.
 const altValid = VALID_TEXT.map(([text]) => [text, "-"]);

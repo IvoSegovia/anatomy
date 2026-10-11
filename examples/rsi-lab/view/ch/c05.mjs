@@ -257,19 +257,21 @@ export const chapter5 = {
       scale: "model",
       camera: () => trayRegion("out", [0, 0, 186, 96], { area: { left: 420 } }),
       caption: (ctx) => {
-        const r2 = ctx.store.training("sgd", 2);
-        const up = r2.history.findIndex((h, i) => i > 0 && h.train > r2.history[i - 1].train);
-        return ctx.event <= 1 ? `Con <b>η = 2</b>, el paso ${up} <b>empeora</b> la pérdida de entrenamiento (${f3(r2.history[up - 1].train)} → ${f3(r2.history[up].train)}): el paso es demasiado largo.` : "Con <b>η = 3</b> la pérdida diverge. La tasa de aprendizaje es un hiperparámetro, no una velocidad de animación.";
+        const r = ctx.store.training("sgd", 1.2);
+        const h = r.history.map((x) => x.train);
+        const up = h.findIndex((v, i) => i > 0 && v > h[i - 1]);
+        return ctx.event <= 1 ? `Con <b>η = 1.2</b>, el paso ${up} <b>empeora</b> la pérdida de entrenamiento (${f3(h[up - 1])} → ${f3(h[up])}): el paso se pasa del mínimo. Después vuelve a bajar.` : "Con <b>η = 3</b> la pérdida diverge. La tasa de aprendizaje es un hiperparámetro del optimizador, no una velocidad de animación.";
       },
       changed: { pesos: "cambió" },
       pose(ctx, t, e) {
-        const eta = e <= 1 ? 2 : 3;
+        const eta = e <= 1 ? 1.2 : 3;
         const r = ctx.store.training("sgd", eta);
-        const k = e <= 1 ? r.history.findIndex((h, i) => i > 0 && h.train > r.history[i - 1].train) : 8;
+        const h = r.history.map((x) => x.train);
+        const k = e <= 1 ? h.findIndex((v, i) => i > 0 && v > h[i - 1]) : 6;
         curves(ctx, k, { opt: "sgd", eta, title: `Pérdida por paso · SGD · η = ${eta}` });
         showHead(ctx, r.history[Math.max(0, k)].head, exOf(ctx));
         ctx.theta(r.history[Math.max(0, k)].print, `η = ${eta}, paso ${k}`, true);
-        trainPanel(ctx, ["upd"], `η = ${eta}: L_entr por paso = ${r.history.slice(0, 9).map((h) => (h.train > 999 ? h.train.toExponential(1) : f2(h.train))).join(" → ")}`);
+        trainPanel(ctx, ["upd"], `η = ${eta}: L_entr por paso = ${h.slice(0, 11).map((v) => (v > 999 ? v.toExponential(1) : f2(v))).join(" → ")}`);
         ctx.focus(["mx-Wu", "bars-out"]);
       },
     },

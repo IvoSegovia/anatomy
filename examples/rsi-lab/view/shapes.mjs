@@ -31,15 +31,46 @@ export function basePlate(plan, P, { thick = 12, foot = 6, ruler = true } = {}) 
 }
 
 // Caja de instrumento: cuerpo con bisel, costura, tapa, tornillos en la tapa y placa de rótulo frontal.
-export function cabinet(plan, z, h, P, { tone = "mid", lid = 3, lit = false, screws = true, seam = true, className = "" } = {}) {
+// Rejilla de ventilación: ranuras cerradas en una cara vertical visible (+x o +y).
+function vents(plan, z0, z1, P, count = 5) {
+  const [vx, vy] = k.towardViewer(P);
+  const out = [];
+  const slot = (pts) => k.pathOf(pts.map((p) => k.iso(p, P)), true);
+  const n = count;
+  if (vx > 0.2) {
+    const x = plan.x + plan.w;
+    const y1 = plan.y + plan.d - 8;
+    for (let i = 0; i < n; i++) {
+      const y = y1 - i * 4.2;
+      out.push(slot([[x, y, z0], [x, y - 2, z0], [x, y - 2, z1], [x, y, z1]]));
+    }
+  }
+  if (vy > 0.2) {
+    const y = plan.y + plan.d;
+    const x1 = plan.x + plan.w - 8;
+    for (let i = 0; i < n; i++) {
+      const x = x1 - i * 4.2;
+      out.push(slot([[x, y, z0], [x - 2, y, z0], [x - 2, y, z1], [x, y, z1]]));
+    }
+  }
+  return out.join("");
+}
+
+export function cabinet(plan, z, h, P, { tone = "mid", lid = 3, lit = false, screws = true, seam = true, className = "", vent = true } = {}) {
   const out = [];
   out.push(`<path class="iso-halo" d="${k.haloOf(k.insetPlan(plan, -2), z, 0.1, P)}" style="filter:blur(6px)"/>`);
-  const body = k.slabOf(plan, z, h - lid, P, 6, 0.8);
-  out.push(S(body, { tone, lit, className, inner: seam ? L(k.sideSeam(plan, z + (h - lid) * 0.35, P, 6), { tone: "faint" }) : "" }));
+  // zócalo inferior (tono bajo) sobre el que apoya el cuerpo
+  const plinth = 2.4;
+  out.push(S(k.slabOf(k.insetPlan(plan, 1.6), z, plinth, P, 5), { tone: "lo", crease: "none" }));
+  const body = k.slabOf(plan, z + plinth, h - lid - plinth, P, 6, 0.8);
+  const bodyH = h - lid - plinth;
+  const inner = (seam ? L(k.sideSeam(plan, z + plinth + bodyH * 0.35, P, 6), { tone: "faint" }) : "") + (vent && bodyH > 14 ? L(vents(plan, z + plinth + bodyH * 0.55, z + plinth + bodyH * 0.85, P), { tone: "lo" }) : "");
+  out.push(S(body, { tone, lit, className, inner }));
   const top = k.insetPlan(plan, -0.8);
   out.push(S(k.slabOf(top, z + h - lid, lid, P, 6, 0.8), { tone, lit, className }));
   if (screws) {
     const pts = k.corners(top, 4.2);
+    out.push(L(pts.map(([x, y]) => k.ring(x, y, 1.6, z + h, P, 14)).join(""), { tone: "lo" }));
     out.push(D(pts.map(([x, y]) => at([x, y, z + h], P)), { size: 0.5 }));
   }
   return out.join("");

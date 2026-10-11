@@ -1,5 +1,5 @@
 // Capítulo 4 — Bloque completo y siguiente token.
-import { baseVisibility, explode, trayRegion, rackCamera, cutAbove } from "../common.mjs";
+import { baseVisibility, explode, trayRegion, rackCamera, cutAbove, fade } from "../common.mjs";
 import { f2, f3, T, esc, lineChart } from "../helpers.mjs";
 import { el } from "../ui.mjs";
 import { rackSetup } from "./c02.mjs";
@@ -87,6 +87,7 @@ export const chapter4 = {
       more: `<p>Cada cabeza aprende a mezclar información de forma distinta. La concatenación vuelve a la anchura 8 y W_O las combina.</p>`,
       pose(ctx, t) {
         cutAbove(ctx, "b0");
+        fade(ctx, ["blk-b0", "mx-b0-wo", "mx-b0-w1", "mx-b0-w2", "vec-b0", "head-b0-0", "head-b0-1"], ctx.still.matches ? 1 : Math.min(1, t * 2.5));
         const tr = ctx.store.trace().blocks[0];
         ctx.focus(["head-b0-0", "head-b0-1", "mx-b0-wo", "blk-b0"]);
         ctx.tag("lb-h0", "head-b0-0", "cabeza 1 → Z₁", { dz: 8, role: "in" });
@@ -146,8 +147,8 @@ export const chapter4 = {
       camera: () => trayRegion("b1", [0, 0, 186, 96], { area: { left: 400 } }),
       caption: "El <b>bloque 2</b> repite la misma operación con otros pesos: Y₂ = H₂ + MLP(LN(H₂)), H₂ = Y₁ + MHA(LN(Y₁)).",
       changed: { contexto: "activo" },
-      pose(ctx) {
-        cutAbove(ctx, "b1");
+      pose(ctx, t) {
+        cutAbove(ctx, "b1", 1, ctx.still.matches ? 1 : Math.min(1, t * 2.5));
         const tr = ctx.store.trace().blocks[1];
         ctx.state("vec-b1", { which: "Y", x: 136 });
         ctx.focus(["blk-b1", "vec-b1", "head-b1-0", "head-b1-1", "mx-b1-wo", "mx-b1-w1", "mx-b1-w2"]);
@@ -164,7 +165,7 @@ export const chapter4 = {
       caption: (ctx) => ["Sólo la <b>última posición</b> predice el siguiente token: h_n pasa por la LayerNorm final.", "<b>W_U</b> (8×16) da 16 logits, uno por símbolo del vocabulario (gris: negativos).", "<b>softmax</b>: 16 probabilidades que suman 1. Con estos pesos aleatorios, el resultado no expresa comprensión."][Math.max(0, ctx.event - 1)],
       changed: { contexto: "activo" },
       pose(ctx, t, e) {
-        cutAbove(ctx, "out");
+        cutAbove(ctx, "out", 1, ctx.still.matches || e > 1 ? 1 : Math.min(1, t * 6));
         const tr = ctx.store.trace();
         ctx.state("bars-out", { showLogits: e >= 2, showProbs: e >= 3, chosen: e >= 3 ? argmax(tr.probs) : undefined });
         ctx.state("card-next", {});

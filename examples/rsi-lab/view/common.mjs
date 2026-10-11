@@ -48,16 +48,21 @@ export function trayRegion(id, [x0, y0, x1, y1], opts = {}) {
   return { points: out, pad: opts.pad ?? 30, area: opts.area ?? { left: 360 }, azimuth: opts.azimuth ?? 45, elevation: opts.elevation ?? 34 };
 }
 // Retira (corte) las bandejas por encima de `keep` y su contenido.
-export function cutAbove(ctx, keep) {
+// share ∈ [0,1] funde progresivamente (1 = retiradas del todo); reveal funde la entrada de las de abajo.
+export function cutAbove(ctx, keep, share = 1, reveal = 1) {
   const order = ["emb", "b0", "b1", "out"];
   const hide = new Set(order.slice(order.indexOf(keep) + 1));
   const rack = new Set([...RACK_IDS, ...TRAY_IDS]);
   for (const [id, entry] of ctx.engine.objects) {
     const tray = id.startsWith("tray-") ? id.replace("tray-", "").replace("-front", "") : entry.parent ? entry.parent.replace("tray-", "") : null;
     if (!tray) continue;
-    if (hide.has(tray)) ctx.show(id, false);
-    else if (rack.has(id) && !id.startsWith("card")) ctx.show(id, true);
+    if (hide.has(tray)) ctx.pose(id, { visible: share < 0.999, opacity: Math.max(0, 1 - share) });
+    else if (rack.has(id) && !id.startsWith("card")) ctx.pose(id, { visible: true, opacity: tray === keep ? reveal : 1 });
   }
+}
+// Funde un conjunto de objetos (corte progresivo dentro de una bandeja).
+export function fade(ctx, ids, value) {
+  for (const id of ids) ctx.pose(id, { visible: value > 0.001, opacity: Math.max(0, Math.min(1, value)) });
 }
 
 // Cámara para un cubo de la cabeza (escala tensores), con el bastidor explosionado.

@@ -1,5 +1,5 @@
 // Capítulo 2 — De tokens a representaciones.
-import { baseVisibility, explode, trayCamera, rackCamera, trayRegion, cutAbove } from "../common.mjs";
+import { baseVisibility, explode, trayCamera, rackCamera, trayRegion, cutAbove, fade } from "../common.mjs";
 import { VOCAB, tokenize } from "../../model/tokenizer.mjs";
 import { f2, f3, esc, T } from "../helpers.mjs";
 import { el } from "../ui.mjs";
@@ -87,7 +87,8 @@ export const chapter2 = {
       caption: (ctx) => `Entrada breve: <b>«${esc(ctx.user.text)}»</b>. Se usará un vocabulario <b>de juguete</b> de 16 símbolos, no la tokenización de un modelo comercial.`,
       changed: { contexto: "cambió" },
       more: (ctx) => `<p>El vocabulario completo, con su identificador:</p>${vocabTable(ctx.store.ids())}<p>La segmentación es codiciosa: en cada posición se toma el símbolo más largo del vocabulario que coincide, ignorando espacios.</p>`,
-      pose(ctx) {
+      pose(ctx, t) {
+        cutAbove(ctx, "emb", ctx.still.matches ? 1 : Math.min(1, t * 2.2));
         ctx.show(cards(10), false);
         ctx.state("mx-X0", { upto: 0 });
         ctx.focus(["tray-emb", "tray-emb-front"]);
@@ -196,7 +197,8 @@ export const chapter2 = {
       caption: "X₀ (n×8) entra al flujo residual del bloque 1. <b>Prueba</b>: cambia un token en la mesa de control y observa qué se recalcula. Con pesos aleatorios no hay comprensión lingüística.",
       changed: { contexto: "cambió" },
       more: `<p><b>Dimensiones</b>: n tokens × d_model = 8. La anchura 8 se mantiene a lo largo de todo el flujo residual.</p><p>Los pesos de este Transformer son aleatorios (semilla 7). Sus predicciones no implican comprensión: sirven para mostrar mecanismos con números reales.</p>`,
-      pose(ctx) {
+      pose(ctx, t) {
+        cutAbove(ctx, "emb", ctx.still.matches ? 0 : 1 - Math.min(1, t * 2));
         const n = ctx.store.ids().length;
         cards(10).forEach((id, j) => ctx.pose(id, { visible: j < n, state: { showId: false } }));
         ctx.state("mx-X0", {});

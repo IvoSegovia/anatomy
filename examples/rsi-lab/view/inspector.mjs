@@ -75,7 +75,7 @@ export function infoFor(ctx, id) {
   return ctx.INFO[id] || TOPICS[id] || (ctx.extraInfo && ctx.extraInfo[id]) || null;
 }
 
-const roleWord = { in: "entrada / activación", w: "peso / parámetro", g: "gradiente / actualización", ok: "cumple el criterio", bad: "falla / regresión", off: "congelado / inactivo" };
+const roleWord = { in: "entrada / activación", w: "peso / parámetro", g: "gradiente / actualización", ok: "cumple el criterio", bad: "falla / regresión", off: "congelado / fijo / inactivo" };
 
 export function renderInspector(ctx, selection) {
   const body = ctx.ref.inspBody;

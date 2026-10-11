@@ -10,19 +10,13 @@ export function makeRng(seed) {
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
-  let spare = null;
+  // Normal aproximada por suma de 12 uniformes (Irwin–Hall): media 0, varianza 1, colas en ±6.
+  // Sólo usa sumas exactas en IEEE-754, así los mismos números salen en Node y en cualquier navegador
+  // (Box–Muller usa log/sin/cos, cuyos últimos bits pueden variar entre motores de JavaScript).
   const normal = () => {
-    if (spare !== null) {
-      const value = spare;
-      spare = null;
-      return value;
-    }
-    let u = 0;
-    while (u === 0) u = next();
-    const v = next();
-    const radius = Math.sqrt(-2 * Math.log(u));
-    spare = radius * Math.sin(2 * Math.PI * v);
-    return radius * Math.cos(2 * Math.PI * v);
+    let total = 0;
+    for (let i = 0; i < 12; i++) total += next();
+    return total - 6;
   };
   const int = (low, high) => low + Math.floor(next() * (high - low + 1));
   const pick = (list) => list[Math.floor(next() * list.length)];
