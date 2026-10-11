@@ -1,0 +1,53 @@
+.iso{--cl-glow:#ffe2a0;--cl-glow-k:.5;--cl-glow-line:#fff3d1}
+.iso[data-theme="light"]{--cl-glow:#f2b33d;--cl-glow-k:.24;--cl-glow-line:#c77d0a}
+.cl-stage{position:relative;touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none}
+.cl-stage[data-dragging]{cursor:grabbing}
+.cl-stage:focus{outline:none}
+.cl-stage:focus-visible{outline:1px solid var(--anatomy-muted);outline-offset:6px}
+.cl-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.cl-svg{overflow:hidden}
+.cl-item{transition:opacity .45s var(--anatomy-ease)}
+.cl-svg[data-focus] .cl-item{opacity:.14}
+.cl-svg[data-focus="cinta"] .cl-item[data-group="cinta"],
+.cl-svg[data-focus="escaner"] .cl-item[data-group="escaner"],
+.cl-svg[data-focus="brazo"] .cl-item[data-group="brazo"],
+.cl-svg[data-focus="bandejas"] .cl-item[data-group="bandejas"],
+.cl-svg[data-focus="control"] .cl-item[data-group="control"]{opacity:1}
+.cl-svg[data-wire] .iso-fill,.cl-svg[data-wire] .iso-shade,.cl-svg[data-wire] .iso-top,.cl-svg[data-wire] .cl-window{fill:none!important;stroke:none!important}
+.cl-svg[data-wire] .iso-halo{display:none}
+.cl-svg[data-wire] .iso-line[data-tone="faint"]{stroke:var(--anatomy-lo)}
+
+.cl-sheet{fill:var(--cl-glow);fill-opacity:var(--cl-glow-k);stroke:none;pointer-events:none}
+.iso[data-theme="light"] .cl-sheet{mix-blend-mode:multiply}
+.cl-scan{stroke:var(--cl-glow-line);stroke-width:1.1px}
+.cl-lamp>.iso-solid>.iso-top,.cl-lamp>.iso-solid>.iso-shade{fill:color-mix(in srgb,var(--cl-glow) calc(var(--glow,0)*65%),var(--anatomy-top))}
+.cl-led[data-on]>.iso-solid>.iso-top,.cl-led[data-on]>.iso-solid>.iso-shade{fill:var(--anatomy-lit-top)}
+.cl-led[data-on]>.iso-solid>.iso-edge{stroke:var(--anatomy-lit)}
+.cl-window{fill:var(--anatomy-shade-0);stroke:var(--anatomy-lo);stroke-width:.5px;vector-effect:non-scaling-stroke}
+.cl-digits{fill:var(--anatomy-hi);font-family:var(--anatomy-mono);letter-spacing:.02em}
+.cl-digits[data-dim]{fill:var(--anatomy-mid)}
+
+.cl-panel{display:grid;gap:10px;margin:-14px 0 40px;font-size:13px;color:var(--anatomy-text)}
+.cl-row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
+.cl-set{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.cl-btn{appearance:none;border:0;border-radius:0;background:var(--anatomy-card);color:var(--anatomy-text);box-shadow:0 0 0 1px var(--anatomy-faint);padding:6px 10px;font:inherit;font-size:12.5px;line-height:1.2;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.cl-btn span{font-family:var(--anatomy-mono);font-size:10.5px;color:var(--anatomy-muted)}
+.cl-btn:hover{box-shadow:0 0 0 1px var(--anatomy-mid);color:var(--anatomy-strong)}
+.cl-btn:focus-visible{outline:1px solid var(--anatomy-muted);outline-offset:3px}
+.cl-btn[aria-pressed="true"]{box-shadow:0 0 0 1px var(--anatomy-hi);color:var(--anatomy-strong)}
+.cl-follow[aria-pressed="true"]{background:var(--anatomy-strong);color:var(--anatomy-card)}
+.cl-speed{display:inline-flex;gap:8px;align-items:center;font-size:12.5px}
+.cl-speed input{width:120px;accent-color:var(--anatomy-hi)}
+.cl-speed output{font-family:var(--anatomy-mono);font-size:11.5px;min-width:9.5em;font-variant-numeric:tabular-nums}
+.cl-info{background:var(--anatomy-card);box-shadow:0 0 0 1px var(--anatomy-faint);padding:12px 14px;display:grid;gap:4px;min-height:132px}
+.cl-info-head{display:grid;gap:2px;margin-bottom:6px}
+.cl-info-head b{color:var(--anatomy-strong);font-weight:600}
+.cl-info-head span{color:var(--anatomy-muted)}
+.cl-spec{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--anatomy-faint);padding-top:4px}
+.cl-spec b{font-weight:500;color:var(--anatomy-strong);font-family:var(--anatomy-mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+.cl-steps{display:flex;flex-wrap:wrap;gap:4px;list-style:none;margin:0 0 6px;padding:0}
+.cl-steps li{padding:3px 8px;font-size:11.5px;box-shadow:0 0 0 1px var(--anatomy-faint);color:var(--anatomy-muted)}
+.cl-steps li[data-done]{color:var(--anatomy-text)}
+.cl-steps li[data-now]{box-shadow:0 0 0 1px var(--anatomy-hi);color:var(--anatomy-strong)}
+.cl-note{margin:6px 0 0;color:var(--anatomy-muted)}
+@media (max-width:560px){.cl-speed input{width:90px}.cl-info{min-height:170px}}

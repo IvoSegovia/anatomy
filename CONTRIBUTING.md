@@ -34,6 +34,8 @@ node examples/desk-computer/build.mjs
 node examples/desk-computer/build.mjs --light
 node examples/arcade-cabinet/build.mjs
 node examples/arcade-cabinet/build.mjs --light
+node examples/sorting-cell/build.mjs
+node examples/sorting-cell/build.mjs --light
 node examples/ripple-tank/build.mjs
 node examples/ripple-tank/build.mjs --light
 node examples/raptor-engine/build.mjs

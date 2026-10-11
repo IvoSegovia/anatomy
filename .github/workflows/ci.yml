@@ -40,6 +40,11 @@ jobs:
           node examples/arcade-cabinet/build.mjs
           node examples/arcade-cabinet/build.mjs --light
 
+      - name: Sorting cell
+        run: |
+          node examples/sorting-cell/build.mjs
+          node examples/sorting-cell/build.mjs --light
+
       - name: Ripple tank
         run: |
           node examples/ripple-tank/build.mjs
