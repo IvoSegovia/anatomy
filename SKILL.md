@@ -7,7 +7,7 @@ description: Build crafted, highly detailed, interactive isometric SVG figures t
 
 This skill makes figures like a small instrument on a bench: a heavy base on feet, rails with tick rulers, a carriage on bushings, knurled knobs, coil springs, a dial gauge whose needle moves, screws as tiny dots. The reader understands the idea because they recognise the machine. Every number the figure shows comes from the same model that moves its parts.
 
-Eight complete examples ship with the skill. Open the closest one before you start. Each framework-free example is built with `node examples/<name>/build.mjs`, which writes a standalone HTML page next to the script; add `--light` for the light theme.
+Nine complete examples ship with the skill. Open the closest one before you start. Each framework-free example is built with `node examples/<name>/build.mjs`, which writes a standalone HTML page next to the script; add `--light` for the light theme.
 
 - `examples/dial-indicator/` is the smallest: a dial gauge on a stand, about 300 lines in all.
 - `examples/desk-computer/` is framework-free SVG: a desk computer with a keyboard you can type on. The typed line appears on a CRT screen drawn in the plane of the case front, and the picture collapses to a line and a dot when you switch it off. It has about 85 solids and 850 paths.
@@ -17,6 +17,7 @@ Eight complete examples ship with the skill. Open the closest one before you sta
 - `examples/test-rig/` is a production figure from a real site (React/Next): a glass button on a spring-mounted carriage, a finger probe on a rail that presses and pulls, and a dial gauge reading the lean. It has 53 solids and about 470 paths.
 - `examples/spot-plate/` is a second production figure from the same site: six pairs of glass drops on a spot plate, each pair drawn from one distance field, so a pair closer than `merge` runs together into one piece of glass. A fan of feeler blades sets `merge`, one blade per gap. It is the reference for shapes that morph into each other and for one control driving many parts.
 - `examples/turning-dial/` is the optional 3D mode: a combination dial that turns in true 3D with a small robot hand on it. It has about 90 live parts in metal materials, a second turn group, a hinge, a three-hinge finger that lifts and a pod that breaks off as a free body. A WebGL LED, its light pool and sparks follow the moving parts. `stress.mjs` beside it is a dense hand of about 380 parts in a cluttered workshop, used to measure performance.
+- `examples/rsi-lab/` is a multi-chapter interactive lesson, not a machine: a dark isometric lab with a guided tour, saved states, three scales and an inspector, in Spanish. Its models in `model/` are pure modules that run the same in Node and in the page, `verify.mjs` checks their numbers, and `build.mjs` bundles every module into one offline page. It is the reference for a narrative timeline, for matrices drawn as surfaces with inspectable cells, and for labelling where each number comes from. It has no light theme.
 
 The test rig is the quality bar for the drawing itself. The Raptor is the bar for shader work: a WebGL effect has to reach its standard of world-space, no-pop, seamless rendering.
 
