@@ -39,31 +39,64 @@ export function reportOf(task, run, versionId) {
   const text = `ERROR ${task.testName} tarea fallida respuesta ${run.answer ? run.answer.culprit : "ninguna"}`;
   lines.push({ type: "ERROR", text, tokens: text.split(/\s+/).length, tags: {} });
   lines.forEach((entry, index) => (entry.index = index));
+  lines.source = { seed: task.seed, version: versionId };
   return lines;
 }
 
-export function analyse(reports, analystGenome) {
-  const seen = {};
-  let total = 0;
-  let visible = 0;
-  for (const lines of reports) {
-    const all = lines.filter((entry) => entry.tags.diag);
-    total += all.length;
-    const { context } = manageContext(lines, analystGenome, BUDGET);
-    for (const entry of context.filter((e) => e.tags.diag)) {
-      visible += 1;
-      seen[entry.tags.diag] = (seen[entry.tags.diag] || 0) + 1;
-    }
-  }
-  return { seen, total, visible, quality: total ? visible / total : 1 };
+const DIAG_RE = /^DEBUG diag \S+ (\S+)(?: (\S+))?/;
+export function readDiagnosis(text) {
+  const match = text.match(DIAG_RE);
+  if (!match) return null;
+  return { kind: match[1], type: TYPES.includes(match[2]) ? match[2] : null };
 }
 
-export function propose(parent, analysis, rng, memory, failingTypes) {
+export function analyse(reports, analystGenome, { keepDetails = 2 } = {}) {
+  const seen = {};
+  const seenTypes = {};
+  const details = [];
+  let total = 0;
+  let visible = 0;
+  reports.forEach((lines, r) => {
+    total += lines.filter((entry) => entry.tags.diag).length;
+    const managed = manageContext(lines, analystGenome, BUDGET);
+    const read = [];
+    for (const entry of managed.context) {
+      const diag = readDiagnosis(entry.text);
+      if (!diag) continue;
+      visible += 1;
+      read.push(diag);
+      seen[diag.kind] = (seen[diag.kind] || 0) + 1;
+      if (diag.type) seenTypes[diag.kind] = [...(seenTypes[diag.kind] || []), diag.type];
+    }
+    if (r < keepDetails)
+      details.push({
+        source: lines.source,
+        lines: lines.map((entry) => ({ index: entry.index, type: entry.type, text: entry.text, tokens: entry.tokens, diag: !!entry.tags.diag, status: managed.status.get(entry.index) })),
+        used: managed.used,
+        read,
+      });
+  });
+  return { seen, seenTypes, total, visible, quality: total ? visible / total : null, details };
+}
+
+export const RULES = {
+  presupuesto: "si el diagnóstico dice «excluida por presupuesto»: seleccionar por puntuación; si ya lo hace, quitar duplicados; si ya lo hace, subir el peso del tipo excluido",
+  tipo: "si dice «descartada por filtro de tipo»: dejar de descartar ese tipo",
+  recorte: "si dice «recorte eliminó la palabra clave»: recortar menos",
+  señuelo: "si dice «eligió un señuelo»: dar más puntaje a las líneas que mencionan pruebas fallidas",
+  duplicados: "si dice «tokens en líneas repetidas»: quitar duplicados",
+  aleatoria: "sin diagnóstico legible, o con una propuesta ya probada: mutación aleatoria de un campo",
+};
+
+export function propose(parent, analysis, rng, memory) {
   const g = withId(parent.genome, "", "");
-  const ranked = Object.entries(analysis.seen).filter(([kind]) => kind !== "otro").sort((a, b) => b[1] - a[1]);
+  const ranked = Object.entries(analysis.seen).filter(([kind]) => kind !== "otro").sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  const typesOf = (kind) => (analysis.seenTypes[kind] && analysis.seenTypes[kind].length ? analysis.seenTypes[kind] : ["DEBUG"]);
   let note;
+  let rule = null;
   if (ranked.length) {
     const kind = ranked[0][0];
+    rule = kind;
     if (kind === "presupuesto") {
       if (g.select === "orden") {
         g.select = "puntuación";
@@ -74,12 +107,12 @@ export function propose(parent, analysis, rng, memory, failingTypes) {
         g.dedupe = true;
         note = "dirigida: quitar duplicados para liberar presupuesto";
       } else {
-        const type = rng.pick(failingTypes.presupuesto || ["DEBUG"]);
+        const type = rng.pick(typesOf("presupuesto"));
         g.weights[type] = clampW(g.weights[type] + 1);
         note = `dirigida: subir el peso de ${type}`;
       }
     } else if (kind === "tipo") {
-      const type = rng.pick(failingTypes.tipo || ["DEBUG"]);
+      const type = rng.pick(typesOf("tipo"));
       g.weights[type] = 1;
       note = `dirigida: dejar de descartar ${type}`;
     } else if (kind === "recorte") {
@@ -94,6 +127,7 @@ export function propose(parent, analysis, rng, memory, failingTypes) {
       note = "dirigida: quitar duplicados";
     }
   }
+  let random = null;
   if (!note || memory.has(keyOf(g))) {
     const field = rng.pick(["dedupe", "weight", "weight", "link", "select", "tie", "clip"]);
     if (field === "dedupe") g.dedupe = !g.dedupe;
@@ -104,17 +138,100 @@ export function propose(parent, analysis, rng, memory, failingTypes) {
     else if (field === "select") g.select = g.select === "orden" ? "puntuación" : "orden";
     else if (field === "tie") g.tie = g.tie === "recientes" ? "antiguas" : "recientes";
     else g.clip = rng.pick([0, 0, 6, 8]);
+    random = field;
     note = `${note ? "repetida → " : ""}aleatoria: cambiar ${field}`;
   }
-  return { genome: g, note };
+  return { genome: g, note, rule: random ? "aleatoria" : rule, directedRule: rule, ranked, random };
+}
+
+export function genomeDiff(a, b) {
+  const out = [];
+  if (a.select !== b.select) out.push(`selección: ${a.select} → ${b.select}`);
+  if (a.dedupe !== b.dedupe) out.push(`duplicados: ${a.dedupe ? "se quitan" : "se conservan"} → ${b.dedupe ? "se quitan" : "se conservan"}`);
+  for (const type of TYPES) if (a.weights[type] !== b.weights[type]) out.push(`peso ${type}: ${a.weights[type]} → ${b.weights[type]}`);
+  if (a.link !== b.link) out.push(`bonificación por mencionar la prueba fallida: ${a.link} → ${b.link}`);
+  if (a.tie !== b.tie) out.push(`empates: más ${a.tie} → más ${b.tie}`);
+  if ((a.clip || 0) !== (b.clip || 0)) out.push(`recorte por línea: ${a.clip || "no"} → ${b.clip || "no"}`);
+  return out;
 }
 
 const validGenome = (g) => TYPES.some((type) => g.weights[type] >= 0) && g.weights.ERROR >= 0;
 
+export const SEARCH_BUDGET = 1600;
+export const PROTOCOL = {
+  unit: "ejecuciones de tareas del banco (una llamada a runTask); no es tiempo, FLOPs ni dinero",
+  search: "desarrollo + validación, incluida la reevaluación de la versión activa en cada comparación",
+  separate: "auditoría (40 por versión medida) y prueba final (60 por versión evaluada al terminar) tienen presupuesto aparte",
+  reserve: "un ciclo empieza sólo si lo que queda cubre desarrollo + 2 × validación; no hay lotes parciales; si la candidata es inválida, la reserva de validación se libera sin ejecutarse",
+  cache: "sin caché: cada evaluación se ejecuta y se cobra",
+};
+export const CATEGORIES = ["desarrollo", "validación", "auditoría", "prueba"];
+const SEARCH = new Set(["desarrollo", "validación"]);
+
+export function makeLedger(limit) {
+  const used = { desarrollo: 0, validación: 0, auditoría: 0, prueba: 0 };
+  const search = () => used.desarrollo + used.validación;
+  return {
+    limit,
+    used,
+    search,
+    remaining: () => limit - search(),
+    total: () => CATEGORIES.reduce((t, key) => t + used[key], 0),
+    charge(category, n = 1) {
+      if (!(category in used)) throw new Error(`categoría desconocida: ${category}`);
+      if (SEARCH.has(category) && search() + n > limit) throw new Error(`presupuesto de búsqueda excedido: ${search() + n} > ${limit}`);
+      used[category] += n;
+    },
+    snapshot: () => ({ ...used, search: search(), limit }),
+  };
+}
+
+const ACCESS = {
+  ejecutor: { desarrollo: ["búsqueda"] },
+  selector: { validación: ["búsqueda"] },
+  auditor: { auditoría: ["búsqueda", "final"] },
+  "evaluador final": { prueba: ["final"] },
+};
+
+export function makeGate({ families = null, testBase = SPLITS.test.base, ledger }) {
+  const sets = {
+    desarrollo: makeSplit(SPLITS.dev.base, SPLITS.dev.count, families),
+    validación: makeSplit(SPLITS.valid.base, SPLITS.valid.count, families),
+    auditoría: makeSplit(SPLITS.audit.base, SPLITS.audit.count),
+    prueba: makeSplit(testBase, SPLITS.test.count),
+  };
+  const log = [];
+  let phase = "búsqueda";
+  return {
+    log,
+    sizes: Object.fromEntries(Object.entries(sets).map(([key, list]) => [key, list.length])),
+    get phase() {
+      return phase;
+    },
+    freeze() {
+      phase = "final";
+      log.push({ consumer: "protocolo", split: null, phase, n: 0, what: "versión final fijada" });
+    },
+    run(consumer, split, genome, count) {
+      const allowed = ACCESS[consumer] && ACCESS[consumer][split];
+      if (!allowed || !allowed.includes(phase)) throw new Error(`acceso no permitido: ${consumer} → ${split} en la fase ${phase}`);
+      const tasks = sets[split].slice(0, count ?? sets[split].length);
+      log.push({ consumer, split, phase, n: tasks.length, version: genome.id });
+      return tasks.map((task) => {
+        ledger.charge(split, 1);
+        return { ...runTask(task, genome), task };
+      });
+    },
+    handOver(consumer, split, what, n) {
+      log.push({ consumer, split, phase, n, what });
+    },
+  };
+}
+
 export function runLoop({
   mode = "B",
   seed = 1,
-  budget = 900,
+  budget = SEARCH_BUDGET,
   noise = 0,
   families = null,
   nVal = 40,
@@ -123,18 +240,18 @@ export function runLoop({
   lambda = 0.1,
   start = VERSIONS.v0,
   metaMutation = true,
+  testBase = SPLITS.test.base,
+  probe = null,
 } = {}) {
   const rng = makeRng(seed * 131 + 1);
   const metaRng = makeRng(seed * 389 + 2);
   const noiseRng = makeRng(seed * 977 + 5);
-  const dev = makeSplit(SPLITS.dev.base, SPLITS.dev.count, families);
-  const valAll = makeSplit(SPLITS.valid.base, SPLITS.valid.count, families);
-  const audit = makeSplit(SPLITS.audit.base, SPLITS.audit.count);
-  const test = makeSplit(SPLITS.test.base, SPLITS.test.count);
-  const auditOf = (genome) => audit.filter((task) => runTask(task, genome).success).length / audit.length;
-  const testOf = (genome) => test.filter((task) => runTask(task, genome).success).length / test.length;
+  const ledger = makeLedger(budget);
+  const gate = makeGate({ families, testBase, ledger });
+  const devCount = gate.sizes.desarrollo;
+  const rate = (runs) => runs.filter((run) => run.success).length / runs.length;
+  const auditOf = (genome) => rate(gate.run("auditor", "auditoría", genome));
   const memory = new Set();
-  let spent = 0;
   let counter = 0;
   const root = { id: start.id, genome: withId(start, start.id, start.name), parent: null, strategy: { nVal, explore }, audit: auditOf(start) };
   const archive = [root];
@@ -144,30 +261,39 @@ export function runLoop({
   const valQueries = new Map();
   const cycles = [];
   let lastValid = root;
-  const evalVal = (genome, tasks) => tasks.map((task) => {
-    const run = runTask(task, genome);
-    const flip = noise > 0 && noiseRng.next() < noise;
-    return { ...run, success: flip ? !run.success : run.success, flipped: flip };
-  });
-  const devCost = dev.length;
-  while (spent + devCost + strategy.nVal <= budget) {
-    const cycle = { index: cycles.length + 1, analyst: analyst.id || "v0", strategy: { ...strategy } };
+  let stopReason = null;
+  const evalVal = (genome, n) =>
+    gate.run("selector", "validación", genome, n).map((run) => {
+      const flip = noise > 0 && noiseRng.next() < noise;
+      return { ...run, success: flip ? !run.success : run.success, flipped: flip };
+    });
+  for (;;) {
+    const need = devCount + 2 * strategy.nVal;
+    if (ledger.remaining() < need) {
+      stopReason = `quedan ${ledger.remaining()} ejecuciones y un ciclo completo necesita ${need}`;
+      break;
+    }
+    const cycle = { index: cycles.length + 1, analyst: analyst.id || "v0", strategy: { ...strategy }, reserved: need, before: ledger.snapshot() };
     const parent = rng.next() < strategy.explore && archive.length > 1 ? rng.pick(archive) : active;
     cycle.parent = parent.id;
-    const devRuns = dev.map((task) => runTask(task, parent.genome));
-    spent += devCost;
-    const failing = dev.map((task, i) => ({ task, run: devRuns[i] })).filter((x) => !x.run.success);
-    const reports = failing.map(({ task, run }) => reportOf(task, run, parent.id));
+    const devRuns = gate.run("ejecutor", "desarrollo", parent.genome);
+    const devTasks = devRuns.map((run) => run.seed);
+    const failing = devRuns.filter((run) => !run.success);
+    const reports = failing.map((run) => reportOf(run.task, run, parent.id));
+    gate.handOver("proponente", "desarrollo", "informes de fallo", reports.length);
     const analysis = analyse(reports, analyst);
-    const failingTypes = {};
-    failing.forEach(({ task, run }) => diagnose(task, run).forEach((d) => (failingTypes[d.kind] = [...(failingTypes[d.kind] || []), d.type])));
     cycle.analysis = analysis;
-    cycle.devSuccess = devRuns.filter((r) => r.success).length / dev.length;
-    const proposal = propose(parent, analysis, rng, memory, failingTypes);
+    cycle.devSuccess = rate(devRuns);
+    cycle.devTasks = devTasks;
+    const proposal = propose(parent, analysis, rng, memory);
+    if (probe && probe.propose) probe.propose({ cycle: cycle.index, parent: parent.id, analyst: analyst.id, reportSeeds: reports.map((lines) => lines.source.seed), analysis, proposal: proposal.note });
     counter += 1;
     const id = `c${counter}`;
     const genome = withId(proposal.genome, id, proposal.note);
     cycle.proposal = proposal.note;
+    cycle.rule = proposal.rule;
+    cycle.ranked = proposal.ranked;
+    cycle.diff = genomeDiff(parent.genome, genome);
     cycle.candidate = id;
     memory.add(keyOf(genome));
     let candidateStrategy = { ...strategy };
@@ -177,23 +303,24 @@ export function runLoop({
     }
     if (!validGenome(genome)) {
       cycle.built = false;
-      cycle.outcome = "inválida (no se archiva)";
+      cycle.outcome = "inválida (no se evalúa ni se archiva)";
+      cycle.released = 2 * strategy.nVal;
+      cycle.after = ledger.snapshot();
+      cycle.spent = ledger.search();
       cycles.push(cycle);
       continue;
     }
     cycle.built = true;
-    const tasks = valAll.slice(0, strategy.nVal);
-    const key = tasks.map((t) => t.seed).join(",");
+    const key = `${strategy.nVal}`;
     valQueries.set(key, (valQueries.get(key) || 0) + 1);
-    const activeRuns = evalVal(active.genome, tasks);
-    const candRuns = evalVal(genome, tasks);
-    spent += strategy.nVal;
+    const activeRuns = evalVal(active.genome, strategy.nVal);
+    const candRuns = evalVal(genome, strategy.nVal);
     const proxyOf = (run) => (run.managed.context.length ? run.managed.context.filter((e) => e.type === "ERROR" || e.type === "TRACE").length / run.managed.context.length : 0);
-    const pack = (runs) => ({ runs, success: runs.filter((r) => r.success).length / runs.length, cost: runs.reduce((t, r) => t + r.cost, 0) / runs.length, proxy: runs.reduce((t, r) => t + proxyOf(r), 0) / runs.length });
+    const pack = (runs) => ({ runs, success: rate(runs), cost: runs.reduce((t, r) => t + r.cost, 0) / runs.length, proxy: runs.reduce((t, r) => t + proxyOf(r), 0) / runs.length });
     const a = pack(activeRuns);
     const c = pack(candRuns);
     const ci = pairedBootstrap(a, c, { resamples: 1000, seed: seed * 17 + counter });
-    cycle.val = { active: a.success, candidate: c.success, ci, n: tasks.length, costA: a.cost, costC: c.cost };
+    cycle.val = { active: a.success, candidate: c.success, ci, n: strategy.nVal, costA: a.cost, costC: c.cost };
     const version = { id, genome, parent: parent.id, strategy: candidateStrategy, cycle: cycle.index, valSuccess: c.success };
     archive.push(version);
     const composite = (x) => x.success - lambda * (x.cost / BUDGET);
@@ -202,14 +329,24 @@ export function runLoop({
     cycle.visible = visibleOf(c);
     cycle.visibleActive = visibleOf(a);
     cycle.promoted = promote;
+    cycle.reason =
+      criterion === "estricto"
+        ? promote
+          ? `IC95 de Δéxito [${ci.low.toFixed(2)}, ${ci.high.toFixed(2)}] queda entero por encima de 0`
+          : ci.high < 0
+            ? `IC95 de Δéxito [${ci.low.toFixed(2)}, ${ci.high.toFixed(2)}] queda entero por debajo de 0: regresión`
+            : `IC95 de Δéxito [${ci.low.toFixed(2)}, ${ci.high.toFixed(2)}] incluye 0: evidencia insuficiente`
+        : `puntuación visible ${visibleOf(c).toFixed(3)} ${promote ? ">" : "≤"} ${visibleOf(a).toFixed(3)} de la activa`;
     if (promote) {
       version.audit = auditOf(genome);
       cycle.auditBefore = active.audit;
       cycle.auditAfter = version.audit;
       cycle.validImprovement = version.audit > active.audit;
+      cycle.replaced = active.id;
       active = version;
       if (version.audit >= lastValid.audit) lastValid = version;
       if (mode === "B") {
+        cycle.analystNext = genome.id;
         analyst = genome;
         strategy = candidateStrategy;
       }
@@ -217,11 +354,19 @@ export function runLoop({
     } else cycle.outcome = ci.high < 0 ? "archivada · regresión" : "archivada sin promover";
     cycle.active = active.id;
     cycle.activeAudit = active.audit;
-    cycle.spent = spent;
+    cycle.after = ledger.snapshot();
+    cycle.spent = ledger.search();
     cycles.push(cycle);
   }
+  gate.freeze();
+  if (probe && probe.freeze) probe.freeze({ active: active.id, lastValid: lastValid.id, cycles: cycles.length });
+  const testOf = (genome) => rate(gate.run("evaluador final", "prueba", genome));
+  const finalTest = testOf(active.genome);
+  const startTest = testOf(root.genome);
+  const lastValidTest = lastValid === active ? finalTest : testOf(lastValid.genome);
   const promotions = cycles.filter((c) => c.promoted).length;
   const valid = cycles.filter((c) => c.validImprovement).length;
+  const qualities = cycles.map((c) => c.analysis && c.analysis.quality).filter((q) => q !== null && q !== undefined);
   return {
     mode,
     seed,
@@ -229,16 +374,20 @@ export function runLoop({
     archive,
     active,
     lastValid,
-    spent,
+    spent: ledger.search(),
+    ledger: ledger.snapshot(),
+    access: gate.log,
+    stopReason,
+    budget,
     startAudit: root.audit,
     finalAudit: active.audit,
-    finalTest: testOf(active.genome),
-    startTest: testOf(root.genome),
-    lastValidTest: testOf(lastValid.genome),
+    finalTest,
+    startTest,
+    lastValidTest,
     promotions,
     validImprovements: valid,
-    costPerImprovement: valid ? spent / valid : null,
-    meanQuality: cycles.length ? cycles.reduce((t, c) => t + (c.analysis ? c.analysis.quality : 0), 0) / cycles.length : 0,
+    costPerImprovement: valid ? ledger.search() / valid : null,
+    meanQuality: qualities.length ? qualities.reduce((t, q) => t + q, 0) / qualities.length : null,
     maxValQueries: Math.max(0, ...valQueries.values()),
     pseudocode: pseudocodeOf(active.genome),
   };

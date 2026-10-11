@@ -2791,7 +2791,14 @@ function solve(context) {
   return { answer: null, steps };
 }
 
+const runObservers = new Set();
+function observeRuns(fn) {
+  runObservers.add(fn);
+  return () => runObservers.delete(fn);
+}
+
 function runTask(task, genome, budget = BUDGET) {
+  for (const fn of runObservers) fn(task, genome);
   const managed = manageContext(task.lines, genome, budget);
   const kept = new Set(managed.context.map((entry) => entry.index));
   const coverage = task.required.filter((index) => kept.has(index)).length / task.required.length;
@@ -2865,17 +2872,6 @@ function promotionDecision(active, candidate, ci, budget = BUDGET) {
   };
 }
 
-function makeAccessLog() {
-  const entries = [];
-  return {
-    entries,
-    read(who, split, what) {
-      if (who === "proponente" && split === "test") throw new Error("el proponente no puede leer la prueba reservada");
-      entries.push({ who, split, what });
-    },
-  };
-}
-
 function pseudocodeOf(genome) {
   const lines = [`función contexto_${genome.id}(registro, B = ${BUDGET}):`];
   if (genome.dedupe) lines.push("  registro ← quitar líneas repetidas");
@@ -2898,7 +2894,7 @@ function pseudocodeOf(genome) {
   return lines.join("\n");
 }
 
-return { BUDGET, TYPES, CAUSES, FAMILIES, makeTask, makeSplit, SPLITS, VERSIONS, manageContext, solve, runTask, evaluate, pairedBootstrap, signTest, verdictOf, COMPOSITE, compositeOf, promotionDecision, makeAccessLog, pseudocodeOf };
+return { BUDGET, TYPES, CAUSES, FAMILIES, makeTask, makeSplit, SPLITS, VERSIONS, manageContext, solve, observeRuns, runTask, evaluate, pairedBootstrap, signTest, verdictOf, COMPOSITE, compositeOf, promotionDecision, pseudocodeOf };
 })();
 const __m_examples_rsi_lab_view_stations_mjs = (() => {
 const k = __m_kit_iso_kit_mjs;
@@ -3877,31 +3873,64 @@ function reportOf(task, run, versionId) {
   const text = `ERROR ${task.testName} tarea fallida respuesta ${run.answer ? run.answer.culprit : "ninguna"}`;
   lines.push({ type: "ERROR", text, tokens: text.split(/\s+/).length, tags: {} });
   lines.forEach((entry, index) => (entry.index = index));
+  lines.source = { seed: task.seed, version: versionId };
   return lines;
 }
 
-function analyse(reports, analystGenome) {
-  const seen = {};
-  let total = 0;
-  let visible = 0;
-  for (const lines of reports) {
-    const all = lines.filter((entry) => entry.tags.diag);
-    total += all.length;
-    const { context } = manageContext(lines, analystGenome, BUDGET);
-    for (const entry of context.filter((e) => e.tags.diag)) {
-      visible += 1;
-      seen[entry.tags.diag] = (seen[entry.tags.diag] || 0) + 1;
-    }
-  }
-  return { seen, total, visible, quality: total ? visible / total : 1 };
+const DIAG_RE = /^DEBUG diag \S+ (\S+)(?: (\S+))?/;
+function readDiagnosis(text) {
+  const match = text.match(DIAG_RE);
+  if (!match) return null;
+  return { kind: match[1], type: TYPES.includes(match[2]) ? match[2] : null };
 }
 
-function propose(parent, analysis, rng, memory, failingTypes) {
+function analyse(reports, analystGenome, { keepDetails = 2 } = {}) {
+  const seen = {};
+  const seenTypes = {};
+  const details = [];
+  let total = 0;
+  let visible = 0;
+  reports.forEach((lines, r) => {
+    total += lines.filter((entry) => entry.tags.diag).length;
+    const managed = manageContext(lines, analystGenome, BUDGET);
+    const read = [];
+    for (const entry of managed.context) {
+      const diag = readDiagnosis(entry.text);
+      if (!diag) continue;
+      visible += 1;
+      read.push(diag);
+      seen[diag.kind] = (seen[diag.kind] || 0) + 1;
+      if (diag.type) seenTypes[diag.kind] = [...(seenTypes[diag.kind] || []), diag.type];
+    }
+    if (r < keepDetails)
+      details.push({
+        source: lines.source,
+        lines: lines.map((entry) => ({ index: entry.index, type: entry.type, text: entry.text, tokens: entry.tokens, diag: !!entry.tags.diag, status: managed.status.get(entry.index) })),
+        used: managed.used,
+        read,
+      });
+  });
+  return { seen, seenTypes, total, visible, quality: total ? visible / total : null, details };
+}
+
+const RULES = {
+  presupuesto: "si el diagnóstico dice «excluida por presupuesto»: seleccionar por puntuación; si ya lo hace, quitar duplicados; si ya lo hace, subir el peso del tipo excluido",
+  tipo: "si dice «descartada por filtro de tipo»: dejar de descartar ese tipo",
+  recorte: "si dice «recorte eliminó la palabra clave»: recortar menos",
+  señuelo: "si dice «eligió un señuelo»: dar más puntaje a las líneas que mencionan pruebas fallidas",
+  duplicados: "si dice «tokens en líneas repetidas»: quitar duplicados",
+  aleatoria: "sin diagnóstico legible, o con una propuesta ya probada: mutación aleatoria de un campo",
+};
+
+function propose(parent, analysis, rng, memory) {
   const g = withId(parent.genome, "", "");
-  const ranked = Object.entries(analysis.seen).filter(([kind]) => kind !== "otro").sort((a, b) => b[1] - a[1]);
+  const ranked = Object.entries(analysis.seen).filter(([kind]) => kind !== "otro").sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  const typesOf = (kind) => (analysis.seenTypes[kind] && analysis.seenTypes[kind].length ? analysis.seenTypes[kind] : ["DEBUG"]);
   let note;
+  let rule = null;
   if (ranked.length) {
     const kind = ranked[0][0];
+    rule = kind;
     if (kind === "presupuesto") {
       if (g.select === "orden") {
         g.select = "puntuación";
@@ -3912,12 +3941,12 @@ function propose(parent, analysis, rng, memory, failingTypes) {
         g.dedupe = true;
         note = "dirigida: quitar duplicados para liberar presupuesto";
       } else {
-        const type = rng.pick(failingTypes.presupuesto || ["DEBUG"]);
+        const type = rng.pick(typesOf("presupuesto"));
         g.weights[type] = clampW(g.weights[type] + 1);
         note = `dirigida: subir el peso de ${type}`;
       }
     } else if (kind === "tipo") {
-      const type = rng.pick(failingTypes.tipo || ["DEBUG"]);
+      const type = rng.pick(typesOf("tipo"));
       g.weights[type] = 1;
       note = `dirigida: dejar de descartar ${type}`;
     } else if (kind === "recorte") {
@@ -3932,6 +3961,7 @@ function propose(parent, analysis, rng, memory, failingTypes) {
       note = "dirigida: quitar duplicados";
     }
   }
+  let random = null;
   if (!note || memory.has(keyOf(g))) {
     const field = rng.pick(["dedupe", "weight", "weight", "link", "select", "tie", "clip"]);
     if (field === "dedupe") g.dedupe = !g.dedupe;
@@ -3942,17 +3972,100 @@ function propose(parent, analysis, rng, memory, failingTypes) {
     else if (field === "select") g.select = g.select === "orden" ? "puntuación" : "orden";
     else if (field === "tie") g.tie = g.tie === "recientes" ? "antiguas" : "recientes";
     else g.clip = rng.pick([0, 0, 6, 8]);
+    random = field;
     note = `${note ? "repetida → " : ""}aleatoria: cambiar ${field}`;
   }
-  return { genome: g, note };
+  return { genome: g, note, rule: random ? "aleatoria" : rule, directedRule: rule, ranked, random };
+}
+
+function genomeDiff(a, b) {
+  const out = [];
+  if (a.select !== b.select) out.push(`selección: ${a.select} → ${b.select}`);
+  if (a.dedupe !== b.dedupe) out.push(`duplicados: ${a.dedupe ? "se quitan" : "se conservan"} → ${b.dedupe ? "se quitan" : "se conservan"}`);
+  for (const type of TYPES) if (a.weights[type] !== b.weights[type]) out.push(`peso ${type}: ${a.weights[type]} → ${b.weights[type]}`);
+  if (a.link !== b.link) out.push(`bonificación por mencionar la prueba fallida: ${a.link} → ${b.link}`);
+  if (a.tie !== b.tie) out.push(`empates: más ${a.tie} → más ${b.tie}`);
+  if ((a.clip || 0) !== (b.clip || 0)) out.push(`recorte por línea: ${a.clip || "no"} → ${b.clip || "no"}`);
+  return out;
 }
 
 const validGenome = (g) => TYPES.some((type) => g.weights[type] >= 0) && g.weights.ERROR >= 0;
 
+const SEARCH_BUDGET = 1600;
+const PROTOCOL = {
+  unit: "ejecuciones de tareas del banco (una llamada a runTask); no es tiempo, FLOPs ni dinero",
+  search: "desarrollo + validación, incluida la reevaluación de la versión activa en cada comparación",
+  separate: "auditoría (40 por versión medida) y prueba final (60 por versión evaluada al terminar) tienen presupuesto aparte",
+  reserve: "un ciclo empieza sólo si lo que queda cubre desarrollo + 2 × validación; no hay lotes parciales; si la candidata es inválida, la reserva de validación se libera sin ejecutarse",
+  cache: "sin caché: cada evaluación se ejecuta y se cobra",
+};
+const CATEGORIES = ["desarrollo", "validación", "auditoría", "prueba"];
+const SEARCH = new Set(["desarrollo", "validación"]);
+
+function makeLedger(limit) {
+  const used = { desarrollo: 0, validación: 0, auditoría: 0, prueba: 0 };
+  const search = () => used.desarrollo + used.validación;
+  return {
+    limit,
+    used,
+    search,
+    remaining: () => limit - search(),
+    total: () => CATEGORIES.reduce((t, key) => t + used[key], 0),
+    charge(category, n = 1) {
+      if (!(category in used)) throw new Error(`categoría desconocida: ${category}`);
+      if (SEARCH.has(category) && search() + n > limit) throw new Error(`presupuesto de búsqueda excedido: ${search() + n} > ${limit}`);
+      used[category] += n;
+    },
+    snapshot: () => ({ ...used, search: search(), limit }),
+  };
+}
+
+const ACCESS = {
+  ejecutor: { desarrollo: ["búsqueda"] },
+  selector: { validación: ["búsqueda"] },
+  auditor: { auditoría: ["búsqueda", "final"] },
+  "evaluador final": { prueba: ["final"] },
+};
+
+function makeGate({ families = null, testBase = SPLITS.test.base, ledger }) {
+  const sets = {
+    desarrollo: makeSplit(SPLITS.dev.base, SPLITS.dev.count, families),
+    validación: makeSplit(SPLITS.valid.base, SPLITS.valid.count, families),
+    auditoría: makeSplit(SPLITS.audit.base, SPLITS.audit.count),
+    prueba: makeSplit(testBase, SPLITS.test.count),
+  };
+  const log = [];
+  let phase = "búsqueda";
+  return {
+    log,
+    sizes: Object.fromEntries(Object.entries(sets).map(([key, list]) => [key, list.length])),
+    get phase() {
+      return phase;
+    },
+    freeze() {
+      phase = "final";
+      log.push({ consumer: "protocolo", split: null, phase, n: 0, what: "versión final fijada" });
+    },
+    run(consumer, split, genome, count) {
+      const allowed = ACCESS[consumer] && ACCESS[consumer][split];
+      if (!allowed || !allowed.includes(phase)) throw new Error(`acceso no permitido: ${consumer} → ${split} en la fase ${phase}`);
+      const tasks = sets[split].slice(0, count ?? sets[split].length);
+      log.push({ consumer, split, phase, n: tasks.length, version: genome.id });
+      return tasks.map((task) => {
+        ledger.charge(split, 1);
+        return { ...runTask(task, genome), task };
+      });
+    },
+    handOver(consumer, split, what, n) {
+      log.push({ consumer, split, phase, n, what });
+    },
+  };
+}
+
 function runLoop({
   mode = "B",
   seed = 1,
-  budget = 900,
+  budget = SEARCH_BUDGET,
   noise = 0,
   families = null,
   nVal = 40,
@@ -3961,18 +4074,18 @@ function runLoop({
   lambda = 0.1,
   start = VERSIONS.v0,
   metaMutation = true,
+  testBase = SPLITS.test.base,
+  probe = null,
 } = {}) {
   const rng = makeRng(seed * 131 + 1);
   const metaRng = makeRng(seed * 389 + 2);
   const noiseRng = makeRng(seed * 977 + 5);
-  const dev = makeSplit(SPLITS.dev.base, SPLITS.dev.count, families);
-  const valAll = makeSplit(SPLITS.valid.base, SPLITS.valid.count, families);
-  const audit = makeSplit(SPLITS.audit.base, SPLITS.audit.count);
-  const test = makeSplit(SPLITS.test.base, SPLITS.test.count);
-  const auditOf = (genome) => audit.filter((task) => runTask(task, genome).success).length / audit.length;
-  const testOf = (genome) => test.filter((task) => runTask(task, genome).success).length / test.length;
+  const ledger = makeLedger(budget);
+  const gate = makeGate({ families, testBase, ledger });
+  const devCount = gate.sizes.desarrollo;
+  const rate = (runs) => runs.filter((run) => run.success).length / runs.length;
+  const auditOf = (genome) => rate(gate.run("auditor", "auditoría", genome));
   const memory = new Set();
-  let spent = 0;
   let counter = 0;
   const root = { id: start.id, genome: withId(start, start.id, start.name), parent: null, strategy: { nVal, explore }, audit: auditOf(start) };
   const archive = [root];
@@ -3982,30 +4095,39 @@ function runLoop({
   const valQueries = new Map();
   const cycles = [];
   let lastValid = root;
-  const evalVal = (genome, tasks) => tasks.map((task) => {
-    const run = runTask(task, genome);
-    const flip = noise > 0 && noiseRng.next() < noise;
-    return { ...run, success: flip ? !run.success : run.success, flipped: flip };
-  });
-  const devCost = dev.length;
-  while (spent + devCost + strategy.nVal <= budget) {
-    const cycle = { index: cycles.length + 1, analyst: analyst.id || "v0", strategy: { ...strategy } };
+  let stopReason = null;
+  const evalVal = (genome, n) =>
+    gate.run("selector", "validación", genome, n).map((run) => {
+      const flip = noise > 0 && noiseRng.next() < noise;
+      return { ...run, success: flip ? !run.success : run.success, flipped: flip };
+    });
+  for (;;) {
+    const need = devCount + 2 * strategy.nVal;
+    if (ledger.remaining() < need) {
+      stopReason = `quedan ${ledger.remaining()} ejecuciones y un ciclo completo necesita ${need}`;
+      break;
+    }
+    const cycle = { index: cycles.length + 1, analyst: analyst.id || "v0", strategy: { ...strategy }, reserved: need, before: ledger.snapshot() };
     const parent = rng.next() < strategy.explore && archive.length > 1 ? rng.pick(archive) : active;
     cycle.parent = parent.id;
-    const devRuns = dev.map((task) => runTask(task, parent.genome));
-    spent += devCost;
-    const failing = dev.map((task, i) => ({ task, run: devRuns[i] })).filter((x) => !x.run.success);
-    const reports = failing.map(({ task, run }) => reportOf(task, run, parent.id));
+    const devRuns = gate.run("ejecutor", "desarrollo", parent.genome);
+    const devTasks = devRuns.map((run) => run.seed);
+    const failing = devRuns.filter((run) => !run.success);
+    const reports = failing.map((run) => reportOf(run.task, run, parent.id));
+    gate.handOver("proponente", "desarrollo", "informes de fallo", reports.length);
     const analysis = analyse(reports, analyst);
-    const failingTypes = {};
-    failing.forEach(({ task, run }) => diagnose(task, run).forEach((d) => (failingTypes[d.kind] = [...(failingTypes[d.kind] || []), d.type])));
     cycle.analysis = analysis;
-    cycle.devSuccess = devRuns.filter((r) => r.success).length / dev.length;
-    const proposal = propose(parent, analysis, rng, memory, failingTypes);
+    cycle.devSuccess = rate(devRuns);
+    cycle.devTasks = devTasks;
+    const proposal = propose(parent, analysis, rng, memory);
+    if (probe && probe.propose) probe.propose({ cycle: cycle.index, parent: parent.id, analyst: analyst.id, reportSeeds: reports.map((lines) => lines.source.seed), analysis, proposal: proposal.note });
     counter += 1;
     const id = `c${counter}`;
     const genome = withId(proposal.genome, id, proposal.note);
     cycle.proposal = proposal.note;
+    cycle.rule = proposal.rule;
+    cycle.ranked = proposal.ranked;
+    cycle.diff = genomeDiff(parent.genome, genome);
     cycle.candidate = id;
     memory.add(keyOf(genome));
     let candidateStrategy = { ...strategy };
@@ -4015,23 +4137,24 @@ function runLoop({
     }
     if (!validGenome(genome)) {
       cycle.built = false;
-      cycle.outcome = "inválida (no se archiva)";
+      cycle.outcome = "inválida (no se evalúa ni se archiva)";
+      cycle.released = 2 * strategy.nVal;
+      cycle.after = ledger.snapshot();
+      cycle.spent = ledger.search();
       cycles.push(cycle);
       continue;
     }
     cycle.built = true;
-    const tasks = valAll.slice(0, strategy.nVal);
-    const key = tasks.map((t) => t.seed).join(",");
+    const key = `${strategy.nVal}`;
     valQueries.set(key, (valQueries.get(key) || 0) + 1);
-    const activeRuns = evalVal(active.genome, tasks);
-    const candRuns = evalVal(genome, tasks);
-    spent += strategy.nVal;
+    const activeRuns = evalVal(active.genome, strategy.nVal);
+    const candRuns = evalVal(genome, strategy.nVal);
     const proxyOf = (run) => (run.managed.context.length ? run.managed.context.filter((e) => e.type === "ERROR" || e.type === "TRACE").length / run.managed.context.length : 0);
-    const pack = (runs) => ({ runs, success: runs.filter((r) => r.success).length / runs.length, cost: runs.reduce((t, r) => t + r.cost, 0) / runs.length, proxy: runs.reduce((t, r) => t + proxyOf(r), 0) / runs.length });
+    const pack = (runs) => ({ runs, success: rate(runs), cost: runs.reduce((t, r) => t + r.cost, 0) / runs.length, proxy: runs.reduce((t, r) => t + proxyOf(r), 0) / runs.length });
     const a = pack(activeRuns);
     const c = pack(candRuns);
     const ci = pairedBootstrap(a, c, { resamples: 1000, seed: seed * 17 + counter });
-    cycle.val = { active: a.success, candidate: c.success, ci, n: tasks.length, costA: a.cost, costC: c.cost };
+    cycle.val = { active: a.success, candidate: c.success, ci, n: strategy.nVal, costA: a.cost, costC: c.cost };
     const version = { id, genome, parent: parent.id, strategy: candidateStrategy, cycle: cycle.index, valSuccess: c.success };
     archive.push(version);
     const composite = (x) => x.success - lambda * (x.cost / BUDGET);
@@ -4040,14 +4163,24 @@ function runLoop({
     cycle.visible = visibleOf(c);
     cycle.visibleActive = visibleOf(a);
     cycle.promoted = promote;
+    cycle.reason =
+      criterion === "estricto"
+        ? promote
+          ? `IC95 de Δéxito [${ci.low.toFixed(2)}, ${ci.high.toFixed(2)}] queda entero por encima de 0`
+          : ci.high < 0
+            ? `IC95 de Δéxito [${ci.low.toFixed(2)}, ${ci.high.toFixed(2)}] queda entero por debajo de 0: regresión`
+            : `IC95 de Δéxito [${ci.low.toFixed(2)}, ${ci.high.toFixed(2)}] incluye 0: evidencia insuficiente`
+        : `puntuación visible ${visibleOf(c).toFixed(3)} ${promote ? ">" : "≤"} ${visibleOf(a).toFixed(3)} de la activa`;
     if (promote) {
       version.audit = auditOf(genome);
       cycle.auditBefore = active.audit;
       cycle.auditAfter = version.audit;
       cycle.validImprovement = version.audit > active.audit;
+      cycle.replaced = active.id;
       active = version;
       if (version.audit >= lastValid.audit) lastValid = version;
       if (mode === "B") {
+        cycle.analystNext = genome.id;
         analyst = genome;
         strategy = candidateStrategy;
       }
@@ -4055,11 +4188,19 @@ function runLoop({
     } else cycle.outcome = ci.high < 0 ? "archivada · regresión" : "archivada sin promover";
     cycle.active = active.id;
     cycle.activeAudit = active.audit;
-    cycle.spent = spent;
+    cycle.after = ledger.snapshot();
+    cycle.spent = ledger.search();
     cycles.push(cycle);
   }
+  gate.freeze();
+  if (probe && probe.freeze) probe.freeze({ active: active.id, lastValid: lastValid.id, cycles: cycles.length });
+  const testOf = (genome) => rate(gate.run("evaluador final", "prueba", genome));
+  const finalTest = testOf(active.genome);
+  const startTest = testOf(root.genome);
+  const lastValidTest = lastValid === active ? finalTest : testOf(lastValid.genome);
   const promotions = cycles.filter((c) => c.promoted).length;
   const valid = cycles.filter((c) => c.validImprovement).length;
+  const qualities = cycles.map((c) => c.analysis && c.analysis.quality).filter((q) => q !== null && q !== undefined);
   return {
     mode,
     seed,
@@ -4067,16 +4208,20 @@ function runLoop({
     archive,
     active,
     lastValid,
-    spent,
+    spent: ledger.search(),
+    ledger: ledger.snapshot(),
+    access: gate.log,
+    stopReason,
+    budget,
     startAudit: root.audit,
     finalAudit: active.audit,
-    finalTest: testOf(active.genome),
-    startTest: testOf(root.genome),
-    lastValidTest: testOf(lastValid.genome),
+    finalTest,
+    startTest,
+    lastValidTest,
     promotions,
     validImprovements: valid,
-    costPerImprovement: valid ? spent / valid : null,
-    meanQuality: cycles.length ? cycles.reduce((t, c) => t + (c.analysis ? c.analysis.quality : 0), 0) / cycles.length : 0,
+    costPerImprovement: valid ? ledger.search() / valid : null,
+    meanQuality: qualities.length ? qualities.reduce((t, q) => t + q, 0) / qualities.length : null,
     maxValQueries: Math.max(0, ...valQueries.values()),
     pseudocode: pseudocodeOf(active.genome),
   };
@@ -4088,10 +4233,10 @@ function compareModes({ seeds = 10, ...options } = {}) {
   return rows;
 }
 
-return { diagnose, reportOf, analyse, propose, runLoop, compareModes };
+return { diagnose, reportOf, readDiagnosis, analyse, RULES, propose, genomeDiff, SEARCH_BUDGET, PROTOCOL, CATEGORIES, makeLedger, makeGate, runLoop, compareModes };
 })();
 const __m_examples_rsi_lab_model_limits_mjs = (() => {
-const { runLoop } = __m_examples_rsi_lab_model_loop_mjs;
+const { runLoop, SEARCH_BUDGET } = __m_examples_rsi_lab_model_loop_mjs;
 const { VERSIONS } = __m_examples_rsi_lab_model_agent_mjs;
 
 
@@ -4103,7 +4248,7 @@ const CRITERIA = {
   proxy: "densidad de ERROR/TRACE mayor (métrica imperfecta)",
 };
 const CONTROLS = {
-  budget: { label: "presupuesto de cómputo", unit: "ejecuciones", min: 120, max: 1500, step: 60, value: 900 },
+  budget: { label: "presupuesto de búsqueda", unit: "ejecuciones de desarrollo + validación", min: 100, max: 3000, step: 100, value: SEARCH_BUDGET },
   noise: { label: "ruido del evaluador", unit: "prob. de invertir", min: 0, max: 0.3, step: 0.05, value: 0 },
   diversity: { label: "diversidad de tareas", unit: "familias", min: 1, max: 4, step: 1, value: 4 },
   nVal: { label: "coste de validación", unit: "tareas/candidata", options: [10, 20, 40], value: 40 },
@@ -4124,19 +4269,58 @@ function optionsOf(values) {
   };
 }
 
+const pct = (x) => `${Math.round(x * 100)} %`;
+const promotedDiffs = (r) => r.cycles.filter((c) => c.promoted).flatMap((c) => c.diff);
+
 const SCENARIOS = {
-  base: { label: "protocolo cuidadoso", values: { budget: 900, noise: 0, diversity: 4, nVal: 40, explore: 0.3, criterion: "estricto" }, mode: "B", seed: 2,
-    lesson: "Criterio estricto (IC95 > 0), validación amplia: las promociones se confirman en la prueba independiente." },
-  sobreajuste: { label: "sobreajuste al benchmark", values: { budget: 900, noise: 0.15, diversity: 4, nVal: 10, explore: 0.3, criterion: "ingenuo", start: "v1", metaMutation: false }, mode: "B", seed: 1,
-    lesson: "Las mismas 10 tareas ruidosas se consultan una y otra vez y se promueve con la estimación puntual: la puntuación visible sube por azar y la prueba baja." },
-  metrica: { label: "métrica imperfecta", values: { budget: 900, noise: 0, diversity: 4, nVal: 40, explore: 0.3, criterion: "proxy", start: "v1", metaMutation: false }, mode: "B", seed: 7,
-    lesson: "Se optimiza la densidad de líneas ERROR/TRACE en el contexto. Descartar DEBUG la sube, pero quita la causa que el solucionador necesita." },
-  diversidad: { label: "pérdida de diversidad", values: { budget: 900, noise: 0, diversity: 4, nVal: 40, explore: 0, criterion: "estricto", metaMutation: false }, mode: "A", seed: 8,
-    lesson: "Sin explorar padres del archivo, la búsqueda queda atrapada en un linaje. Con exploración 0.5 y la misma semilla llega más lejos." },
-  dominio: { label: "regresión fuera del dominio", values: { budget: 900, noise: 0, diversity: 1, nVal: 40, explore: 0.3, criterion: "compuesto", lambda: 0.3, start: "v1", metaMutation: false }, mode: "B", seed: 8,
-    lesson: "Desarrollo y validación sólo contienen la familia F2 (causa en el mensaje). Lo que allí parece igual y más barato falla en las otras familias de la prueba." },
-  presupuesto: { label: "agotamiento del presupuesto", values: { budget: 160, noise: 0, diversity: 4, nVal: 40, explore: 0.3, criterion: "estricto" }, mode: "B", seed: 1,
-    lesson: "Cada ciclo cuesta 16 ejecuciones de análisis + 40 de validación: con 160 sólo caben 2 ciclos y ninguno alcanza a probar una mejora." },
+  base: {
+    label: "protocolo cuidadoso",
+    values: { budget: SEARCH_BUDGET, noise: 0, diversity: 4, nVal: 40, explore: 0.3, criterion: "estricto" },
+    mode: "B",
+    seed: 2,
+    lesson: (r) => `Criterio estricto (IC95 > 0) y 40 tareas de validación: ${r.promotions} promociones, y la prueba final pasa de ${pct(r.startTest)} a ${pct(r.finalTest)}.`,
+    holds: (r) => r.promotions > 0 && r.finalTest > r.startTest,
+  },
+  sobreajuste: {
+    label: "sobreajuste al benchmark",
+    values: { budget: SEARCH_BUDGET, noise: 0.15, diversity: 4, nVal: 10, explore: 0.3, criterion: "ingenuo", start: "v1", metaMutation: false },
+    mode: "B",
+    seed: 14,
+    lesson: (r) => `Las mismas 10 tareas de validación, con un 15 % de resultados invertidos al azar, se consultan en cada ciclo y se promueve con la estimación puntual: ${r.promotions} promociones, y la prueba final baja de ${pct(r.startTest)} a ${pct(r.finalTest)}.`,
+    holds: (r) => r.promotions > 1 && r.finalTest < r.startTest && r.maxValQueries > 1,
+  },
+  metrica: {
+    label: "métrica imperfecta",
+    values: { budget: SEARCH_BUDGET, noise: 0, diversity: 4, nVal: 40, explore: 0.3, criterion: "proxy", start: "v1", metaMutation: false },
+    mode: "B",
+    seed: 1,
+    lesson: (r) => `Se promueve lo que aumente la proporción de líneas ERROR/TRACE en el contexto. El cambio promovido (${promotedDiffs(r).join("; ") || "ninguno"}) la sube porque los reintentos repetidos son ERROR y TRACE, pero ocupan el lugar de la evidencia: la prueba final baja de ${pct(r.startTest)} a ${pct(r.finalTest)}.`,
+    holds: (r) => r.promotions > 0 && r.finalTest < r.startTest && promotedDiffs(r).some((d) => d.startsWith("duplicados: se quitan → se conservan")),
+  },
+  diversidad: {
+    label: "pérdida de diversidad",
+    values: { budget: SEARCH_BUDGET, noise: 0, diversity: 4, nVal: 40, explore: 0, criterion: "estricto", metaMutation: false },
+    mode: "A",
+    seed: 8,
+    lesson: (r) => `Sin explorar padres del archivo, cada candidata sale de la versión activa: la búsqueda queda en un solo linaje y termina con ${pct(r.finalTest)} en la prueba final. Abajo, la misma semilla explorando el archivo.`,
+    holds: (r, other) => other && other.finalTest > r.finalTest,
+  },
+  dominio: {
+    label: "regresión fuera del dominio",
+    values: { budget: SEARCH_BUDGET, noise: 0, diversity: 1, nVal: 40, explore: 0.3, criterion: "compuesto", lambda: 0.3, start: "v1", metaMutation: false },
+    mode: "B",
+    seed: 8,
+    lesson: (r) => `Desarrollo y validación sólo contienen la familia F2 (la causa está en el propio mensaje de error). Lo que allí parece igual y más barato falla en las otras familias: la prueba final, con las cuatro, baja de ${pct(r.startTest)} a ${pct(r.finalTest)}.`,
+    holds: (r) => r.promotions > 0 && r.finalTest < r.startTest && r.lastValidTest > r.finalTest,
+  },
+  presupuesto: {
+    label: "agotamiento del presupuesto",
+    values: { budget: 200, noise: 0, diversity: 4, nVal: 40, explore: 0.3, criterion: "estricto" },
+    mode: "B",
+    seed: 1,
+    lesson: (r) => `Un ciclo completo reserva 16 ejecuciones de desarrollo + 2 × 40 de validación = 96. Con ${r.budget} caben ${r.cycles.length} ciclos y ${r.promotions ? "sólo hubo " + r.promotions + " promoción" : "ninguno alcanza para probar una mejora"}.`,
+    holds: (r) => r.promotions === 0,
+  },
 };
 
 function runScenario(name, overrides = {}) {
@@ -4189,7 +4373,7 @@ const DEFAULTS = {
   versionB: "v1",
   loopSeed: 2,
   loopMode: "B",
-  limits: { budget: 900, noise: 0, diversity: 4, nVal: 40, explore: 0.3, criterion: "estricto" },
+  limits: { budget: 1600, noise: 0, diversity: 4, nVal: 40, explore: 0.3, criterion: "estricto" },
   scenario: "base",
   rolledBack: false,
   activeVersion: "v0",
@@ -4330,6 +4514,8 @@ function summary(run) {
   return {
     cycles: run.cycles.length,
     spent: run.spent,
+    ledger: run.ledger,
+    stopReason: run.stopReason,
     startTest: run.startTest,
     finalTest: run.finalTest,
     startAudit: run.startAudit,
@@ -6960,7 +7146,7 @@ function limitsPanel(ctx, { title, lesson, extra } = {}) {
     ${table(["", "inicio", "final"], [["puntuación visible", f2(vis[0] ?? NaN), f2(vis[n - 1] ?? NaN)], ["auditoría (no la ve el bucle)", pct(run.startAudit), pct(run.finalAudit)], ["ciclos · promociones", "", `${run.cycles.length} · ${run.promotions}`], ["presupuesto gastado", "", `${run.spent} / ${ctx.user.limits.budget}`], ["consultas a la misma validación", "", run.maxValQueries], ["versiones en el archivo", "", run.archive.length]])}
     ${alarm ? `<div class="subst"><b class="bad-t">La puntuación visible mejora y la auditoría empeora.</b></div>` : ""}
     ${rolled ? `<div class="subst">Vuelta a la última versión válida <b>${esc(run.lastValid.id)}</b>: auditoría ${pct(run.lastValid.audit)} · prueba final (uso único) ${pct(run.lastValidTest)} frente a ${pct(run.finalTest)} de la versión descartada.</div>` : ""}
-    ${lesson ? `<div class="subst">${esc(lesson)}</div>` : ""}
+    ${lesson ? `<div class="subst">${esc(typeof lesson === "function" ? lesson(run) : lesson)}</div>` : ""}
     ${extra ? extra(run) : ""}`;
   ctx.panel("limits", { title: title || "Mesa de límites", provKind: "sim", html, width: 450, dock: "right", top: 136 });
   ctx.state("evaluador", { value: Math.max(0, Math.min(1, vis[n - 1] ?? 0)), ok: !alarm && audDelta >= 0, fail: alarm });
@@ -7197,7 +7383,9 @@ const { examplesOf, TRAIN_TEXT, headOf, lossAndGrad, adamStep, adamInit, flatHea
 const { runReflection } = __m_examples_rsi_lab_model_reflection_mjs;
 const { softmax } = __m_examples_rsi_lab_model_linalg_mjs;
 const { gradLogPi } = __m_examples_rsi_lab_model_rl_mjs;
-const { SPLITS, makeSplit, makeAccessLog } = __m_examples_rsi_lab_model_agent_mjs;
+const { SPLITS, makeSplit, observeRuns } = __m_examples_rsi_lab_model_agent_mjs;
+const { runLoop } = __m_examples_rsi_lab_model_loop_mjs;
+
 
 
 
@@ -7266,14 +7454,14 @@ function liveChecks(store) {
   check("∇ log π = e_a − π", Math.abs(num - g[1]) < 1e-8);
   const seeds = Object.values(SPLITS).map((s) => new Set(makeSplit(s.base, s.count).map((t) => t.seed)));
   check("particiones disjuntas", seeds.every((a, i) => seeds.every((b, j) => i === j || [...a].every((x) => !b.has(x)))));
-  const log = makeAccessLog();
-  let blocked = false;
-  try {
-    log.read("proponente", "test", "x");
-  } catch {
-    blocked = true;
-  }
-  check("el proponente no puede leer la prueba reservada", blocked);
+  const order = [];
+  const stop = observeRuns((task) => order.push(task.seed >= SPLITS.test.base && task.seed < SPLITS.test.base + 100 ? "prueba" : "otra"));
+  let seedsOk = true;
+  const run = runLoop({ mode: "B", seed: 2, budget: 300, probe: { propose: (input) => (seedsOk = seedsOk && input.reportSeeds.every((s) => s >= SPLITS.dev.base && s < SPLITS.dev.base + SPLITS.dev.count)), freeze: () => order.push("fijada") } });
+  stop();
+  const fixedAt = order.indexOf("fijada");
+  check("ruta real: la prueba reservada sólo se ejecuta tras fijar la versión final", fixedAt >= 0 && order.slice(0, fixedAt).every((x) => x !== "prueba") && order.slice(fixedAt).includes("prueba"));
+  check("ruta real: el proponente sólo recibe informes de desarrollo", seedsOk && run.ledger.search <= 300, `${run.ledger.search}/300 ejecuciones de búsqueda`);
   return out;
 }
 

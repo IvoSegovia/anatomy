@@ -30,7 +30,7 @@ export const DEFAULTS = {
   versionB: "v1",
   loopSeed: 2,
   loopMode: "B",
-  limits: { budget: 900, noise: 0, diversity: 4, nVal: 40, explore: 0.3, criterion: "estricto" },
+  limits: { budget: 1600, noise: 0, diversity: 4, nVal: 40, explore: 0.3, criterion: "estricto" },
   scenario: "base",
   rolledBack: false,
   activeVersion: "v0",
@@ -171,6 +171,8 @@ function summary(run) {
   return {
     cycles: run.cycles.length,
     spent: run.spent,
+    ledger: run.ledger,
+    stopReason: run.stopReason,
     startTest: run.startTest,
     finalTest: run.finalTest,
     startAudit: run.startAudit,

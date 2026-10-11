@@ -3,7 +3,8 @@ import { examplesOf, TRAIN_TEXT, headOf, lossAndGrad, adamStep, adamInit, flatHe
 import { runReflection } from "../model/reflection.mjs";
 import { softmax } from "../model/linalg.mjs";
 import { gradLogPi } from "../model/rl.mjs";
-import { SPLITS, makeSplit, makeAccessLog } from "../model/agent.mjs";
+import { SPLITS, makeSplit, observeRuns } from "../model/agent.mjs";
+import { runLoop } from "../model/loop.mjs";
 
 export function liveChecks(store) {
   const out = [];
@@ -67,13 +68,13 @@ export function liveChecks(store) {
   check("∇ log π = e_a − π", Math.abs(num - g[1]) < 1e-8);
   const seeds = Object.values(SPLITS).map((s) => new Set(makeSplit(s.base, s.count).map((t) => t.seed)));
   check("particiones disjuntas", seeds.every((a, i) => seeds.every((b, j) => i === j || [...a].every((x) => !b.has(x)))));
-  const log = makeAccessLog();
-  let blocked = false;
-  try {
-    log.read("proponente", "test", "x");
-  } catch {
-    blocked = true;
-  }
-  check("el proponente no puede leer la prueba reservada", blocked);
+  const order = [];
+  const stop = observeRuns((task) => order.push(task.seed >= SPLITS.test.base && task.seed < SPLITS.test.base + 100 ? "prueba" : "otra"));
+  let seedsOk = true;
+  const run = runLoop({ mode: "B", seed: 2, budget: 300, probe: { propose: (input) => (seedsOk = seedsOk && input.reportSeeds.every((s) => s >= SPLITS.dev.base && s < SPLITS.dev.base + SPLITS.dev.count)), freeze: () => order.push("fijada") } });
+  stop();
+  const fixedAt = order.indexOf("fijada");
+  check("ruta real: la prueba reservada sólo se ejecuta tras fijar la versión final", fixedAt >= 0 && order.slice(0, fixedAt).every((x) => x !== "prueba") && order.slice(fixedAt).includes("prueba"));
+  check("ruta real: el proponente sólo recibe informes de desarrollo", seedsOk && run.ledger.search <= 300, `${run.ledger.search}/300 ejecuciones de búsqueda`);
   return out;
 }
