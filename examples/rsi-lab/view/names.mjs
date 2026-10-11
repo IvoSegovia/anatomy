@@ -1,5 +1,5 @@
 export const NAMES = {
-  plate: ["Mesa del laboratorio", "La base de la maqueta. Las posiciones son conceptuales: no representan hardware."],
+  plate: ["Laboratorio", "Qué es esto y qué permite: clic en el piso del laboratorio."],
   bench: ["Banco de estaciones", "Aquí están las estaciones A, B y C del capítulo 6."],
   route1: ["Bucle 1 · resolver una tarea", "Cian: el agente lee el contexto, usa herramientas y responde. Nada del sistema cambia."],
   route2: ["Bucle 2 · modificar el sistema", "Naranja: se propone un cambio en el código del agente, se prueba y se evalúa."],

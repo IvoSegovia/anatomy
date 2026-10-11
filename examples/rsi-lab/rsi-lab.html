@@ -408,7 +408,7 @@ details summary{cursor:pointer;color:var(--ink-2);font-size:12px}
 .clock{font:11px var(--mono);color:var(--ink-3);white-space:nowrap;min-width:92px;text-align:right}
 .transport .next{font-size:11px}
 
-@media (max-width:1100px){.inspector{width:340px}.guide .g-text{font-size:17px}.chapter-btn .t{max-width:220px}}
+@media (max-width:1100px){.inspector{width:340px}.guide .g-text{font-size:15px}.chapter-btn .t{max-width:220px}}
 @media (max-width:760px){
   #app{grid-template-rows:auto 1fr auto}
   .top{flex-wrap:wrap;height:auto;padding:6px 8px;gap:6px}
@@ -447,18 +447,18 @@ details summary{cursor:pointer;color:var(--ink-2);font-size:12px}
   .inspector{grid-row:3;grid-column:1;width:auto;border-left:0;border-top:1px solid var(--line)}
   .inspector[hidden]{display:none}
   .transport{grid-row:4}
-  .guide .g-text{font-size:17px;line-height:1.55}
+  .guide .g-text{font-size:15px;line-height:1.55}
   .opchip{top:auto;bottom:40px}
 }
 .glass{fill:#9fdbe60c;stroke:#9fdbe633;stroke-width:.6}
 
 .guide{padding-bottom:10px}
 .guide h2{font-size:15px}
-.guide .g-text{font:17.5px/1.62 var(--sans);color:var(--ink);margin:10px 0 4px;letter-spacing:.005em}
+.guide .g-text{font:15.5px/1.6 var(--sans);color:var(--ink);margin:10px 0 4px;letter-spacing:.005em}
 .guide .g-text b{color:#fff;font-weight:600}
-.guide .g-text.dim{opacity:.55;font-size:15px;line-height:1.5}
-.guide .g-text.dim.small{font-size:13.5px}
-.guide .g-act{margin:10px 0;padding:8px 10px;border-left:2px solid var(--c-in);background:#47c9dd0d;color:var(--ink);font-size:15.5px;line-height:1.45}
+.guide .g-text.dim{opacity:.55;font-size:13.5px;line-height:1.5}
+.guide .g-text.dim.small{font-size:13px}
+.guide .g-act{margin:10px 0;padding:8px 10px;border-left:2px solid var(--c-in);background:#47c9dd0d;color:var(--ink);font-size:14.5px;line-height:1.45}
 .guide .phases{display:flex;gap:4px;list-style:none;padding:0;margin:10px 0 0}
 .guide .phases li{font:10.5px var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-4);border:1px solid var(--line-2);border-radius:10px;padding:2px 8px}
 .guide .phases li[aria-current]{color:var(--ink);border-color:var(--c-in);background:#47c9dd14}
@@ -519,6 +519,16 @@ details summary{cursor:pointer;color:var(--ink-2);font-size:12px}
 .plane.min h4{padding-right:0}
 .opchip,.opchip *,.caption,.caption *{pointer-events:none!important}
 .back-tour.on{pointer-events:auto;z-index:5}
+.about{left:50%;top:50%;transform:translate(-50%,-50%);width:min(520px,calc(100% - 32px));max-height:calc(100% - 32px);overflow:auto;pointer-events:auto;z-index:8;background:#0d0e11f2;border:1px solid var(--line-2);border-radius:10px;padding:18px 20px;box-shadow:0 18px 50px #000c;color:var(--ink-2);font-size:13.5px;line-height:1.55}
+.about h2{margin:2px 0 8px;font-size:17px;color:var(--ink);font-weight:600}
+.about .kind{font:10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.about p{margin:0 0 10px}
+.about b{color:var(--ink);font-weight:600}
+.about ul{margin:0 0 12px;padding-left:18px}
+.about li{margin:6px 0}
+.about .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.about .x{position:absolute;right:10px;top:8px;font-size:18px}
+.desk-what{margin:0 0 6px;font-size:11.5px;line-height:1.4;color:var(--ink-3)}
 </style>
 </head>
 <body class="iso" data-theme="dark">
@@ -1608,9 +1618,10 @@ function buildShell(app, chapters) {
   ref.backTour = el("button", { class: "hud btn back-tour" }, "Volver a la explicación");
   ref.desk = el("div", { class: "hud desk min", role: "region", "aria-label": "Mesa de control de la escena" });
   ref.opChip = el("div", { class: "hud opchip", "aria-hidden": "true" });
+  ref.about = el("div", { class: "hud about", role: "dialog", "aria-label": "Qué es este laboratorio", hidden: true });
   ref.tip = el("div", { class: "tip", role: "tooltip" });
   ref.planes = el("div", { class: "planes" });
-  ref.stage.append(ref.svg, ref.labels, ref.planes, ref.rail, ref.scalemap, ref.caption, ref.backTour, ref.desk, ref.opChip, ref.tip);
+  ref.stage.append(ref.svg, ref.labels, ref.planes, ref.rail, ref.scalemap, ref.caption, ref.backTour, ref.desk, ref.opChip, ref.about, ref.tip);
 
   ref.inspector = el("aside", { class: "inspector", id: "inspector", "aria-label": "Panel lateral" });
   ref.tabs = el("div", { class: "insp-tabs", role: "tablist" });
@@ -7933,7 +7944,7 @@ return { SOURCES, infoFor, renderInspector };
 const __m_examples_rsi_lab_view_names_mjs = (() => {
 
 const NAMES = {
-  plate: ["Mesa del laboratorio", "La base de la maqueta. Las posiciones son conceptuales: no representan hardware."],
+  plate: ["Laboratorio", "Qué es esto y qué permite: clic en el piso del laboratorio."],
   bench: ["Banco de estaciones", "Aquí están las estaciones A, B y C del capítulo 6."],
   route1: ["Bucle 1 · resolver una tarea", "Cian: el agente lee el contexto, usa herramientas y responde. Nada del sistema cambia."],
   route2: ["Bucle 2 · modificar el sistema", "Naranja: se propone un cambio en el código del agente, se prueba y se evalúa."],
@@ -11436,7 +11447,7 @@ const ctx = {
     ref.stage.classList.add("has-desk");
     ref.desk.classList.toggle("min", ref.desk.dataset.open !== "1");
     const open = !ref.desk.classList.contains("min");
-    const toggle = el("button", { class: "pl-toggle", "aria-expanded": open ? "true" : "false", title: "Mostrar u ocultar los controles de esta escena" }, el("span", { class: "pl-arrow", "aria-hidden": "true" }, open ? "▾" : "▸"), el("span", {}, `Mesa de control · ${title}`));
+    const toggle = el("button", { class: "pl-toggle", "aria-expanded": open ? "true" : "false", title: "Mesa de control: los parámetros de esta escena. Abrila para cambiarlos." }, el("span", { class: "pl-arrow", "aria-hidden": "true" }, open ? "▾" : "▸"), el("span", {}, `Mesa de control · ${title}`));
     const close = el("button", { class: "x", "aria-label": "Cerrar la mesa de control" }, "×");
     const flip = (next) => {
       ref.desk.dataset.open = next ? "1" : "";
@@ -11449,6 +11460,7 @@ const ctx = {
     ref.desk.append(el("h3", {}, toggle, close));
     const body = el("div", { class: "desk-body" });
     ref.desk.append(body);
+    body.append(el("p", { class: "desk-what" }, "Los parámetros de esta escena. Si cambiás uno, los cálculos, la escena y el texto de la Guía se rehacen con el valor nuevo; nada sale de esta página."));
     build(body);
   },
   refresh() {
@@ -11683,6 +11695,7 @@ function resetLesson() {
   director.S.activeBeat = -1;
   lesson.enter(0);
   director.flyTo(director.cameraFor(director.beat));
+  showAbout(true);
   wakeLoop();
 }
 ctx.defaults = JSON.parse(JSON.stringify(store.user));
@@ -11957,11 +11970,44 @@ const firstSentence = (html) => {
   const sentence = cut > 20 ? text.slice(0, cut + 1) : text;
   return sentence.length > 150 ? `${sentence.slice(0, 147)}…` : sentence;
 };
-function unpick() {
+function unpick({ restore = false } = {}) {
+  const had = engine.labels.has("pick") || ref.tip.classList.contains("pinned") || !!ref.svg.querySelector("[data-sel]");
   engine.unlabel("pick");
   ref.tip.classList.remove("pinned", "on");
   for (const node of ref.svg.querySelectorAll("[data-sel]")) node.removeAttribute("data-sel");
+  if (restore && had) {
+    selection = null;
+    ctx.focus(null);
+    director.apply();
+    lesson.applyLook();
+    wakeLoop();
+  }
 }
+const ABOUT = `<button class="x" data-about="close" aria-label="Cerrar">×</button>
+  <div class="kind">Qué es esto</div>
+  <h2>Anatomía de la automejora recursiva</h2>
+  <p>Un laboratorio dibujado como maqueta para entender <b>qué tendría que cambiar en un sistema de IA para que su próxima versión también pudiera producir mejores mejoras</b>. Los números se calculan en esta página: no es un video.</p>
+  <ul>
+    <li><b>Qué muestra.</b> Un Transformer pequeño (el modelo), el agente que lo rodea (contexto, herramientas, código, datos, evaluador y archivo de versiones) y, a la derecha, tres estaciones con algoritmos de mejora.</li>
+    <li><b>Qué permite.</b> Seguir la lección en 10 capítulos con la Guía; detener cualquier operación, repetirla y ver sus números; tocar una pieza para saber qué hace; cambiar parámetros en la mesa de control y ver cómo cambia todo.</li>
+    <li><b>Qué no es.</b> No es un sistema real ni un plano de hardware: las posiciones son conceptuales y algunas reglas se inventaron para la demostración; cada número dice de dónde sale.</li>
+  </ul>
+  <div class="row"><button class="btn primary" data-about="start">Empezar</button><span class="kv">Para volver a verlo, hacé clic en el piso del laboratorio.</span></div>`;
+let aboutStep = 0;
+function showAbout(open) {
+  if (open) {
+    ref.about.innerHTML = ABOUT;
+    aboutStep = lesson.L.i;
+  }
+  ref.about.hidden = !open;
+}
+ref.about.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-about]");
+  if (button) showAbout(false);
+});
+lesson.onChange(() => {
+  if (!ref.about.hidden && (lesson.L.i !== aboutStep || lesson.L.auto || lesson.L.phase !== "orient")) showAbout(false);
+});
 ctx.unpick = unpick;
 function pickCard(title, text, { more = false } = {}) {
   return `<span class="pick-card"><button class="x" data-pick="close" aria-label="Cerrar">×</button><b>${title}</b>${text ? `<em>${text}</em>` : ""}${more ? '<button class="link" data-pick="more">Detalles en el panel ›</button>' : ""}</span>`;
@@ -11973,9 +12019,7 @@ ref.labels.addEventListener("click", (event) => {
     if (ref.inspector.hasAttribute("hidden")) toggleInspector(true);
     selectTab("obj");
   }
-  unpick();
-  director.apply();
-  wakeLoop();
+  unpick({ restore: true });
 });
 ref.tip.addEventListener("click", (event) => {
   const button = event.target.closest("[data-pick]");
@@ -11984,19 +12028,19 @@ ref.tip.addEventListener("click", (event) => {
     if (ref.inspector.hasAttribute("hidden")) toggleInspector(true);
     selectTab("obj");
   }
-  unpick();
-  wakeLoop();
+  unpick({ restore: true });
 });
 function click(event) {
   const { cell, id } = hit(event);
-  unpick();
-  if (!id) {
-    selection = null;
+  const again = id && !cell && engine.labels.has("pick") && engine.objects.get(id)?.el.hasAttribute("data-sel");
+  if (!id || id === "plate" || again) {
+    unpick({ restore: true });
     if (ctx.tab === "obj") renderInspector(ctx, null);
-    director.apply();
-    wakeLoop();
+    if (id === "plate") showAbout(true);
     return;
   }
+  unpick();
+  showAbout(false);
   const entry = engine.objects.get(id);
   const target = entry.info || id;
   engine.objects.get(id).el.setAttribute("data-sel", "");
@@ -12084,7 +12128,7 @@ window.addEventListener("keydown", (event) => {
   else if (key === "c" || key === "C") act(() => (director.guidedCamera(), lesson.applyLook()));
   else if (key === "i" || key === "I") act(() => toggleInspector());
   else if (key === "m" || key === "M") act(() => setMode(director.S.mode === "tour" ? "free" : "tour"));
-  else if (key === "Escape") act(() => (engine.labels.has("pick") || ref.tip.classList.contains("pinned") || !ref.chapterList.hidden ? (unpick(), openChapters(false), director.apply()) : goBack()));
+  else if (key === "Escape") act(() => (engine.labels.has("pick") || ref.tip.classList.contains("pinned") || !ref.chapterList.hidden ? (unpick({ restore: true }), openChapters(false)) : goBack()));
   else if (key === "0") act(() => resetLesson());
   else if (key === "?" || key === "h" || key === "H") act(() => ref.help.click());
 });
@@ -12131,6 +12175,7 @@ window.__sceneQA = {
 
 lesson.enter(0);
 director.flyTo(director.cameraFor(director.beat), 0);
+showAbout(true);
 wakeLoop();
 
 return {  };

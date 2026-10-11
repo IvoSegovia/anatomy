@@ -43,6 +43,10 @@ const settle = () => page.waitForFunction(() => window.__sceneQA.director.S.step
 
 const s0 = await state();
 check("abre en la pestaña Guía, paso 1.1, orientación", s0.tab === "guide" && s0.step === "1.1" && s0.phase === "orient", `${s0.tab} · ${s0.step} · ${s0.phase}`);
+const aboutText = await page.evaluate(() => { const a = document.querySelector(".about"); return a && !a.hidden ? a.textContent : ""; });
+check("al abrir, una presentación explica qué es el laboratorio y qué permite", /Qué muestra/.test(aboutText) && /Qué permite/.test(aboutText) && /Qué no es/.test(aboutText));
+await page.click('.about [data-about="start"]');
+check("«Empezar» la cierra", await page.evaluate(() => document.querySelector(".about").hidden));
 const chrome = await page.evaluate(() => ({
   top: document.querySelectorAll(".top button:not(.chapter-list button)").length,
   transport: document.querySelectorAll(".transport button").length,
@@ -223,6 +227,30 @@ await page.waitForTimeout(200);
 await page.keyboard.press("Escape");
 await page.waitForTimeout(200);
 check("Esc cierra el rótulo", !(await page.$(".lbl.pick")));
+await go("1.1");
+await settle();
+const focus0 = await page.evaluate(() => document.querySelector("svg.scene").hasAttribute("data-focus"));
+const box11 = await page.evaluate(() => { const b = document.querySelector('[data-obj="evaluador"] .iso-fill').getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; });
+await page.mouse.click(box11.x, box11.y);
+await page.waitForTimeout(200);
+const dimmed = await page.evaluate(() => document.querySelector("svg.scene").hasAttribute("data-focus"));
+const emptyPt = await page.evaluate(() => { const b = document.querySelector(".stage").getBoundingClientRect(); return { x: b.x + b.width - 30, y: b.y + b.height - 70 }; });
+await page.mouse.click(emptyPt.x, emptyPt.y);
+await page.waitForTimeout(250);
+const back = await page.evaluate(() => ({ focus: document.querySelector("svg.scene").hasAttribute("data-focus"), sel: !!document.querySelector("[data-sel]"), pick: !!document.querySelector(".lbl.pick") }));
+check("clic en una zona vacía: la vista vuelve a la inicial, sin nada seleccionado", !focus0 && dimmed && !back.focus && !back.sel && !back.pick);
+await page.mouse.click(box11.x, box11.y);
+await page.waitForTimeout(200);
+await page.click(".lbl.pick [data-pick=close]");
+await page.waitForTimeout(250);
+check("cerrar el rótulo con × también devuelve la vista inicial", await page.evaluate(() => !document.querySelector("svg.scene").hasAttribute("data-focus") && !document.querySelector("[data-sel]")));
+const plateHit = await page.evaluate(() => { const els = [...document.querySelectorAll('[data-obj="plate"] .iso-fill, [data-obj="plate"] path')]; for (const e of els) { const b = e.getBoundingClientRect(); for (const [fx, fy] of [[0.2, 0.5], [0.5, 0.85], [0.8, 0.5], [0.5, 0.2]]) { const x = b.x + b.width * fx, y = b.y + b.height * fy; const t = document.elementFromPoint(x, y); if (t && t.closest("[data-obj]")?.getAttribute("data-obj") === "plate") return { x, y }; } } return null; });
+if (plateHit) {
+  await page.mouse.click(plateHit.x, plateHit.y);
+  await page.waitForTimeout(200);
+  check("clic en el piso del laboratorio vuelve a mostrar la presentación", await page.evaluate(() => !document.querySelector(".about").hidden));
+  await page.click('.about [data-about="close"]');
+} else check("piso del laboratorio alcanzable con un clic", false);
 await page.click('[data-tab="refs"]');
 await page.click(".live-checks summary");
 await page.click("[data-run-checks]");
