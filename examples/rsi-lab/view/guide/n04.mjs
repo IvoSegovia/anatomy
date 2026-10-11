@@ -120,7 +120,7 @@ export const N04 = {
       result: (ctx) => {
         const tr = ctx.store.trace();
         const g = argmax(tr.probs);
-        return `argmax elige ${tok(g)}, con p = ${n3(tr.probs[g])}. Es determinista: con la misma entrada, siempre el mismo token.`;
+        return `argmax elige ${tok(g)}, con p = ${n3(tr.probs[g])}. Es determinista: con la misma entrada, siempre el mismo token. Elegir no cambia nada del modelo: sólo lee las probabilidades ya calculadas.`;
       },
     },
     {

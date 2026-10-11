@@ -58,9 +58,9 @@ const VOICES = {
     return 0.16;
   },
   evaluate(v, t) {
-    v.tone({ t, type: "sine", f: 523.25, attack: 0.002, decay: 0.2, peak: 0.19 });
-    v.tone({ t, type: "sine", f: 2093, attack: 0.001, decay: 0.03, peak: 0.055 });
-    return 0.24;
+    v.tone({ t, type: "sine", f: 783.99, attack: 0.002, decay: 0.16, peak: 0.17 });
+    v.tone({ t, type: "sine", f: 3136, attack: 0.001, decay: 0.025, peak: 0.05 });
+    return 0.2;
   },
   promote(v, t) {
     v.tone({ t, type: "triangle", f: 523.25, attack: 0.008, decay: 0.15, peak: 0.17 });

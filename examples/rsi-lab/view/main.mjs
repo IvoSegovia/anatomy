@@ -343,7 +343,7 @@ function frame(now) {
   lesson.frame();
   engine.render();
   updateTimeline();
-  const busy = moving || director.S.playing || director.S.stepTo !== null || director.S.camAnim || dirtyFrame || lesson.L.phase === "act" || lesson.L.entering;
+  const busy = moving || director.S.playing || director.S.stepTo !== null || director.S.camAnim || dirtyFrame || (lesson.L.phase === "act" && !lesson.L.frozen) || lesson.L.entering;
   dirtyFrame = false;
   if (busy && !document.hidden) raf = requestAnimationFrame(frame);
   else {

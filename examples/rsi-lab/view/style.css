@@ -257,11 +257,10 @@ details summary{cursor:pointer;color:var(--ink-2);font-size:12px}
 .speed select{background:var(--panel-2);border:1px solid var(--line-2);border-radius:5px;padding:2px 4px;font-size:12px}
 .speed label{font-size:11px;color:var(--ink-3)}
 
-@media (max-width:1100px){.inspector{width:340px}.guide .g-text{font-size:16.5px}}
+@media (max-width:1100px){.inspector{width:340px}.guide .g-text{font-size:17px}}
 @media (max-width:760px){
   #app{grid-template-rows:auto 1fr auto}
   .top{flex-wrap:wrap;height:auto;padding:6px 8px;gap:6px}
-  .brand{flex:1 1 100%;font-size:12px}
   .brand small{display:none}
   .chapters{margin-left:0;overflow:auto;max-width:100%}
   .chapters button{width:24px}
@@ -289,12 +288,21 @@ details summary{cursor:pointer;color:var(--ink-2);font-size:12px}
   .timeline{order:-1;flex:1 1 100%}
   .clock{min-width:0}
   .speed label{display:none}
-  #app{grid-template-rows:auto minmax(250px,50vh) minmax(0,1fr) auto;grid-template-columns:minmax(0,1fr)}
+  #app{grid-template-rows:auto minmax(220px,40vh) minmax(0,1fr) auto;grid-template-columns:minmax(0,1fr)}
+  .brand{display:none}
+  .top .icon-btn{height:24px;padding:0 6px;font-size:11px}
+  .mode button{padding:2px 7px;font-size:11px}
+  .transport .speed label,.transport .clock{display:none}
+  .transport .icon-btn{height:26px}
+  .transport .speed select{font-size:11px;padding:1px 2px}
+  .guide .g-text.dim{font-size:13px}
+  .insp-tabs button{padding:6px 2px;font-size:11.5px}
+  .insp-body{padding:10px 12px 20px}
   .stage{grid-row:2;grid-column:1}
   .inspector{grid-row:3;grid-column:1;width:auto;border-left:0;border-top:1px solid var(--line)}
   .inspector[hidden]{display:none}
   .transport{grid-row:4}
-  .guide .g-text{font-size:16px}
+  .guide .g-text{font-size:17px;line-height:1.55}
   .learnbar{order:-2;flex:1 1 100%;justify-content:stretch}
   .learnbar .btn{flex:1}
   .opchip{top:auto;bottom:calc(var(--cap-h,70px) + 4px)}

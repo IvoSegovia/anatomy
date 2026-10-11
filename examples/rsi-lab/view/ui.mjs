@@ -35,7 +35,7 @@ export function buildShell(app, chapters) {
     return button;
   });
   ref.narratorBtn = el("button", { class: "icon-btn", title: "Mostrar u ocultar el narrador escrito (N)", "aria-pressed": "true" }, "Narrador");
-  ref.soundBtn = el("button", { class: "icon-btn", title: "Activar sonidos: cada familia de operaciones tiene una señal propia (X silencia)", "aria-pressed": "false" }, "Activar sonidos");
+  ref.soundBtn = el("button", { class: "icon-btn sound-btn", title: "Activar sonidos: cada familia de operaciones tiene una señal propia (X silencia)", "aria-pressed": "false" }, "Activar sonidos");
   ref.inspectorToggle = el("button", { class: "icon-btn", title: "Panel lateral (I)", "aria-pressed": "true", "aria-controls": "inspector" }, "Panel");
   ref.help = el("button", { class: "icon-btn", title: "Atajos de teclado (?)" }, "?");
   ref.top.append(ref.brand, ref.chapters, ref.mode, ref.narratorBtn, ref.soundBtn, ref.inspectorToggle, ref.help);

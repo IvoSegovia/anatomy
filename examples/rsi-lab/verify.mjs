@@ -12,6 +12,12 @@ import { runTask } from "./model/agent.mjs";
 import { optionsOf } from "./model/limits.mjs";
 import { runScenario, SCENARIOS } from "./model/limits.mjs";
 import { fingerprint } from "./model/rng.mjs";
+import { makeStore, DEFAULTS } from "./view/store.mjs";
+import { CHAPTERS } from "./view/chapters.mjs";
+import { SCRIPTS } from "./view/guide/index.mjs";
+import { CONCEPTS } from "./view/guide/concepts.mjs";
+import { wordsOf } from "./view/lesson.mjs";
+import { SOUND_OPS } from "./view/sound.mjs";
 
 const results = [];
 const check = (name, ok, detail = "") => results.push({ name, ok: !!ok, detail });
@@ -251,6 +257,90 @@ for (const [name, sc] of Object.entries(SCENARIOS)) {
 }
 const repA = runLoop({ mode: "A", seed: 3 });
 check("bucle reproducible", fingerprint(repA.cycles.map((c) => c.val ? c.val.candidate : -1)) === fingerprint(A.cycles.map((c) => c.val ? c.val.candidate : -1)));
+
+const guideStore = makeStore();
+guideStore.loopCompare();
+const scene = new Proxy({ store: guideStore, user: guideStore.user }, { get: (o, k) => (k in o ? o[k] : () => {}) });
+const beatsAll = CHAPTERS.flatMap((ch) => ch.beats.map((beat) => ({ events: 1, ...beat, chapter: ch })));
+const uncovered = [];
+for (const beat of beatsAll) {
+  const defs = SCRIPTS[beat.id] || [];
+  let k = 1;
+  for (const def of defs) {
+    const to = def.last ? beat.events : Math.min(beat.events, k + (def.span ?? 1) - 1);
+    if (to < k) uncovered.push(`${beat.id} (paso vacío)`);
+    k = to + 1;
+  }
+  if (!defs.length || k <= beat.events) uncovered.push(beat.id);
+}
+const extraKeys = Object.keys(SCRIPTS).filter((id) => !beatsAll.some((b) => b.id === id));
+const stepCount = Object.values(SCRIPTS).reduce((t, list) => t + list.length, 0);
+check("guion: cada evento de cada escena tiene un paso narrado (sin huecos ni guiones huérfanos)", !uncovered.length && !extraKeys.length, uncovered.length || extraKeys.length ? `${uncovered.join(", ")} ${extraKeys.join(", ")}` : `${beatsAll.length} escenas, ${stepCount} pasos`);
+const valueOf = (x) => (typeof x === "function" ? x(scene) : x) || "";
+const variants = [{}, { head: 1, row: 1, eta: 1.2, task: 3, loopSeed: 5, loopMode: "A", lambda: 0.3, temperature: 1.5, sampleSeed: 4 }];
+const BROKEN = /undefined|\[object|Calculando|(?<!obtuvo )NaN/;
+const bad = [];
+const blocks = [];
+for (const variant of variants) {
+  guideStore.restore({ ...JSON.parse(JSON.stringify(DEFAULTS)), ...variant });
+  let activeChapter = null;
+  for (const beat of beatsAll) {
+    if (beat.chapter !== activeChapter) {
+      activeChapter = beat.chapter;
+      try {
+        beat.chapter.setup && beat.chapter.setup(scene);
+      } catch {}
+    }
+    try {
+      beat.enter && beat.enter(scene);
+    } catch {}
+    for (const [i, def] of (SCRIPTS[beat.id] || []).entries()) {
+      const id = `${beat.id}${i ? String.fromCharCode(97 + i) : ""}`;
+      for (const part of ["orient", "act", "result"]) {
+        let text;
+        try {
+          text = valueOf(def[part]);
+        } catch (err) {
+          bad.push(`${id}.${part}: ${err.message}`);
+          continue;
+        }
+        if (BROKEN.test(text)) bad.push(`${id}.${part}: ${text.slice(0, 60)}`);
+        if (part !== "act" && text) blocks.push({ id, part, words: wordsOf(text) });
+      }
+      if (!valueOf(def.orient)) bad.push(`${id}: sin orientación`);
+    }
+  }
+}
+guideStore.restore(JSON.parse(JSON.stringify(DEFAULTS)));
+check("guion: todos los textos se generan desde los parámetros actuales (sin «undefined», «NaN» ni marcadores pendientes)", !bad.length, bad.length ? bad.slice(0, 4).join(" · ") : `${variants.length} configuraciones de parámetros`);
+const longest = blocks.reduce((a, b) => (b.words > a.words ? b : a));
+check("guion: ningún bloque de lectura supera 75 palabras (los largos se dividieron en pasos)", longest.words <= 75, `más largo: ${longest.id} ${longest.part}, ${longest.words} palabras; mediana ${blocks.map((b) => b.words).sort((a, b) => a - b)[blocks.length >> 1]}`);
+const termKeys = new Set();
+for (const list of Object.values(SCRIPTS))
+  for (const def of list) {
+    if (def.concept) termKeys.add(def.concept);
+    for (const part of ["orient", "act", "result"]) {
+      const source = typeof def[part] === "function" ? def[part].toString() : def[part] || "";
+      for (const m of source.matchAll(/\[\[([^|\]]+)\|/g)) termKeys.add(m[1]);
+    }
+  }
+const missingTerms = [...termKeys].filter((key) => !CONCEPTS[key]);
+check("glosario: cada término enlazado y cada concepto de paso tiene entrada", !missingTerms.length, missingTerms.length ? missingTerms.join(", ") : `${termKeys.size} términos usados, ${Object.keys(CONCEPTS).length} entradas`);
+const PROV = new Set(["local", "ilus", "sim", "cita"]);
+const badConcepts = Object.entries(CONCEPTS).filter(([, c]) => {
+  if (!c.title || !c.def || !c.simple || !Array.isArray(c.where)) return true;
+  try {
+    const ex = c.example(scene);
+    return !ex || !ex.html || BROKEN.test(ex.html) || !PROV.has(ex.prov);
+  } catch {
+    return true;
+  }
+});
+check("glosario: definición, versión simple y ejemplo que corre y declara su procedencia (calculado, ilustrativo, simulación o cita)", !badConcepts.length, badConcepts.length ? badConcepts.map(([k]) => k).join(", ") : `${Object.keys(CONCEPTS).length} entradas`);
+const opsKnown = new Set(SOUND_OPS.map((o) => o.op));
+const cueOps = [];
+for (const list of Object.values(SCRIPTS)) for (const def of list) for (const cue of (typeof def.cues === "function" ? def.cues(scene) : def.cues) || []) cueOps.push(cue.op);
+check("señales: cada operación narrada usa una familia de sonido definida", cueOps.length > 0 && cueOps.every((op) => opsKnown.has(op)), `${cueOps.length} señales, ${new Set(cueOps).size} familias usadas de ${opsKnown.size}`);
 
 const failed = results.filter((r) => !r.ok);
 for (const r of results) console.log(`${r.ok ? "✓" : "✗"} ${r.name}${r.detail ? `  (${r.detail})` : ""}`);

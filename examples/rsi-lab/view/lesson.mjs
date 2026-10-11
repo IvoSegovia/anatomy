@@ -144,6 +144,7 @@ export function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }
   function enter(i, phase = "orient", { push = true, restore = null } = {}) {
     clearTimer();
     cancelSound();
+    L.frozen = false;
     L.i = Math.max(0, Math.min(steps.length - 1, i));
     const s = step();
     if (restore) ctx.restoreUser(restore);
@@ -172,6 +173,7 @@ export function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }
   function perform() {
     const s = step();
     if (!hasAct(s) || L.phase === "act") return;
+    L.frozen = false;
     clearTimer();
     if (L.phase !== "orient") director.seek(s.bi, startT(s));
     L.phase = "act";
@@ -227,7 +229,7 @@ export function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }
     const s = step();
     if (L.phase === "orient" && hasAct(s)) return perform();
     if (L.phase === "act") {
-      director.animateTo(endT(s), 0);
+      if (!resumeAct()) director.animateTo(endT(s), 0);
       return;
     }
     if (L.i < steps.length - 1) enter(L.i + 1);
@@ -286,10 +288,20 @@ export function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }
     render();
   }
 
+  function resumeAct() {
+    if (!L.frozen) return false;
+    const s = step();
+    const left = Math.max(0, endT(s) - director.S.t);
+    const span = Math.max(1e-9, endT(s) - startT(s));
+    director.animateTo(endT(s), still() ? 0 : (animSeconds(s) * left) / span);
+    L.frozen = false;
+    return true;
+  }
   function play() {
     if (L.auto) return;
     L.auto = true;
     if (L.phase === "done" && L.i >= steps.length - 1) enter(0);
+    resumeAct();
     schedule();
     notify();
     renderTransport();
@@ -298,6 +310,11 @@ export function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }
     if (L.auto && L.timer) L.remaining = Math.max(0, L.waitUntil - performance.now());
     L.auto = false;
     clearTimer();
+    if (L.phase === "act" && director.S.stepTo !== null) {
+      director.S.stepTo = null;
+      director.S.stepRate = null;
+      L.frozen = true;
+    }
     sound.stopAll();
     if (reason) L.pausedBy = reason;
     notify();
@@ -305,7 +322,7 @@ export function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }
     render();
   }
   function interrupt(reason) {
-    if (L.auto) pause(reason);
+    if (L.auto || (L.phase === "act" && director.S.stepTo !== null)) pause(reason);
   }
 
   function goToChapter(c) {
@@ -373,7 +390,7 @@ export function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }
   function primaryLabel() {
     const s = step();
     if (L.phase === "orient" && hasAct(s)) return "Ver la operación";
-    if (L.phase === "act") return "Saltar al resultado";
+    if (L.phase === "act") return L.frozen ? "Seguir la operación" : "Saltar al resultado";
     if (L.i >= steps.length - 1) return "Fin del recorrido";
     return "Continuar";
   }

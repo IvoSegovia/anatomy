@@ -33,16 +33,18 @@ const STATUS = { incluida: ["✓", "ok-t", "llega"], presupuesto: ["✗", "bad-t
 function statusCell(state) {
   if (!state) return '<span class="off-t">·</span>';
   const [mark, cls, word] = STATUS[state] || ["·", "off-t", state];
-  return `<span class="${cls}">${mark} ${word}</span>`;
+  return `<span class="${cls}" title="${word}">${mark}</span>`;
 }
 
 function reportTable(detail, columns) {
   const rows = detail.raw.map((line) => {
-    const text = line.text.length > 46 ? `${line.text.slice(0, 45)}…` : line.text;
+    const text = line.text.length > 38 ? `${line.text.slice(0, 37)}…` : line.text;
     const cls = line.tags.diag ? ' class="on"' : "";
     return `<tr${cls}><td>L${line.index}</td><td style="text-align:left;white-space:nowrap">${line.tags.diag ? "<b>" : ""}${esc(text)}${line.tags.diag ? "</b>" : ""}</td>${columns.map((col) => `<td>${statusCell(col.status.get(line.index))}</td>`).join("")}</tr>`;
   });
-  return `<table class="tbl rep"><tr><th>línea</th><th style="text-align:left">texto (en negrita, diagnósticos)</th>${columns.map((c) => `<th>${esc(c.label)}</th>`).join("")}</tr>${rows.join("")}</table>`;
+  const present = Object.keys(STATUS).filter((state) => columns.some((col) => detail.raw.some((line) => col.status.get(line.index) === state)));
+  const legend = present.map((state) => `<span class="${STATUS[state][1]}">${STATUS[state][0]}</span> ${STATUS[state][2]}`).join(" · ");
+  return `<table class="tbl rep"><tr><th>línea</th><th style="text-align:left">texto (en negrita, diagnósticos)</th>${columns.map((c) => `<th>${esc(c.label)}</th>`).join("")}</tr>${rows.join("")}</table><div class="subst">${legend}</div>`;
 }
 
 const statusOf = (lines, genome) => manageContext(lines, genome, BUDGET).status;

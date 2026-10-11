@@ -112,7 +112,7 @@ export const N07 = {
       seconds: 1.2,
       result: (ctx) => {
         const e = ev(ctx);
-        return `v2 es más barata: ${e.v2.valid.cost.toFixed(1)} tokens por tarea frente a ${e.v1.valid.cost.toFixed(1)} de v1. Pero acierta ${pc(e.v2.valid.success)} contra ${pc(e.v1.valid.success)}.`;
+        return `v2 es más barata: ${e.v2.valid.cost.toFixed(1)} tokens por tarea frente a ${e.v1.valid.cost.toFixed(1)} de v1. Pero acierta ${pc(e.v2.valid.success)} contra ${pc(e.v1.valid.success)}: al quedarse sólo con ERROR y TRACE descarta las líneas DEBUG, y en muchas tareas sólo una DEBUG nombra la causa.`;
       },
     },
     {

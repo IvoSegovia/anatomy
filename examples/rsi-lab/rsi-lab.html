@@ -371,11 +371,10 @@ details summary{cursor:pointer;color:var(--ink-2);font-size:12px}
 .speed select{background:var(--panel-2);border:1px solid var(--line-2);border-radius:5px;padding:2px 4px;font-size:12px}
 .speed label{font-size:11px;color:var(--ink-3)}
 
-@media (max-width:1100px){.inspector{width:340px}.guide .g-text{font-size:16.5px}}
+@media (max-width:1100px){.inspector{width:340px}.guide .g-text{font-size:17px}}
 @media (max-width:760px){
   #app{grid-template-rows:auto 1fr auto}
   .top{flex-wrap:wrap;height:auto;padding:6px 8px;gap:6px}
-  .brand{flex:1 1 100%;font-size:12px}
   .brand small{display:none}
   .chapters{margin-left:0;overflow:auto;max-width:100%}
   .chapters button{width:24px}
@@ -403,12 +402,21 @@ details summary{cursor:pointer;color:var(--ink-2);font-size:12px}
   .timeline{order:-1;flex:1 1 100%}
   .clock{min-width:0}
   .speed label{display:none}
-  #app{grid-template-rows:auto minmax(250px,50vh) minmax(0,1fr) auto;grid-template-columns:minmax(0,1fr)}
+  #app{grid-template-rows:auto minmax(220px,40vh) minmax(0,1fr) auto;grid-template-columns:minmax(0,1fr)}
+  .brand{display:none}
+  .top .icon-btn{height:24px;padding:0 6px;font-size:11px}
+  .mode button{padding:2px 7px;font-size:11px}
+  .transport .speed label,.transport .clock{display:none}
+  .transport .icon-btn{height:26px}
+  .transport .speed select{font-size:11px;padding:1px 2px}
+  .guide .g-text.dim{font-size:13px}
+  .insp-tabs button{padding:6px 2px;font-size:11.5px}
+  .insp-body{padding:10px 12px 20px}
   .stage{grid-row:2;grid-column:1}
   .inspector{grid-row:3;grid-column:1;width:auto;border-left:0;border-top:1px solid var(--line)}
   .inspector[hidden]{display:none}
   .transport{grid-row:4}
-  .guide .g-text{font-size:16px}
+  .guide .g-text{font-size:17px;line-height:1.55}
   .learnbar{order:-2;flex:1 1 100%;justify-content:stretch}
   .learnbar .btn{flex:1}
   .opchip{top:auto;bottom:calc(var(--cap-h,70px) + 4px)}
@@ -1524,7 +1532,7 @@ function buildShell(app, chapters) {
     return button;
   });
   ref.narratorBtn = el("button", { class: "icon-btn", title: "Mostrar u ocultar el narrador escrito (N)", "aria-pressed": "true" }, "Narrador");
-  ref.soundBtn = el("button", { class: "icon-btn", title: "Activar sonidos: cada familia de operaciones tiene una señal propia (X silencia)", "aria-pressed": "false" }, "Activar sonidos");
+  ref.soundBtn = el("button", { class: "icon-btn sound-btn", title: "Activar sonidos: cada familia de operaciones tiene una señal propia (X silencia)", "aria-pressed": "false" }, "Activar sonidos");
   ref.inspectorToggle = el("button", { class: "icon-btn", title: "Panel lateral (I)", "aria-pressed": "true", "aria-controls": "inspector" }, "Panel");
   ref.help = el("button", { class: "icon-btn", title: "Atajos de teclado (?)" }, "?");
   ref.top.append(ref.brand, ref.chapters, ref.mode, ref.narratorBtn, ref.soundBtn, ref.inspectorToggle, ref.help);
@@ -6920,16 +6928,18 @@ const STATUS = { incluida: ["✓", "ok-t", "llega"], presupuesto: ["✗", "bad-t
 function statusCell(state) {
   if (!state) return '<span class="off-t">·</span>';
   const [mark, cls, word] = STATUS[state] || ["·", "off-t", state];
-  return `<span class="${cls}">${mark} ${word}</span>`;
+  return `<span class="${cls}" title="${word}">${mark}</span>`;
 }
 
 function reportTable(detail, columns) {
   const rows = detail.raw.map((line) => {
-    const text = line.text.length > 46 ? `${line.text.slice(0, 45)}…` : line.text;
+    const text = line.text.length > 38 ? `${line.text.slice(0, 37)}…` : line.text;
     const cls = line.tags.diag ? ' class="on"' : "";
     return `<tr${cls}><td>L${line.index}</td><td style="text-align:left;white-space:nowrap">${line.tags.diag ? "<b>" : ""}${esc(text)}${line.tags.diag ? "</b>" : ""}</td>${columns.map((col) => `<td>${statusCell(col.status.get(line.index))}</td>`).join("")}</tr>`;
   });
-  return `<table class="tbl rep"><tr><th>línea</th><th style="text-align:left">texto (en negrita, diagnósticos)</th>${columns.map((c) => `<th>${esc(c.label)}</th>`).join("")}</tr>${rows.join("")}</table>`;
+  const present = Object.keys(STATUS).filter((state) => columns.some((col) => detail.raw.some((line) => col.status.get(line.index) === state)));
+  const legend = present.map((state) => `<span class="${STATUS[state][1]}">${STATUS[state][0]}</span> ${STATUS[state][2]}`).join(" · ");
+  return `<table class="tbl rep"><tr><th>línea</th><th style="text-align:left">texto (en negrita, diagnósticos)</th>${columns.map((c) => `<th>${esc(c.label)}</th>`).join("")}</tr>${rows.join("")}</table><div class="subst">${legend}</div>`;
 }
 
 const statusOf = (lines, genome) => manageContext(lines, genome, BUDGET).status;
@@ -7978,9 +7988,9 @@ const VOICES = {
     return 0.16;
   },
   evaluate(v, t) {
-    v.tone({ t, type: "sine", f: 523.25, attack: 0.002, decay: 0.2, peak: 0.19 });
-    v.tone({ t, type: "sine", f: 2093, attack: 0.001, decay: 0.03, peak: 0.055 });
-    return 0.24;
+    v.tone({ t, type: "sine", f: 783.99, attack: 0.002, decay: 0.16, peak: 0.17 });
+    v.tone({ t, type: "sine", f: 3136, attack: 0.001, decay: 0.025, peak: 0.05 });
+    return 0.2;
   },
   promote(v, t) {
     v.tone({ t, type: "triangle", f: 523.25, attack: 0.008, decay: 0.15, peak: 0.17 });
@@ -8374,6 +8384,7 @@ function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }) {
   function enter(i, phase = "orient", { push = true, restore = null } = {}) {
     clearTimer();
     cancelSound();
+    L.frozen = false;
     L.i = Math.max(0, Math.min(steps.length - 1, i));
     const s = step();
     if (restore) ctx.restoreUser(restore);
@@ -8402,6 +8413,7 @@ function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }) {
   function perform() {
     const s = step();
     if (!hasAct(s) || L.phase === "act") return;
+    L.frozen = false;
     clearTimer();
     if (L.phase !== "orient") director.seek(s.bi, startT(s));
     L.phase = "act";
@@ -8457,7 +8469,7 @@ function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }) {
     const s = step();
     if (L.phase === "orient" && hasAct(s)) return perform();
     if (L.phase === "act") {
-      director.animateTo(endT(s), 0);
+      if (!resumeAct()) director.animateTo(endT(s), 0);
       return;
     }
     if (L.i < steps.length - 1) enter(L.i + 1);
@@ -8516,10 +8528,20 @@ function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }) {
     render();
   }
 
+  function resumeAct() {
+    if (!L.frozen) return false;
+    const s = step();
+    const left = Math.max(0, endT(s) - director.S.t);
+    const span = Math.max(1e-9, endT(s) - startT(s));
+    director.animateTo(endT(s), still() ? 0 : (animSeconds(s) * left) / span);
+    L.frozen = false;
+    return true;
+  }
   function play() {
     if (L.auto) return;
     L.auto = true;
     if (L.phase === "done" && L.i >= steps.length - 1) enter(0);
+    resumeAct();
     schedule();
     notify();
     renderTransport();
@@ -8528,6 +8550,11 @@ function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }) {
     if (L.auto && L.timer) L.remaining = Math.max(0, L.waitUntil - performance.now());
     L.auto = false;
     clearTimer();
+    if (L.phase === "act" && director.S.stepTo !== null) {
+      director.S.stepTo = null;
+      director.S.stepRate = null;
+      L.frozen = true;
+    }
     sound.stopAll();
     if (reason) L.pausedBy = reason;
     notify();
@@ -8535,7 +8562,7 @@ function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }) {
     render();
   }
   function interrupt(reason) {
-    if (L.auto) pause(reason);
+    if (L.auto || (L.phase === "act" && director.S.stepTo !== null)) pause(reason);
   }
 
   function goToChapter(c) {
@@ -8603,7 +8630,7 @@ function makeLesson({ director, ctx, ref, bus, sound, scripts, concepts }) {
   function primaryLabel() {
     const s = step();
     if (L.phase === "orient" && hasAct(s)) return "Ver la operación";
-    if (L.phase === "act") return "Saltar al resultado";
+    if (L.phase === "act") return L.frozen ? "Seguir la operación" : "Saltar al resultado";
     if (L.i >= steps.length - 1) return "Fin del recorrido";
     return "Continuar";
   }
@@ -8834,7 +8861,7 @@ const N01 = {
       const task = taskOf(ctx);
       return `{{contexto|Contexto}}: lo que el sistema tiene delante en un paso. Para esta tarea son las líneas del registro que entran en un espacio limitado de 64 tokens; aquí cada palabra cuenta como un token. El registro completo tiene ${task.lines.length} líneas y ${task.totalTokens} tokens, así que no cabe entero: algo hay que dejar afuera.`;
     }),
-    module("herramientas", (ctx) => `{{herramientas|Herramientas}}: ejecutan pruebas y leen registros. Producen [[observacion|observaciones]] externas, por ejemplo que ${esc(taskOf(ctx).testName)} dio un resultado distinto del esperado. Esas observaciones pueden volver al contexto en el paso siguiente.`),
+    module("herramientas", (ctx) => `{{herramientas|Herramientas}}: ejecutan pruebas y leen registros. Producen [[observacion|observaciones]] externas, por ejemplo que ${esc(taskOf(ctx).testName)} dio un resultado distinto del esperado. Esas observaciones pueden volver al contexto en el paso siguiente. No son parámetros ni código del agente: son datos nuevos que llegan desde afuera.`),
     module("codigo", "{{codigo|Código del agente}}: el programa que decide cómo trabajar. Para nosotros importa su [[gestor_contexto|gestor de contexto]], la regla que elige qué líneas del registro entran en esos 64 tokens. Hoy está en la versión {{cart-v0|v0}}. Es lo que esta lección va a modificar."),
     module("datos", (ctx) => `{{datos|Datos}}: el banco de tareas, en cuatro [[particiones|cajones separados]]. Desarrollo (16 tareas, para analizar fallos), validación (40, para comparar versiones), prueba reservada (60, para medir al final) y auditoría (40, una medición fuera de la búsqueda). Nuestra tarea, la ${taskOf(ctx).seed}, es de desarrollo.`),
     module("entorno", "{{entorno|Entorno de ejecución}}: el recinto donde se ejecutan las tareas, con un [[presupuesto|presupuesto]] contado en ejecuciones. Cada vez que una versión del gestor se prueba con una tarea se gasta una ejecución. No es tiempo, ni potencia de cálculo, ni dinero: es un contador."),
@@ -9349,7 +9376,7 @@ const N04 = {
       result: (ctx) => {
         const tr = ctx.store.trace();
         const g = argmax(tr.probs);
-        return `argmax elige ${tok(g)}, con p = ${n3(tr.probs[g])}. Es determinista: con la misma entrada, siempre el mismo token.`;
+        return `argmax elige ${tok(g)}, con p = ${n3(tr.probs[g])}. Es determinista: con la misma entrada, siempre el mismo token. Elegir no cambia nada del modelo: sólo lee las probabilidades ya calculadas.`;
       },
     },
     {
@@ -9540,7 +9567,7 @@ const N05 = {
     {
       concept: "perdida",
       look: ["mx-Wu", "bars-out"],
-      orient: "¿Sirvió? Medimos la pérdida otra vez con los parámetros nuevos, en los ejemplos de entrenamiento y en los de validación.",
+      orient: "¿Sirvió? Medimos la pérdida otra vez con los parámetros nuevos, en los ejemplos de entrenamiento y en los de validación. Los de validación no se usaron para calcular el gradiente.",
       act: "Se recalcula la pérdida.",
       cues: [{ at: 0.9, op: "evaluate", targets: ["bars-out"] }],
       seconds: 1,
@@ -9980,7 +10007,7 @@ const N07 = {
       seconds: 1.2,
       result: (ctx) => {
         const e = ev(ctx);
-        return `v2 es más barata: ${e.v2.valid.cost.toFixed(1)} tokens por tarea frente a ${e.v1.valid.cost.toFixed(1)} de v1. Pero acierta ${pc(e.v2.valid.success)} contra ${pc(e.v1.valid.success)}.`;
+        return `v2 es más barata: ${e.v2.valid.cost.toFixed(1)} tokens por tarea frente a ${e.v1.valid.cost.toFixed(1)} de v1. Pero acierta ${pc(e.v2.valid.success)} contra ${pc(e.v1.valid.success)}: al quedarse sólo con ERROR y TRACE descarta las líneas DEBUG, y en muchas tareas sólo una DEBUG nombra la causa.`;
       },
     },
     {
@@ -11468,7 +11495,7 @@ function frame(now) {
   lesson.frame();
   engine.render();
   updateTimeline();
-  const busy = moving || director.S.playing || director.S.stepTo !== null || director.S.camAnim || dirtyFrame || lesson.L.phase === "act" || lesson.L.entering;
+  const busy = moving || director.S.playing || director.S.stepTo !== null || director.S.camAnim || dirtyFrame || (lesson.L.phase === "act" && !lesson.L.frozen) || lesson.L.entering;
   dirtyFrame = false;
   if (busy && !document.hidden) raf = requestAnimationFrame(frame);
   else {

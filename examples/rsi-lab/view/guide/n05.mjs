@@ -114,7 +114,7 @@ export const N05 = {
     {
       concept: "perdida",
       look: ["mx-Wu", "bars-out"],
-      orient: "¿Sirvió? Medimos la pérdida otra vez con los parámetros nuevos, en los ejemplos de entrenamiento y en los de validación.",
+      orient: "¿Sirvió? Medimos la pérdida otra vez con los parámetros nuevos, en los ejemplos de entrenamiento y en los de validación. Los de validación no se usaron para calcular el gradiente.",
       act: "Se recalcula la pérdida.",
       cues: [{ at: 0.9, op: "evaluate", targets: ["bars-out"] }],
       seconds: 1,
